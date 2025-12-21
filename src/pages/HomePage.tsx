@@ -17,9 +17,9 @@ const HomePage: React.FC = () => {
       try {
         setLoading(true);
         const [lost, found, returned] = await Promise.all([
-          getRecentLostItems(6),
-          getRecentFoundItems(6),
-          getRecentReturnedItems(6),
+          getRecentLostItems(12),
+          getRecentFoundItems(12),
+          getRecentReturnedItems(12),
         ]);
         setLostItems(lost);
         setFoundItems(found);
@@ -79,19 +79,51 @@ const HomePage: React.FC = () => {
               </Button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-3xl mx-auto">
-              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 card-hover">
-                <div className="text-3xl font-bold text-accent mb-2">{lostItems.length}+</div>
-                <div className="text-sm text-muted-foreground">Lost Items Reported</div>
+            {/* Stats - Circular Design */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              {/* Lost Items Stat */}
+              <div className="flex flex-col items-center card-hover">
+                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 border-2 border-accent/30 flex items-center justify-center mb-4 animate-pulse-glow">
+                  <div className="absolute inset-0 rounded-full bg-accent/10 animate-pulse" />
+                  <div className="relative z-10 text-center">
+                    <div className="text-5xl font-bold text-accent mb-1">{lostItems.length}</div>
+                    <div className="text-xs text-accent/80 font-medium">Items</div>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-foreground mb-1">Lost Items</div>
+                  <div className="text-sm text-muted-foreground">Waiting to be found</div>
+                </div>
               </div>
-              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 card-hover">
-                <div className="text-3xl font-bold text-primary mb-2">{foundItems.length}+</div>
-                <div className="text-sm text-muted-foreground">Found Items Listed</div>
+
+              {/* Found Items Stat */}
+              <div className="flex flex-col items-center card-hover">
+                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/30 flex items-center justify-center mb-4 animate-pulse-glow">
+                  <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
+                  <div className="relative z-10 text-center">
+                    <div className="text-5xl font-bold text-primary mb-1">{foundItems.length}</div>
+                    <div className="text-xs text-primary/80 font-medium">Items</div>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-foreground mb-1">Found Items</div>
+                  <div className="text-sm text-muted-foreground">Ready to be claimed</div>
+                </div>
               </div>
-              <div className="bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6 card-hover">
-                <div className="text-3xl font-bold text-green-500 mb-2">{returnedItems.length}+</div>
-                <div className="text-sm text-muted-foreground">Successful Returns</div>
+
+              {/* Successful Returns Stat */}
+              <div className="flex flex-col items-center card-hover">
+                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-green-500/20 to-green-500/5 border-2 border-green-500/30 flex items-center justify-center mb-4 animate-pulse-glow">
+                  <div className="absolute inset-0 rounded-full bg-green-500/10 animate-pulse" />
+                  <div className="relative z-10 text-center">
+                    <div className="text-5xl font-bold text-green-500 mb-1">{returnedItems.length}</div>
+                    <div className="text-xs text-green-500/80 font-medium">Returns</div>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-foreground mb-1">Success Stories</div>
+                  <div className="text-sm text-muted-foreground">Happy reunions</div>
+                </div>
               </div>
             </div>
           </div>
@@ -120,7 +152,7 @@ const HomePage: React.FC = () => {
 
         {loading ? (
           <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(12)].map((_, i) => (
               <div key={i} className="h-64 bg-muted animate-pulse rounded-xl" />
             ))}
           </div>
@@ -162,7 +194,7 @@ const HomePage: React.FC = () => {
 
         {loading ? (
           <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(12)].map((_, i) => (
               <div key={i} className="h-64 bg-muted animate-pulse rounded-xl" />
             ))}
           </div>
@@ -204,7 +236,7 @@ const HomePage: React.FC = () => {
 
         {loading ? (
           <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
+            {[...Array(12)].map((_, i) => (
               <div key={i} className="h-64 bg-muted animate-pulse rounded-xl" />
             ))}
           </div>

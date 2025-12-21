@@ -22,6 +22,7 @@ export interface LostItem {
   contact_email: string | null;
   contact_phone: string | null;
   additional_info: string | null;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +39,7 @@ export interface FoundItem {
   contact_email: string | null;
   contact_phone: string | null;
   additional_info: string | null;
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +57,7 @@ export interface ReturnedItem {
   location: string;
   campus: string;
   story: string | null;
+  image_url: string | null;
   created_at: string;
 }
 

@@ -17,18 +17,21 @@ const App: React.FC = () => {
         return;
       }
 
-      // Get some recent item IDs from the database to simulate user's reports
-      // These will be the first few items that were added
+      // Sample lost report IDs (these are actual IDs from the database)
       const sampleLostReports = [
-        // These IDs will exist from our initial seed data
+        "61e06ef3-9e9c-4207-a5fa-39dfb9378cbc",
+        "c0ba7707-b297-4522-bc7c-89b3420b2abf",
+        "c5828a9f-b720-4977-98a8-c1c735bfb171"
       ];
       
+      // Sample found report IDs (these are actual IDs from the database)
       const sampleFoundReports = [
-        // These IDs will exist from our initial seed data
+        "d9a8cdfc-7fab-488d-97ca-8e896cc84dcc",
+        "5dd07192-8be8-478b-9578-b64ae5ac1af7",
+        "f3acee1a-f9fb-466d-9ab5-6d98fc5ebeb0"
       ];
 
-      // For demo purposes, we'll add a few sample IDs
-      // In a real app, these would be actual report IDs from the user's submissions
+      // Set the sample reports in localStorage
       if (!localStorage.getItem('myLostReports')) {
         localStorage.setItem('myLostReports', JSON.stringify(sampleLostReports));
       }

@@ -53,9 +53,27 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
 
   return (
     <Card
-      className="card-hover cursor-pointer animate-fade-in bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/50 transition-all duration-300"
+      className="card-hover cursor-pointer animate-fade-in bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/50 transition-all duration-300 overflow-hidden"
       onClick={handleClick}
     >
+      {/* Image Section */}
+      {item.image_url && (
+        <div className="relative h-48 w-full overflow-hidden bg-secondary/30">
+          <img 
+            src={item.image_url} 
+            alt={item.item_name}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+          />
+          <div className="absolute top-3 right-3">
+            <Badge
+              className={`${getBadgeClass()} shadow-lg interactive-scale border`}
+            >
+              {type === 'lost' ? 'Lost' : type === 'found' ? 'Found' : 'Returned'}
+            </Badge>
+          </div>
+        </div>
+      )}
+      
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -66,11 +84,13 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
               {item.description}
             </CardDescription>
           </div>
-          <Badge
-            className={`${getBadgeClass()} shrink-0 shadow-lg interactive-scale border`}
-          >
-            {type === 'lost' ? 'Lost' : type === 'found' ? 'Found' : 'Returned'}
-          </Badge>
+          {!item.image_url && (
+            <Badge
+              className={`${getBadgeClass()} shrink-0 shadow-lg interactive-scale border`}
+            >
+              {type === 'lost' ? 'Lost' : type === 'found' ? 'Found' : 'Returned'}
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="pt-0">
