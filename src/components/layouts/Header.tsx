@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Menu, Sparkles } from 'lucide-react';
+import { Search, Menu, Sparkles, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -27,14 +27,25 @@ const Header: React.FC = () => {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 group-hover:scale-110 transition-transform duration-300 border-glow">
-              <Search className="w-5 h-5 text-background" />
+          {/* Enhanced Logo */}
+          <Link to="/" className="flex items-center space-x-3 group relative">
+            {/* Animated glow effect */}
+            <div className="absolute -inset-2 bg-gradient-to-r from-primary via-accent to-primary opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-500 rounded-full" />
+            
+            {/* Logo icon with multiple layers */}
+            <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-accent group-hover:scale-110 transition-all duration-300 shadow-lg shadow-primary/50">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 animate-pulse" />
+              <Search className="w-6 h-6 text-background relative z-10 drop-shadow-lg" />
+              <Sparkles className="w-3 h-3 text-background absolute top-1 right-1 animate-pulse" />
             </div>
-            <div className="flex items-center">
-              <span className="text-2xl font-bold text-primary glow-text">FINDIT</span>
-              <span className="text-2xl font-bold text-foreground">.AI</span>
+            
+            {/* Logo text with gradient */}
+            <div className="flex items-center relative">
+              <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(0,255,255,0.5)]">
+                FINDIT
+              </span>
+              <span className="text-2xl font-black tracking-tight text-foreground">.AI</span>
+              <Zap className="w-4 h-4 text-accent ml-1 animate-pulse" />
             </div>
           </Link>
 
@@ -64,13 +75,18 @@ const Header: React.FC = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-card border-border">
               <nav className="flex flex-col space-y-3 mt-8">
-                <Link to="/" className="flex items-center space-x-2 mb-6 group">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 group-hover:scale-110 transition-transform duration-300">
-                    <Search className="w-5 h-5 text-background" />
+                <Link to="/" className="flex items-center space-x-3 mb-6 group relative" onClick={() => setIsOpen(false)}>
+                  <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-accent group-hover:scale-110 transition-all duration-300 shadow-lg shadow-primary/50">
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 animate-pulse" />
+                    <Search className="w-6 h-6 text-background relative z-10 drop-shadow-lg" />
+                    <Sparkles className="w-3 h-3 text-background absolute top-1 right-1 animate-pulse" />
                   </div>
-                  <div className="flex items-center">
-                    <span className="text-2xl font-bold text-primary">FINDIT</span>
-                    <span className="text-2xl font-bold text-foreground">.AI</span>
+                  <div className="flex items-center relative">
+                    <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
+                      FINDIT
+                    </span>
+                    <span className="text-2xl font-black tracking-tight text-foreground">.AI</span>
+                    <Zap className="w-4 h-4 text-accent ml-1 animate-pulse" />
                   </div>
                 </Link>
                 {navItems.map((item) => (
