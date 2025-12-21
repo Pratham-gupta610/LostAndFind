@@ -82,10 +82,10 @@ const HomePage: React.FC = () => {
             {/* Stats - Circular Design */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 max-w-4xl mx-auto">
               {/* Lost Items Stat */}
-              <div className="flex flex-col items-center card-hover">
-                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 border-2 border-accent/30 flex items-center justify-center mb-4 animate-pulse-glow">
+              <div className="flex flex-col items-center">
+                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-accent/20 to-accent/5 border-2 border-accent/30 flex items-center justify-center mb-4 animate-pulse-glow transition-all duration-300 hover:scale-110">
                   <div className="absolute inset-0 rounded-full bg-accent/10 animate-pulse" />
-                  <div className="relative z-10 text-center">
+                  <div className="relative z-10 text-center select-none">
                     <div className="text-5xl font-bold text-accent mb-1">{lostItems.length}</div>
                     <div className="text-xs text-accent/80 font-medium">Items</div>
                   </div>
@@ -97,10 +97,10 @@ const HomePage: React.FC = () => {
               </div>
 
               {/* Found Items Stat */}
-              <div className="flex flex-col items-center card-hover">
-                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/30 flex items-center justify-center mb-4 animate-pulse-glow">
+              <div className="flex flex-col items-center">
+                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/30 flex items-center justify-center mb-4 animate-pulse-glow transition-all duration-300 hover:scale-110">
                   <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse" />
-                  <div className="relative z-10 text-center">
+                  <div className="relative z-10 text-center select-none">
                     <div className="text-5xl font-bold text-primary mb-1">{foundItems.length}</div>
                     <div className="text-xs text-primary/80 font-medium">Items</div>
                   </div>
@@ -112,10 +112,10 @@ const HomePage: React.FC = () => {
               </div>
 
               {/* Successful Returns Stat */}
-              <div className="flex flex-col items-center card-hover">
-                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-green-500/20 to-green-500/5 border-2 border-green-500/30 flex items-center justify-center mb-4 animate-pulse-glow">
+              <div className="flex flex-col items-center">
+                <div className="relative w-40 h-40 rounded-full bg-gradient-to-br from-green-500/20 to-green-500/5 border-2 border-green-500/30 flex items-center justify-center mb-4 animate-pulse-glow transition-all duration-300 hover:scale-110">
                   <div className="absolute inset-0 rounded-full bg-green-500/10 animate-pulse" />
-                  <div className="relative z-10 text-center">
+                  <div className="relative z-10 text-center select-none">
                     <div className="text-5xl font-bold text-green-500 mb-1">{returnedItems.length}</div>
                     <div className="text-xs text-green-500/80 font-medium">Returns</div>
                   </div>

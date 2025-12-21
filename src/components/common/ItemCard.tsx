@@ -58,15 +58,16 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
     >
       {/* Image Section */}
       {item.image_url && (
-        <div className="relative h-48 w-full overflow-hidden bg-secondary/30">
+        <div className="relative h-40 w-full overflow-hidden bg-secondary/30">
           <img 
             src={item.image_url} 
             alt={item.item_name}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            loading="lazy"
           />
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-2 right-2">
             <Badge
-              className={`${getBadgeClass()} shadow-lg interactive-scale border`}
+              className={`${getBadgeClass()} shadow-lg interactive-scale border backdrop-blur-sm`}
             >
               {type === 'lost' ? 'Lost' : type === 'found' ? 'Found' : 'Returned'}
             </Badge>
