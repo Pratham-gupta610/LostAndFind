@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import routes from './routes';
 import Header from '@/components/layouts/Header';
 import { Toaster } from '@/components/ui/toaster';
+import InteractiveCursor from '@/components/common/InteractiveCursor';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -57,6 +58,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
+      <InteractiveCursor />
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow">

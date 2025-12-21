@@ -151,13 +151,13 @@ const HomePage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[...Array(12)].map((_, i) => (
               <div key={i} className="h-64 bg-muted animate-pulse rounded-xl" />
             ))}
           </div>
         ) : lostItems.length > 0 ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {lostItems.map((item, index) => (
               <div key={item.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                 <ItemCard item={item} type="lost" />
@@ -193,13 +193,13 @@ const HomePage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[...Array(12)].map((_, i) => (
               <div key={i} className="h-64 bg-muted animate-pulse rounded-xl" />
             ))}
           </div>
         ) : foundItems.length > 0 ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {foundItems.map((item, index) => (
               <div key={item.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                 <ItemCard item={item} type="found" />
@@ -235,13 +235,13 @@ const HomePage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[...Array(12)].map((_, i) => (
               <div key={i} className="h-64 bg-muted animate-pulse rounded-xl" />
             ))}
           </div>
         ) : returnedItems.length > 0 ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {returnedItems.map((item, index) => (
               <div key={item.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                 <ItemCard item={item} type="returned" />
