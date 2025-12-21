@@ -45,50 +45,59 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
     return (item as LostItem | FoundItem).contact_name;
   };
 
+  const getBadgeClass = () => {
+    if (type === 'lost') return 'bg-accent/90 text-accent-foreground hover:bg-accent border-accent/50';
+    if (type === 'found') return 'bg-primary/90 text-background hover:bg-primary border-primary/50';
+    return 'bg-green-500/90 text-white hover:bg-green-500 border-green-500/50';
+  };
+
   return (
     <Card
-      className="card-hover cursor-pointer animate-fade-in"
+      className="card-hover cursor-pointer animate-fade-in bg-card/50 backdrop-blur-sm border-border/50 hover:border-primary/50 transition-all duration-300"
       onClick={handleClick}
     >
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg mb-2">{item.item_name}</CardTitle>
-            <CardDescription className="line-clamp-2">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-xl mb-2 text-foreground group-hover:text-primary transition-colors">
+              {item.item_name}
+            </CardTitle>
+            <CardDescription className="line-clamp-2 text-muted-foreground">
               {item.description}
             </CardDescription>
           </div>
           <Badge
-            variant={
-              type === 'lost'
-                ? 'destructive'
-                : type === 'found'
-                  ? 'default'
-                  : 'secondary'
-            }
-            className="ml-2"
+            className={`${getBadgeClass()} shrink-0 shadow-lg interactive-scale border`}
           >
             {type === 'lost' ? 'Lost' : type === 'found' ? 'Found' : 'Returned'}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center text-muted-foreground">
-            <Tag className="w-4 h-4 mr-2" />
-            <span>{item.category}</span>
+      <CardContent className="pt-0">
+        <div className="space-y-2.5 text-sm">
+          <div className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 mr-3">
+              <Tag className="w-4 h-4" />
+            </div>
+            <span className="font-medium">{item.category}</span>
           </div>
-          <div className="flex items-center text-muted-foreground">
-            <MapPin className="w-4 h-4 mr-2" />
-            <span className="line-clamp-1">{item.location} • {item.campus}</span>
+          <div className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 mr-3">
+              <MapPin className="w-4 h-4" />
+            </div>
+            <span className="line-clamp-1 flex-1">{item.location} • {item.campus}</span>
           </div>
-          <div className="flex items-center text-muted-foreground">
-            <Calendar className="w-4 h-4 mr-2" />
+          <div className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 mr-3">
+              <Calendar className="w-4 h-4" />
+            </div>
             <span>{getDateLabel()} {getDateField()}</span>
           </div>
-          <div className="flex items-center text-muted-foreground">
-            <User className="w-4 h-4 mr-2" />
-            <span>{getContactName()}</span>
+          <div className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 mr-3">
+              <User className="w-4 h-4" />
+            </div>
+            <span className="line-clamp-1">{getContactName()}</span>
           </div>
         </div>
       </CardContent>
