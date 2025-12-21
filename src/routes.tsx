@@ -1,4 +1,10 @@
-import SamplePage from './pages/SamplePage';
+import HomePage from './pages/HomePage';
+import LostItemsPage from './pages/LostItemsPage';
+import FoundItemsPage from './pages/FoundItemsPage';
+import ReportLostPage from './pages/ReportLostPage';
+import ReportFoundPage from './pages/ReportFoundPage';
+import HistoryPage from './pages/HistoryPage';
+import ItemDetailPage from './pages/ItemDetailPage';
 import type { ReactNode } from 'react';
 
 interface RouteConfig {
@@ -10,9 +16,40 @@ interface RouteConfig {
 
 const routes: RouteConfig[] = [
   {
-    name: 'Sample Page',
+    name: 'Home',
     path: '/',
-    element: <SamplePage />
+    element: <HomePage />
+  },
+  {
+    name: 'Lost Items',
+    path: '/lost-items',
+    element: <LostItemsPage />
+  },
+  {
+    name: 'Found Items',
+    path: '/found-items',
+    element: <FoundItemsPage />
+  },
+  {
+    name: 'Report Lost',
+    path: '/report-lost',
+    element: <ReportLostPage />
+  },
+  {
+    name: 'Report Found',
+    path: '/report-found',
+    element: <ReportFoundPage />
+  },
+  {
+    name: 'History',
+    path: '/history',
+    element: <HistoryPage />
+  },
+  {
+    name: 'Item Detail',
+    path: '/:type/:id',
+    element: <ItemDetailPage />,
+    visible: false
   }
 ];
 

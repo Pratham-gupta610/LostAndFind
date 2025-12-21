@@ -2,19 +2,14 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import routes from './routes';
-
-// import Header from '@/components/common/Header';
-// import { AuthProvider } from '@/contexts/AuthContext';
-// import { RouteGuard } from '@/components/common/RouteGuard';
+import Header from '@/components/layouts/Header';
 import { Toaster } from '@/components/ui/toaster';
 
 const App: React.FC = () => {
   return (
     <Router>
-      {/*<AuthProvider>*/}
-      {/*<RouteGuard>*/}
       <div className="flex flex-col min-h-screen">
-        {/*<Header />*/}
+        <Header />
         <main className="flex-grow">
           <Routes>
           {routes.map((route, index) => (
@@ -29,8 +24,6 @@ const App: React.FC = () => {
         </main>
       </div>
       <Toaster />
-      {/*</RouteGuard>*/}
-      {/*</AuthProvider>*/}
     </Router>
   );
 };

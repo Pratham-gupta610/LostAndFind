@@ -1,6 +1,203 @@
-# Welcome to Your Miaoda Project
+# FINDIT.AI - Multi-Campus Lost & Found Application
 
-## Project Info
+## 🎯 Project Overview
+
+FINDIT.AI is a modern, highly interactive web application designed to help campus community members report and search for lost or found items across multiple campus locations. Built with a trust-first design philosophy, it provides a seamless user experience for reuniting people with their belongings.
+
+## ✨ Key Features
+
+- **📦 Lost Items Management**: Report and search for lost items with detailed descriptions
+- **🔍 Found Items Management**: Report and browse found items to help return them to owners
+- **📜 History of Returns**: View successful reunions and inspiring success stories
+- **🔎 Real-time Search**: Instant search with debouncing across all item categories
+- **📅 Date Filtering**: Filter items by date range using an intuitive calendar picker
+- **📱 Responsive Design**: Seamless experience on desktop and mobile devices
+- **💾 My Reports**: Track your submitted reports with localStorage-based session management
+- **🎨 Modern UI**: Trust-inspiring blue theme with smooth animations and card-based layout
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js ≥ 20
+- npm ≥ 10
+
+### Installation
+
+```bash
+# Step 1: Clone or download the project
+# Step 2: Navigate to the project directory
+cd app-8e6wgm5ndzi9
+
+# Step 3: Install dependencies
+npm install
+
+# Step 4: Start the development server
+npm run dev -- --host 127.0.0.1
+
+# Alternative if step 4 fails:
+npx vite --host 127.0.0.1
+```
+
+### Environment Setup
+
+The application uses Supabase for backend services. Environment variables are already configured in the `.env` file.
+
+## 📚 Documentation
+
+- **[USER_GUIDE.md](./USER_GUIDE.md)** - Complete user guide for using the application
+- **[APPLICATION_SUMMARY.md](./APPLICATION_SUMMARY.md)** - Technical overview and architecture
+- **[VERIFICATION_CHECKLIST.md](./VERIFICATION_CHECKLIST.md)** - Complete feature checklist
+- **[TODO.md](./TODO.md)** - Development tracking and progress
+
+## 🏗️ Project Structure
+
+```
+├── src/
+│   ├── components/
+│   │   ├── common/          # Reusable components
+│   │   │   ├── ItemCard.tsx
+│   │   │   ├── SearchBar.tsx
+│   │   │   └── DateRangeFilter.tsx
+│   │   ├── layouts/         # Layout components
+│   │   │   └── Header.tsx
+│   │   └── ui/              # shadcn/ui components
+│   ├── pages/               # Page components
+│   │   ├── HomePage.tsx
+│   │   ├── LostItemsPage.tsx
+│   │   ├── FoundItemsPage.tsx
+│   │   ├── ReportLostPage.tsx
+│   │   ├── ReportFoundPage.tsx
+│   │   ├── HistoryPage.tsx
+│   │   └── ItemDetailPage.tsx
+│   ├── db/                  # Database layer
+│   │   ├── supabase.ts      # Supabase client
+│   │   └── api.ts           # API functions
+│   ├── types/               # TypeScript types
+│   │   └── types.ts
+│   ├── hooks/               # Custom hooks
+│   ├── lib/                 # Utilities
+│   ├── routes.tsx           # Route configuration
+│   ├── App.tsx              # Main app component
+│   └── index.css            # Global styles
+├── public/                  # Static assets
+└── supabase/               # Supabase migrations
+```
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18 + TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Backend**: Supabase (PostgreSQL)
+- **Routing**: React Router v6
+- **Forms**: React Hook Form + Zod
+- **Build Tool**: Vite
+- **Icons**: Lucide React
+
+## 🎨 Design System
+
+### Color Palette
+- **Primary**: Trust-inspiring blue (#2563EB / HSL 217 91% 60%)
+- **Background**: Clean white (#FFFFFF)
+- **Secondary**: Soft gray (#F3F4F6)
+- **Text**: Dark gray (#374151)
+
+### Key Design Principles
+- Trust-first design with professional appearance
+- Card-based grid layout with ample white space
+- Smooth animations (200-300ms transitions)
+- Clear visual hierarchy
+- Responsive breakpoints for all devices
+
+## 📊 Database Schema
+
+### Tables
+
+1. **lost_items**
+   - Stores reported lost items
+   - Fields: item_name, description, category, date_lost, location, campus, contact info
+   - 8 test records included
+
+2. **found_items**
+   - Stores reported found items
+   - Fields: item_name, description, category, date_found, location, campus, contact info
+   - 8 test records included
+
+3. **returned_items**
+   - Stores history of successful returns
+   - Fields: item details, owner info, finder info, return_date, story
+   - 6 test records included
+
+## 🔧 Development
+
+### Available Scripts
+
+```bash
+# Start development server
+npm run dev
+
+# Run linter
+npm run lint
+
+# Type checking
+npm run type-check
+```
+
+### Code Quality
+
+- ✅ TypeScript strict mode enabled
+- ✅ No lint errors (84 files checked)
+- ✅ Proper type safety throughout
+- ✅ Clean component architecture
+- ✅ Consistent code style
+
+## 📱 Features in Detail
+
+### Search Functionality
+- Real-time search with 300ms debouncing
+- Searches across: item names, descriptions, categories, locations, campuses
+- Separate search systems for lost and found items
+- Results update instantly
+
+### Date Filtering
+- Calendar-based date range picker
+- Filter by date lost/found/returned
+- Clear filter option
+- Persistent across page navigation
+
+### Form Validation
+- Real-time validation with helpful error messages
+- Required field indicators
+- Email and phone validation
+- Success notifications
+
+### My Reports
+- localStorage-based tracking
+- View all your submitted reports
+- Persists across browser sessions
+- Quick access from report pages
+
+## 🌐 Browser Support
+
+- Chrome/Edge (recommended)
+- Firefox
+- Safari
+- Mobile browsers (iOS Safari, Chrome Mobile)
+
+## 📄 License
+
+Copyright © 2025 FINDIT.AI
+
+## 🤝 Support
+
+For technical issues or questions:
+1. Check the [USER_GUIDE.md](./USER_GUIDE.md)
+2. Review the [APPLICATION_SUMMARY.md](./APPLICATION_SUMMARY.md)
+3. Contact your campus IT support
+
+## 🎉 Acknowledgments
+
+Built with modern web technologies and best practices to provide a seamless lost and found experience for campus communities.
 
 ## Project Directory
 
