@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { LostItem, FoundItem, ReturnedItem, LostItemInput, FoundItemInput } from '@/types/types';
+import type { LostItem, FoundItem, ReturnedItem, LostItemInput, FoundItemInput, ChatConversation, ChatMessage } from '@/types/types';
 
 // Lost Items API
 export const getLostItems = async (
@@ -220,4 +220,122 @@ export const getRecentReturnedItems = async (limit = 6): Promise<ReturnedItem[]>
   }
 
   return Array.isArray(data) ? data : [];
+};
+
+// Chat API
+export const getOrCreateConversation = async (
+  lostItemId: string | null,
+  foundItemId: string | null,
+  lostItemOwnerId: string,
+  foundItemReporterId: string
+): Promise<ChatConversation | null> => {
+  // First try to get existing conversation
+  let query = supabase
+    .from('chat_conversations')
+    .select('*');
+
+  if (lostItemId) {
+    query = query.eq('lost_item_id', lostItemId);
+  }
+  if (foundItemId) {
+    query = query.eq('found_item_id', foundItemId);
+  }
+
+  const { data: existing } = await query.maybeSingle();
+
+  if (existing) {
+    return existing;
+  }
+
+  // Create new conversation
+  const { data, error } = await supabase
+    .from('chat_conversations')
+    .insert({
+      lost_item_id: lostItemId,
+      found_item_id: foundItemId,
+      lost_item_owner_id: lostItemOwnerId,
+      found_item_reporter_id: foundItemReporterId,
+    })
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error creating conversation:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const getUserConversations = async (userId: string): Promise<ChatConversation[]> => {
+  const { data, error } = await supabase
+    .from('chat_conversations')
+    .select('*')
+    .or(`lost_item_owner_id.eq.${userId},found_item_reporter_id.eq.${userId}`)
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching conversations:', error);
+    throw error;
+  }
+
+  return Array.isArray(data) ? data : [];
+};
+
+export const getConversationMessages = async (conversationId: string): Promise<ChatMessage[]> => {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching messages:', error);
+    throw error;
+  }
+
+  return Array.isArray(data) ? data : [];
+};
+
+export const sendMessage = async (
+  conversationId: string,
+  senderId: string,
+  message: string
+): Promise<ChatMessage | null> => {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .insert({
+      conversation_id: conversationId,
+      sender_id: senderId,
+      message,
+    })
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error sending message:', error);
+    throw error;
+  }
+
+  // Update conversation's updated_at
+  await supabase
+    .from('chat_conversations')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('id', conversationId);
+
+  return data;
+};
+
+export const markMessagesAsRead = async (conversationId: string, userId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('chat_messages')
+    .update({ read: true })
+    .eq('conversation_id', conversationId)
+    .neq('sender_id', userId)
+    .eq('read', false);
+
+  if (error) {
+    console.error('Error marking messages as read:', error);
+    throw error;
+  }
 };

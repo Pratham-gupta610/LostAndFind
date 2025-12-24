@@ -27,6 +27,7 @@ import { createLostItem, getLostItemById } from '@/db/api';
 import ItemCard from '@/components/common/ItemCard';
 import type { LostItem, LostItemInput } from '@/types/types';
 import { CATEGORIES, CAMPUSES } from '@/types/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 const formSchema = z.object({
   item_name: z.string().min(3, 'Item name must be at least 3 characters'),
@@ -43,6 +44,7 @@ const formSchema = z.object({
 
 const ReportLostPage: React.FC = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [myReports, setMyReports] = useState<LostItem[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
@@ -86,6 +88,7 @@ const ReportLostPage: React.FC = () => {
     try {
       setSubmitting(true);
       const itemData: LostItemInput = {
+        user_id: user?.id || null,
         item_name: values.item_name,
         description: values.description,
         category: values.category,

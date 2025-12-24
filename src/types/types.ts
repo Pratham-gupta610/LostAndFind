@@ -1,17 +1,19 @@
 // Database types matching Supabase schema
 
+export type UserRole = 'user' | 'admin';
+
 export interface Profile {
   id: string;
   email: string;
-  username?: string;
-  full_name?: string;
-  avatar_url?: string;
+  phone: string | null;
+  role: UserRole;
   created_at: string;
   updated_at: string;
 }
 
 export interface LostItem {
   id: string;
+  user_id: string | null;
   item_name: string;
   description: string;
   category: string;
@@ -29,6 +31,7 @@ export interface LostItem {
 
 export interface FoundItem {
   id: string;
+  user_id: string | null;
   item_name: string;
   description: string;
   category: string;
@@ -62,6 +65,7 @@ export interface ReturnedItem {
 }
 
 export interface LostItemInput {
+  user_id?: string | null;
   item_name: string;
   description: string;
   category: string;
@@ -75,6 +79,7 @@ export interface LostItemInput {
 }
 
 export interface FoundItemInput {
+  user_id?: string | null;
   item_name: string;
   description: string;
   category: string;
@@ -114,3 +119,22 @@ export const CAMPUSES = [
   'East Campus',
   'West Campus'
 ] as const;
+
+export interface ChatConversation {
+  id: string;
+  lost_item_id: string | null;
+  found_item_id: string | null;
+  lost_item_owner_id: string;
+  found_item_reporter_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  message: string;
+  created_at: string;
+  read: boolean;
+}

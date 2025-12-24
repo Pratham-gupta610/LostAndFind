@@ -31,7 +31,14 @@ const HomePage: React.FC = () => {
       }
     };
 
+    // Initial fetch
     fetchData();
+
+    // Set up polling to refresh data every 5 seconds
+    const intervalId = setInterval(fetchData, 5000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   return (

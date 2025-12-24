@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { getLostItemById, getFoundItemById, getReturnedItemById } from '@/db/api';
 import type { LostItem, FoundItem, ReturnedItem } from '@/types/types';
+import ChatButton from '@/components/chat/ChatButton';
 
 type ItemType = 'lost' | 'found' | 'returned';
 
@@ -257,6 +258,16 @@ const ItemDetailPage: React.FC = () => {
                           </div>
                         </div>
                       )}
+
+                      {/* Chat Button */}
+                      <div className="pt-4">
+                        <ChatButton
+                          itemId={item.id}
+                          itemType={itemType as 'lost' | 'found'}
+                          itemOwnerId={(item as LostItem | FoundItem).user_id}
+                          itemOwnerEmail={(item as LostItem | FoundItem).contact_email}
+                        />
+                      </div>
                     </>
                   )}
                 </div>

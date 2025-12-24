@@ -1,16 +1,39 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Menu, Sparkles, Zap } from 'lucide-react';
+import { Search, Menu, Sparkles, Zap, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/contexts/AuthContext';
+import PhoneCollectionModal from '@/components/common/PhoneCollectionModal';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = React.useState(false);
+  const { user, profile, signOut } = useAuth();
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+
+  // Check if user needs to add phone number
+  useEffect(() => {
+    if (user && profile && !profile.phone) {
+      setShowPhoneModal(true);
+    }
+  }, [user, profile]);
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   const navItems = [
     { name: 'Home', path: '/' },
@@ -64,6 +87,46 @@ const Header: React.FC = () => {
                 {item.name}
               </Link>
             ))}
+
+            {/* Auth Buttons - Desktop */}
+            <div className="ml-4 flex items-center gap-2">
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="border-primary/30 hover:border-primary">
+                      <User className="w-4 h-4 mr-2" />
+                      {profile?.email?.split('@')[0] || 'User'}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                      {profile?.email}
+                    </DropdownMenuItem>
+                    {profile?.phone && (
+                      <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                        {profile.phone}
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  <Button asChild variant="ghost" size="sm">
+                    <Link to="/login">Sign In</Link>
+                  </Button>
+                  <Button asChild size="sm" className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
+                    <Link to="/signup">Sign Up</Link>
+                  </Button>
+                </>
+              )}
+            </div>
           </nav>
 
           {/* Mobile Navigation */}
@@ -103,11 +166,49 @@ const Header: React.FC = () => {
                     {item.name}
                   </Link>
                 ))}
+
+                {/* Auth Buttons - Mobile */}
+                <div className="pt-4 mt-4 border-t border-border space-y-3">
+                  {user ? (
+                    <>
+                      <div className="px-4 py-2 bg-secondary/50 rounded-lg">
+                        <div className="text-sm font-medium text-foreground">{profile?.email?.split('@')[0] || 'User'}</div>
+                        <div className="text-xs text-muted-foreground">{profile?.email}</div>
+                        {profile?.phone && (
+                          <div className="text-xs text-muted-foreground">{profile.phone}</div>
+                        )}
+                      </div>
+                      <Button 
+                        onClick={() => { handleSignOut(); setIsOpen(false); }} 
+                        variant="outline" 
+                        className="w-full border-destructive/30 text-destructive hover:bg-destructive/10"
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button asChild variant="outline" className="w-full">
+                        <Link to="/login" onClick={() => setIsOpen(false)}>Sign In</Link>
+                      </Button>
+                      <Button asChild className="w-full bg-gradient-to-r from-primary to-primary/80">
+                        <Link to="/signup" onClick={() => setIsOpen(false)}>Sign Up</Link>
+                      </Button>
+                    </>
+                  )}
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
         </div>
       </div>
+
+      {/* Phone Collection Modal */}
+      <PhoneCollectionModal 
+        open={showPhoneModal} 
+        onClose={() => setShowPhoneModal(false)} 
+      />
     </header>
   );
 };

@@ -5,6 +5,8 @@ import ReportLostPage from './pages/ReportLostPage';
 import ReportFoundPage from './pages/ReportFoundPage';
 import HistoryPage from './pages/HistoryPage';
 import ItemDetailPage from './pages/ItemDetailPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import type { ReactNode } from 'react';
 
 interface RouteConfig {
@@ -49,6 +51,18 @@ const routes: RouteConfig[] = [
     name: 'Item Detail',
     path: '/:type/:id',
     element: <ItemDetailPage />,
+    visible: false
+  },
+  {
+    name: 'Login',
+    path: '/login',
+    element: <LoginPage />,
+    visible: false
+  },
+  {
+    name: 'Signup',
+    path: '/signup',
+    element: <SignupPage />,
     visible: false
   }
 ];

@@ -11,19 +11,21 @@ export async function getProfile(userId: string): Promise<Profile | null> {
     .maybeSingle();
 
   if (error) {
-    console.error('获取用户信息失败:', error);
+    console.error('Failed to get user profile:', error);
     return null;
   }
   return data;
 }
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (username: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (username: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  updatePhone: (phone: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -64,9 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithUsername = async (username: string, password: string) => {
+  const signInWithEmail = async (email: string, password: string) => {
     try {
-      const email = `${username}@miaoda.com`;
+      // Validate college email format
+      if (!email.endsWith('.edu') && !email.includes('@college.') && !email.includes('@university.')) {
+        throw new Error('Please use a valid college email address');
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -79,15 +85,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUpWithUsername = async (username: string, password: string) => {
+  const signUpWithEmail = async (email: string, password: string) => {
     try {
-      const email = `${username}@miaoda.com`;
+      // Validate college email format
+      if (!email.endsWith('.edu') && !email.includes('@college.') && !email.includes('@university.')) {
+        throw new Error('Please use a valid college email address');
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const updatePhone = async (phone: string) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ phone, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      // Refresh profile after update
+      await refreshProfile();
+      
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -101,7 +131,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn: signInWithUsername, signUp: signUpWithUsername, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      loading, 
+      signIn: signInWithEmail, 
+      signUp: signUpWithEmail, 
+      signOut, 
+      refreshProfile,
+      updatePhone 
+    }}>
       {children}
     </AuthContext.Provider>
   );
