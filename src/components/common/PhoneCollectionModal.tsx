@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,13 +19,13 @@ interface PhoneCollectionModalProps {
   onClose: () => void;
 }
 
-const PhoneCollectionModal: React.FC<PhoneCollectionModalProps> = ({ open, onClose }) => {
+const PhoneCollectionModal = ({ open, onClose }: PhoneCollectionModalProps) => {
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { updatePhone } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);

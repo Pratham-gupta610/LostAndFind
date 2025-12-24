@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ interface ChatButtonProps {
   itemOwnerEmail?: string;
 }
 
-const ChatButton: React.FC<ChatButtonProps> = ({ itemId, itemType, itemOwnerId, itemOwnerEmail }) => {
+const ChatButton = ({ itemId, itemType, itemOwnerId, itemOwnerEmail }: ChatButtonProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ interface ChatDialogProps {
   otherUserEmail: string;
 }
 
-const ChatDialog: React.FC<ChatDialogProps> = ({ open, onClose, conversationId, otherUserEmail }) => {
+const ChatDialog = ({ open, onClose, conversationId, otherUserEmail }: ChatDialogProps) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
