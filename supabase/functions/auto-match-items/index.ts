@@ -11,6 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('=== Auto Match Items Function Called ===');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -21,6 +23,8 @@ Deno.serve(async (req) => {
     if (!itemType || !itemId) {
       throw new Error('itemType and itemId are required');
     }
+
+    console.log('Item Type:', itemType, 'Item ID:', itemId);
 
     let matchesFound = 0;
 
@@ -36,6 +40,8 @@ Deno.serve(async (req) => {
         throw new Error('Lost item not found');
       }
 
+      console.log('Lost Item:', lostItem.item_name, 'Campus:', lostItem.campus);
+
       // Get all found items from the same campus
       const { data: foundItems, error: foundError } = await supabaseClient
         .from('found_items')
@@ -45,6 +51,8 @@ Deno.serve(async (req) => {
       if (foundError) {
         throw new Error('Error fetching found items');
       }
+
+      console.log('Found', foundItems?.length || 0, 'found items to check');
 
       // Check each found item for matches
       for (const foundItem of foundItems || []) {
@@ -56,15 +64,25 @@ Deno.serve(async (req) => {
           .eq('found_item_id', foundItem.id)
           .maybeSingle();
 
-        if (existingMatch) continue;
+        if (existingMatch) {
+          console.log('Skipping already matched item:', foundItem.item_name);
+          continue;
+        }
+
+        console.log('Checking match with:', foundItem.item_name);
 
         // Call AI matching function
         const matchResponse = await supabaseClient.functions.invoke('ai-match-items', {
           body: { lostItem, foundItem },
         });
 
+        if (matchResponse.error) {
+          console.error('Error invoking ai-match-items:', matchResponse.error);
+        }
+
         if (matchResponse.data?.is_match) {
           matchesFound++;
+          console.log('✓ Match found! Total matches:', matchesFound);
         }
       }
     } else if (itemType === 'found') {
@@ -79,6 +97,8 @@ Deno.serve(async (req) => {
         throw new Error('Found item not found');
       }
 
+      console.log('Found Item:', foundItem.item_name, 'Campus:', foundItem.campus);
+
       // Get all lost items from the same campus
       const { data: lostItems, error: lostError } = await supabaseClient
         .from('lost_items')
@@ -88,6 +108,8 @@ Deno.serve(async (req) => {
       if (lostError) {
         throw new Error('Error fetching lost items');
       }
+
+      console.log('Found', lostItems?.length || 0, 'lost items to check');
 
       // Check each lost item for matches
       for (const lostItem of lostItems || []) {
@@ -99,18 +121,30 @@ Deno.serve(async (req) => {
           .eq('found_item_id', foundItem.id)
           .maybeSingle();
 
-        if (existingMatch) continue;
+        if (existingMatch) {
+          console.log('Skipping already matched item:', lostItem.item_name);
+          continue;
+        }
+
+        console.log('Checking match with:', lostItem.item_name);
 
         // Call AI matching function
         const matchResponse = await supabaseClient.functions.invoke('ai-match-items', {
           body: { lostItem, foundItem },
         });
 
+        if (matchResponse.error) {
+          console.error('Error invoking ai-match-items:', matchResponse.error);
+        }
+
         if (matchResponse.data?.is_match) {
           matchesFound++;
+          console.log('✓ Match found! Total matches:', matchesFound);
         }
       }
     }
+
+    console.log('=== Auto Match Complete - Total Matches:', matchesFound, '===');
 
     return new Response(
       JSON.stringify({ success: true, matchesFound }),

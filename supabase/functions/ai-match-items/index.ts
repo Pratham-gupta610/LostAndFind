@@ -49,6 +49,8 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('=== AI Match Items Function Called ===');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -60,14 +62,21 @@ Deno.serve(async (req) => {
       throw new Error('Both lostItem and foundItem are required');
     }
 
+    console.log('Lost Item:', lostItem.item_name, '(ID:', lostItem.id, ')');
+    console.log('Found Item:', foundItem.item_name, '(ID:', foundItem.id, ')');
+
     // Build the AI prompt for matching
     const prompt = buildMatchingPrompt(lostItem, foundItem);
 
     // Call the Large Language Model API
     const matchResult = await callAIMatchingAPI(prompt, lostItem.image_url, foundItem.image_url);
 
+    console.log('Match Result - Score:', matchResult.similarity_score, 'Is Match:', matchResult.is_match);
+
     // If it's a match (score >= 75), store it in the database
     if (matchResult.is_match) {
+      console.log('Match threshold met! Storing in database...');
+      
       const { data: existingMatch } = await supabaseClient
         .from('matches')
         .select('id')
@@ -195,6 +204,11 @@ async function callAIMatchingAPI(
   const APP_ID = Deno.env.get('APP_ID');
   const API_URL = 'https://api-integrations.appmedo.com/app-8e6wgm5ndzi9/api-rLob8RdzAOl9/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse';
 
+  console.log('=== AI Matching API Call ===');
+  console.log('APP_ID:', APP_ID);
+  console.log('Has lost item image:', !!lostItemImageUrl);
+  console.log('Has found item image:', !!foundItemImageUrl);
+
   // Build the parts array for the API request
   const parts: any[] = [{ text: prompt }];
 
@@ -227,6 +241,7 @@ async function callAIMatchingAPI(
   };
 
   try {
+    console.log('Sending request to AI API...');
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
@@ -236,7 +251,11 @@ async function callAIMatchingAPI(
       body: JSON.stringify(requestBody),
     });
 
+    console.log('API Response status:', response.status);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error response:', errorText);
       throw new Error(`API request failed: ${response.statusText}`);
     }
 
@@ -262,13 +281,17 @@ async function callAIMatchingAPI(
       }
     }
 
+    console.log('AI Full Response:', fullResponse.substring(0, 200) + '...');
+
     // Extract JSON from response (it might be wrapped in markdown code blocks)
     const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.error('No JSON found in response');
       throw new Error('No valid JSON found in AI response');
     }
 
     const result: MatchResult = JSON.parse(jsonMatch[0]);
+    console.log('Parsed match result:', JSON.stringify(result));
 
     // Validate the result
     if (typeof result.similarity_score !== 'number' || typeof result.is_match !== 'boolean') {

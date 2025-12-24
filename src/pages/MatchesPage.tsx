@@ -33,11 +33,8 @@ const MatchesPage: React.FC = () => {
       setMatches(data);
     } catch (error) {
       console.error('Error loading matches:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load matches',
-        variant: 'destructive',
-      });
+      // Don't show error toast, just show empty state
+      setMatches([]);
     } finally {
       setLoading(false);
     }
