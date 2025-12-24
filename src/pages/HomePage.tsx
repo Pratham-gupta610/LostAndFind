@@ -3,27 +3,36 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Package, PackageCheck, PackageX, Search, Sparkles, Zap, Star, TrendingUp, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ItemCard from '@/components/common/ItemCard';
-import { getRecentLostItems, getRecentFoundItems, getRecentReturnedItems } from '@/db/api';
+import { getRecentLostItems, getRecentFoundItems, getRecentReturnedItems, getLostItemsCount, getFoundItemsCount, getReturnedItemsCount } from '@/db/api';
 import type { LostItem, FoundItem, ReturnedItem } from '@/types/types';
 
 const HomePage: React.FC = () => {
   const [lostItems, setLostItems] = useState<LostItem[]>([]);
   const [foundItems, setFoundItems] = useState<FoundItem[]>([]);
   const [returnedItems, setReturnedItems] = useState<ReturnedItem[]>([]);
+  const [lostCount, setLostCount] = useState(0);
+  const [foundCount, setFoundCount] = useState(0);
+  const [returnedCount, setReturnedCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [lost, found, returned] = await Promise.all([
+        const [lost, found, returned, lostTotal, foundTotal, returnedTotal] = await Promise.all([
           getRecentLostItems(12),
           getRecentFoundItems(12),
           getRecentReturnedItems(12),
+          getLostItemsCount(),
+          getFoundItemsCount(),
+          getReturnedItemsCount(),
         ]);
         setLostItems(lost);
         setFoundItems(found);
         setReturnedItems(returned);
+        setLostCount(lostTotal);
+        setFoundCount(foundTotal);
+        setReturnedCount(returnedTotal);
       } catch (error) {
         console.error('Error fetching items:', error);
       } finally {
@@ -149,7 +158,7 @@ const HomePage: React.FC = () => {
                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-accent/10 to-transparent animate-pulse" />
                   <div className="absolute inset-0 rounded-full bg-accent/5 blur-xl group-hover:bg-accent/10 transition-all duration-500" />
                   <div className="relative z-10 text-center select-none">
-                    <div className="text-6xl font-black text-accent mb-2 drop-shadow-[0_0_20px_rgba(255,0,100,0.5)]">{lostItems.length}</div>
+                    <div className="text-6xl font-black text-accent mb-2 drop-shadow-[0_0_20px_rgba(255,0,100,0.5)]">{lostCount}</div>
                     <div className="text-sm text-accent/90 font-semibold uppercase tracking-wider">Items</div>
                   </div>
                   <div className="absolute -top-2 -right-2 w-6 h-6 bg-accent rounded-full animate-ping opacity-75" />
@@ -169,7 +178,7 @@ const HomePage: React.FC = () => {
                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/10 to-transparent animate-pulse" />
                   <div className="absolute inset-0 rounded-full bg-primary/5 blur-xl group-hover:bg-primary/10 transition-all duration-500" />
                   <div className="relative z-10 text-center select-none">
-                    <div className="text-6xl font-black text-primary mb-2 drop-shadow-[0_0_20px_rgba(0,255,255,0.5)]">{foundItems.length}</div>
+                    <div className="text-6xl font-black text-primary mb-2 drop-shadow-[0_0_20px_rgba(0,255,255,0.5)]">{foundCount}</div>
                     <div className="text-sm text-primary/90 font-semibold uppercase tracking-wider">Items</div>
                   </div>
                   <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full animate-ping opacity-75" />
@@ -189,7 +198,7 @@ const HomePage: React.FC = () => {
                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-green-400/10 to-transparent animate-pulse" />
                   <div className="absolute inset-0 rounded-full bg-green-400/5 blur-xl group-hover:bg-green-400/10 transition-all duration-500" />
                   <div className="relative z-10 text-center select-none">
-                    <div className="text-6xl font-black text-green-400 mb-2 drop-shadow-[0_0_20px_rgba(74,222,128,0.5)]">{returnedItems.length}</div>
+                    <div className="text-6xl font-black text-green-400 mb-2 drop-shadow-[0_0_20px_rgba(74,222,128,0.5)]">{returnedCount}</div>
                     <div className="text-sm text-green-400/90 font-semibold uppercase tracking-wider">Returns</div>
                   </div>
                   <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full animate-ping opacity-75" />

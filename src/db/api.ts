@@ -222,6 +222,46 @@ export const getRecentReturnedItems = async (limit = 6): Promise<ReturnedItem[]>
   return Array.isArray(data) ? data : [];
 };
 
+// Count functions for stats
+export const getLostItemsCount = async (): Promise<number> => {
+  const { count, error } = await supabase
+    .from('lost_items')
+    .select('*', { count: 'exact', head: true });
+
+  if (error) {
+    console.error('Error counting lost items:', error);
+    return 0;
+  }
+
+  return count || 0;
+};
+
+export const getFoundItemsCount = async (): Promise<number> => {
+  const { count, error } = await supabase
+    .from('found_items')
+    .select('*', { count: 'exact', head: true });
+
+  if (error) {
+    console.error('Error counting found items:', error);
+    return 0;
+  }
+
+  return count || 0;
+};
+
+export const getReturnedItemsCount = async (): Promise<number> => {
+  const { count, error } = await supabase
+    .from('returned_items')
+    .select('*', { count: 'exact', head: true });
+
+  if (error) {
+    console.error('Error counting returned items:', error);
+    return 0;
+  }
+
+  return count || 0;
+};
+
 // Chat API
 export const getOrCreateConversation = async (
   lostItemId: string | null,

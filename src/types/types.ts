@@ -6,6 +6,7 @@ export interface Profile {
   id: string;
   email: string;
   phone: string | null;
+  full_name: string | null;
   role: UserRole;
   created_at: string;
   updated_at: string;
@@ -76,6 +77,7 @@ export interface LostItemInput {
   contact_email?: string;
   contact_phone?: string;
   additional_info?: string;
+  image_url?: string;
 }
 
 export interface FoundItemInput {
@@ -90,6 +92,7 @@ export interface FoundItemInput {
   contact_email?: string;
   contact_phone?: string;
   additional_info?: string;
+  image_url?: string;
 }
 
 export interface DateRange {

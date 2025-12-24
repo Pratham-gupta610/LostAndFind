@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { PackageCheck, Plus } from 'lucide-react';
+import { PackageCheck, Plus, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,8 +28,10 @@ import { createFoundItem, getFoundItemById } from '@/db/api';
 import ItemCard from '@/components/common/ItemCard';
 import type { FoundItem, FoundItemInput } from '@/types/types';
 import { CATEGORIES, CAMPUSES } from '@/types/types';
-
 import { useAuth } from '@/contexts/AuthContext';
+import { uploadImage } from '@/lib/storage';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
 const formSchema = z.object({
   item_name: z.string().min(3, 'Item name must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
@@ -36,18 +39,18 @@ const formSchema = z.object({
   date_found: z.string().min(1, 'Please select a date'),
   location: z.string().min(3, 'Location must be at least 3 characters'),
   campus: z.string().min(1, 'Please select a campus'),
-  contact_name: z.string().min(2, 'Name must be at least 2 characters'),
-  contact_email: z.string().email('Invalid email address').optional().or(z.literal('')),
-  contact_phone: z.string().optional(),
   additional_info: z.string().optional(),
 });
 
 const ReportFoundPage: React.FC = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [myReports, setMyReports] = useState<FoundItem[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,9 +61,6 @@ const ReportFoundPage: React.FC = () => {
       date_found: '',
       location: '',
       campus: '',
-      contact_name: '',
-      contact_email: '',
-      contact_phone: '',
       additional_info: '',
     },
   });
@@ -84,6 +84,46 @@ const ReportFoundPage: React.FC = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (1MB)
+    if (file.size > 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Image must be less than 1MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Only JPG, PNG, and WEBP images are allowed',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setImageFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       // Check if user is logged in
@@ -99,6 +139,27 @@ const ReportFoundPage: React.FC = () => {
       }
 
       setSubmitting(true);
+      
+      // Upload image if provided
+      let imageUrl: string | undefined = undefined;
+      if (imageFile) {
+        setUploadingImage(true);
+        const { url, error } = await uploadImage(imageFile, 'found_items');
+        setUploadingImage(false);
+        
+        if (error) {
+          toast({
+            title: 'Image upload failed',
+            description: error,
+            variant: 'destructive',
+          });
+          setSubmitting(false);
+          return;
+        }
+        
+        imageUrl = url || undefined;
+      }
+
       const itemData: FoundItemInput = {
         user_id: user.id,
         item_name: values.item_name,
@@ -107,10 +168,11 @@ const ReportFoundPage: React.FC = () => {
         date_found: values.date_found,
         location: values.location,
         campus: values.campus,
-        contact_name: values.contact_name,
-        contact_email: values.contact_email || undefined,
-        contact_phone: values.contact_phone || undefined,
+        contact_name: profile?.full_name || 'Anonymous',
+        contact_email: profile?.email || undefined,
+        contact_phone: profile?.phone || undefined,
         additional_info: values.additional_info || undefined,
+        image_url: imageUrl,
       };
 
       const newItem = await createFoundItem(itemData);
@@ -126,6 +188,7 @@ const ReportFoundPage: React.FC = () => {
       });
 
       form.reset();
+      removeImage();
       loadMyReports();
     } catch (error) {
       console.error('Error submitting report:', error);
@@ -280,49 +343,64 @@ const ReportFoundPage: React.FC = () => {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="contact_name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Your Name *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Jane Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="contact_email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="jane@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
+                    {/* Image Upload */}
+                    <div className="space-y-2">
+                      <FormLabel>Item Image (Optional)</FormLabel>
+                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                        {!imagePreview ? (
+                          <label htmlFor="image-upload-found" className="cursor-pointer block">
+                            <div className="flex flex-col items-center space-y-2">
+                              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Upload className="w-8 h-8 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">Click to upload image</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  JPG, PNG, or WEBP (max 1MB)
+                                </p>
+                              </div>
+                            </div>
+                            <input
+                              id="image-upload-found"
+                              type="file"
+                              accept="image/jpeg,image/jpg,image/png,image/webp"
+                              onChange={handleImageChange}
+                              className="hidden"
+                            />
+                          </label>
+                        ) : (
+                          <div className="relative">
+                            <img
+                              src={imagePreview}
+                              alt="Preview"
+                              className="max-h-48 mx-auto rounded-lg"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2"
+                              onClick={removeImage}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
                         )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="contact_phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone</FormLabel>
-                            <FormControl>
-                              <Input placeholder="555-0123" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      </div>
+                      <FormDescription>
+                        Adding an image helps owners identify their item more easily
+                      </FormDescription>
                     </div>
+
+                    {/* Auto-fill info for logged-in users */}
+                    {user && (
+                      <Alert>
+                        <ImageIcon className="h-4 w-4" />
+                        <AlertDescription>
+                          Your contact information ({profile?.full_name || 'Anonymous'}, {profile?.email}) will be automatically included with this report.
+                        </AlertDescription>
+                      </Alert>
+                    )}
 
                     <FormField
                       control={form.control}
@@ -342,9 +420,9 @@ const ReportFoundPage: React.FC = () => {
                       )}
                     />
 
-                    <Button type="submit" size="lg" disabled={submitting} className="w-full">
+                    <Button type="submit" size="lg" disabled={submitting || uploadingImage} className="w-full">
                       <Plus className="w-5 h-5 mr-2" />
-                      {submitting ? 'Submitting...' : 'Submit Report'}
+                      {uploadingImage ? 'Uploading Image...' : submitting ? 'Submitting...' : 'Submit Report'}
                     </Button>
                   </form>
                 </Form>

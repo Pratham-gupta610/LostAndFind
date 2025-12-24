@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { PackageX, Plus, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { PackageCheck, Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,7 +11,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,33 +23,31 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { createLostItem, getLostItemById } from '@/db/api';
+import { createFoundItem, getFoundItemById } from '@/db/api';
 import ItemCard from '@/components/common/ItemCard';
-import type { LostItem, LostItemInput } from '@/types/types';
+import type { FoundItem, FoundItemInput } from '@/types/types';
 import { CATEGORIES, CAMPUSES } from '@/types/types';
-import { useAuth } from '@/contexts/AuthContext';
-import { uploadImage } from '@/lib/storage';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
+import { useAuth } from '@/contexts/AuthContext';
 const formSchema = z.object({
   item_name: z.string().min(3, 'Item name must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.string().min(1, 'Please select a category'),
-  date_lost: z.string().min(1, 'Please select a date'),
+  date_found: z.string().min(1, 'Please select a date'),
   location: z.string().min(3, 'Location must be at least 3 characters'),
   campus: z.string().min(1, 'Please select a campus'),
+  contact_name: z.string().min(2, 'Name must be at least 2 characters'),
+  contact_email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  contact_phone: z.string().optional(),
   additional_info: z.string().optional(),
 });
 
-const ReportLostPage: React.FC = () => {
+const ReportFoundPage: React.FC = () => {
   const { toast } = useToast();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [submitting, setSubmitting] = useState(false);
-  const [myReports, setMyReports] = useState<LostItem[]>([]);
+  const [myReports, setMyReports] = useState<FoundItem[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,9 +55,12 @@ const ReportLostPage: React.FC = () => {
       item_name: '',
       description: '',
       category: '',
-      date_lost: '',
+      date_found: '',
       location: '',
       campus: '',
+      contact_name: '',
+      contact_email: '',
+      contact_phone: '',
       additional_info: '',
     },
   });
@@ -72,56 +72,16 @@ const ReportLostPage: React.FC = () => {
   const loadMyReports = async () => {
     try {
       setLoadingReports(true);
-      const reportIds = JSON.parse(localStorage.getItem('myLostReports') || '[]');
+      const reportIds = JSON.parse(localStorage.getItem('myFoundReports') || '[]');
       const reports = await Promise.all(
-        reportIds.map((id: string) => getLostItemById(id))
+        reportIds.map((id: string) => getFoundItemById(id))
       );
-      setMyReports(reports.filter((r): r is LostItem => r !== null));
+      setMyReports(reports.filter((r): r is FoundItem => r !== null));
     } catch (error) {
       console.error('Error loading reports:', error);
     } finally {
       setLoadingReports(false);
     }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file size (1MB)
-    if (file.size > 1024 * 1024) {
-      toast({
-        title: 'File too large',
-        description: 'Image must be less than 1MB',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      toast({
-        title: 'Invalid file type',
-        description: 'Only JPG, PNG, and WEBP images are allowed',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setImageFile(file);
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -134,61 +94,38 @@ const ReportLostPage: React.FC = () => {
           variant: 'destructive',
         });
         // Redirect to login with return path
-        window.location.href = '/login?redirect=/report-lost';
+        window.location.href = '/login?redirect=/report-found';
         return;
       }
 
       setSubmitting(true);
-      
-      // Upload image if provided
-      let imageUrl: string | undefined = undefined;
-      if (imageFile) {
-        setUploadingImage(true);
-        const { url, error } = await uploadImage(imageFile, 'lost_items');
-        setUploadingImage(false);
-        
-        if (error) {
-          toast({
-            title: 'Image upload failed',
-            description: error,
-            variant: 'destructive',
-          });
-          setSubmitting(false);
-          return;
-        }
-        
-        imageUrl = url || undefined;
-      }
-
-      const itemData: LostItemInput = {
+      const itemData: FoundItemInput = {
         user_id: user.id,
         item_name: values.item_name,
         description: values.description,
         category: values.category,
-        date_lost: values.date_lost,
+        date_found: values.date_found,
         location: values.location,
         campus: values.campus,
-        contact_name: profile?.full_name || 'Anonymous',
-        contact_email: profile?.email || undefined,
-        contact_phone: profile?.phone || undefined,
+        contact_name: values.contact_name,
+        contact_email: values.contact_email || undefined,
+        contact_phone: values.contact_phone || undefined,
         additional_info: values.additional_info || undefined,
-        image_url: imageUrl,
       };
 
-      const newItem = await createLostItem(itemData);
+      const newItem = await createFoundItem(itemData);
 
       // Save to localStorage
-      const reportIds = JSON.parse(localStorage.getItem('myLostReports') || '[]');
+      const reportIds = JSON.parse(localStorage.getItem('myFoundReports') || '[]');
       reportIds.unshift(newItem.id);
-      localStorage.setItem('myLostReports', JSON.stringify(reportIds));
+      localStorage.setItem('myFoundReports', JSON.stringify(reportIds));
 
       toast({
         title: 'Success!',
-        description: 'Your lost item report has been submitted.',
+        description: 'Your found item report has been submitted.',
       });
 
       form.reset();
-      removeImage();
       loadMyReports();
     } catch (error) {
       console.error('Error submitting report:', error);
@@ -207,13 +144,13 @@ const ReportLostPage: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center space-x-3 mb-8 animate-fade-in">
-          <div className="w-12 h-12 rounded-lg bg-destructive/10 flex items-center justify-center">
-            <PackageX className="w-7 h-7 text-destructive" />
+          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+            <PackageCheck className="w-7 h-7 text-primary" />
           </div>
           <div>
-            <h1 className="text-3xl xl:text-4xl font-bold">Report Lost Item</h1>
+            <h1 className="text-3xl xl:text-4xl font-bold">Report Found Item</h1>
             <p className="text-muted-foreground">
-              Help us help you find your lost item
+              Help reunite someone with their lost item
             </p>
           </div>
         </div>
@@ -225,7 +162,7 @@ const ReportLostPage: React.FC = () => {
               <CardHeader>
                 <CardTitle>Item Details</CardTitle>
                 <CardDescription>
-                  Please provide as much detail as possible to help others identify your item
+                  Please provide as much detail as possible to help the owner identify their item
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -238,7 +175,7 @@ const ReportLostPage: React.FC = () => {
                         <FormItem>
                           <FormLabel>Item Name *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., Black Leather Wallet" {...field} />
+                            <Input placeholder="e.g., Blue Backpack" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -253,7 +190,7 @@ const ReportLostPage: React.FC = () => {
                           <FormLabel>Description *</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Describe your item in detail..."
+                              placeholder="Describe the item in detail..."
                               className="min-h-24"
                               {...field}
                             />
@@ -291,10 +228,10 @@ const ReportLostPage: React.FC = () => {
 
                       <FormField
                         control={form.control}
-                        name="date_lost"
+                        name="date_found"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Date Lost *</FormLabel>
+                            <FormLabel>Date Found *</FormLabel>
                             <FormControl>
                               <Input type="date" {...field} />
                             </FormControl>
@@ -311,7 +248,7 @@ const ReportLostPage: React.FC = () => {
                         <FormItem>
                           <FormLabel>Location *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., Main Library, 3rd Floor" {...field} />
+                            <Input placeholder="e.g., Student Center Cafeteria" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -343,64 +280,49 @@ const ReportLostPage: React.FC = () => {
                       )}
                     />
 
-                    {/* Image Upload */}
-                    <div className="space-y-2">
-                      <FormLabel>Item Image (Optional)</FormLabel>
-                      <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
-                        {!imagePreview ? (
-                          <label htmlFor="image-upload" className="cursor-pointer block">
-                            <div className="flex flex-col items-center space-y-2">
-                              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Upload className="w-8 h-8 text-primary" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium">Click to upload image</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  JPG, PNG, or WEBP (max 1MB)
-                                </p>
-                              </div>
-                            </div>
-                            <input
-                              id="image-upload"
-                              type="file"
-                              accept="image/jpeg,image/jpg,image/png,image/webp"
-                              onChange={handleImageChange}
-                              className="hidden"
-                            />
-                          </label>
-                        ) : (
-                          <div className="relative">
-                            <img
-                              src={imagePreview}
-                              alt="Preview"
-                              className="max-h-48 mx-auto rounded-lg"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              className="absolute top-2 right-2"
-                              onClick={removeImage}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                      <FormDescription>
-                        Adding an image helps others identify your item more easily
-                      </FormDescription>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="contact_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Your Name *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Jane Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    {/* Auto-fill info for logged-in users */}
-                    {user && (
-                      <Alert>
-                        <ImageIcon className="h-4 w-4" />
-                        <AlertDescription>
-                          Your contact information ({profile?.full_name || 'Anonymous'}, {profile?.email}) will be automatically included with this report.
-                        </AlertDescription>
-                      </Alert>
-                    )}
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="contact_email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="jane@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="contact_phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone</FormLabel>
+                            <FormControl>
+                              <Input placeholder="555-0123" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
                     <FormField
                       control={form.control}
@@ -420,9 +342,9 @@ const ReportLostPage: React.FC = () => {
                       )}
                     />
 
-                    <Button type="submit" size="lg" disabled={submitting || uploadingImage} className="w-full">
+                    <Button type="submit" size="lg" disabled={submitting} className="w-full">
                       <Plus className="w-5 h-5 mr-2" />
-                      {uploadingImage ? 'Uploading Image...' : submitting ? 'Submitting...' : 'Submit Report'}
+                      {submitting ? 'Submitting...' : 'Submit Report'}
                     </Button>
                   </form>
                 </Form>
@@ -435,7 +357,7 @@ const ReportLostPage: React.FC = () => {
             <Card className="animate-fade-in sticky top-20">
               <CardHeader>
                 <CardTitle>My Reports</CardTitle>
-                <CardDescription>Your submitted lost item reports</CardDescription>
+                <CardDescription>Your submitted found item reports</CardDescription>
               </CardHeader>
               <CardContent>
                 {loadingReports ? (
@@ -446,13 +368,13 @@ const ReportLostPage: React.FC = () => {
                   </div>
                 ) : myReports.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <PackageX className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <PackageCheck className="w-12 h-12 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No reports yet</p>
                   </div>
                 ) : (
                   <div className="space-y-4 max-h-[600px] overflow-y-auto">
                     {myReports.map((item) => (
-                      <ItemCard key={item.id} item={item} type="lost" />
+                      <ItemCard key={item.id} item={item} type="found" />
                     ))}
                   </div>
                 )}
@@ -465,4 +387,4 @@ const ReportLostPage: React.FC = () => {
   );
 };
 
-export default ReportLostPage;
+export default ReportFoundPage;

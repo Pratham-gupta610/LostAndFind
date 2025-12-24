@@ -133,6 +133,18 @@ const ItemDetailPage: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Item Image */}
+              {item.image_url && (
+                <div className="relative w-full overflow-hidden rounded-lg bg-secondary/30">
+                  <img 
+                    src={item.image_url} 
+                    alt={item.item_name}
+                    className="w-full max-h-96 object-contain"
+                    loading="lazy"
+                  />
+                </div>
+              )}
+
               {/* Description */}
               <div>
                 <h3 className="text-lg font-semibold mb-2">Description</h3>

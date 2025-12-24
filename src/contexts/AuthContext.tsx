@@ -22,10 +22,11 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   updatePhone: (phone: string) => Promise<{ error: Error | null }>;
+  updateProfile: (updates: { full_name?: string; phone?: string }) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -96,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
+  const signUpWithEmail = async (email: string, password: string, fullName: string) => {
     try {
       // Validate college/university email format
       // Accept: .edu, @college., @university., @iiit, @iit, @nit, .ac.in, etc.
@@ -114,12 +115,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Please use a valid college or university email address');
       }
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
+        }
       });
 
       if (error) throw error;
+      
+      // Update profile with full_name after signup
+      if (data.user) {
+        await supabase
+          .from('profiles')
+          .update({ full_name: fullName })
+          .eq('id', data.user.id);
+      }
+      
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const updateProfile = async (updates: { full_name?: string; phone?: string }) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      // Refresh profile after update
+      await refreshProfile();
+      
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -161,7 +196,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp: signUpWithEmail, 
       signOut, 
       refreshProfile,
-      updatePhone 
+      updatePhone,
+      updateProfile
     }}>
       {children}
     </AuthContext.Provider>
