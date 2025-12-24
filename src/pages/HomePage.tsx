@@ -125,7 +125,7 @@ const HomePage: React.FC = () => {
               Lost something? Found something?
             </p>
             <p className="text-lg xl:text-xl text-muted-foreground/80 mb-12 leading-relaxed max-w-3xl mx-auto">
-              We're here to help reunite our campus community with their belongings through intelligent matching and instant notifications.
+              We're here to help reunite our IIIT Guwahati Campus with their belongings through intelligent matching and instant notifications.
             </p>
             
             {/* CTA Buttons with enhanced styling */}

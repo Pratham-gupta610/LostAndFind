@@ -322,6 +322,29 @@ export const getUserConversations = async (userId: string): Promise<ChatConversa
   return Array.isArray(data) ? data : [];
 };
 
+// Get conversations with item and user details for chat history
+export const getUserConversationsWithDetails = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('chat_conversations')
+    .select(`
+      *,
+      lost_item:lost_items!lost_item_id(id, item_name, image_url, category),
+      found_item:found_items!found_item_id(id, item_name, image_url, category),
+      lost_owner:profiles!lost_item_owner_id(id, full_name, email),
+      found_reporter:profiles!found_item_reporter_id(id, full_name, email)
+    `)
+    .or(`lost_item_owner_id.eq.${userId},found_item_reporter_id.eq.${userId}`)
+    .is('history_deleted_at', null)
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching conversations with details:', error);
+    throw error;
+  }
+
+  return Array.isArray(data) ? data : [];
+};
+
 export const getConversationMessages = async (conversationId: string): Promise<ChatMessage[]> => {
   const { data, error } = await supabase
     .from('chat_messages')

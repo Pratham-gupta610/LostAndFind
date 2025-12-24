@@ -326,11 +326,11 @@ const ReportLostPage: React.FC = () => {
                       name="campus"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Campus *</FormLabel>
+                          <FormLabel>Main Location *</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select campus" />
+                                <SelectValue placeholder="Select main location" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>

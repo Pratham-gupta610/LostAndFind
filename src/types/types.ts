@@ -116,11 +116,12 @@ export const CATEGORIES = [
 ] as const;
 
 export const CAMPUSES = [
-  'North Campus',
-  'South Campus',
-  'Central Campus',
-  'East Campus',
-  'West Campus'
+  'Academic Building',
+  'Old boys Hostel',
+  'Annex-1',
+  'Annex-2',
+  'Girls Hostel',
+  'Lake Side'
 ] as const;
 
 export interface ChatConversation {
