@@ -86,9 +86,21 @@ const ReportLostPage: React.FC = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      // Check if user is logged in
+      if (!user) {
+        toast({
+          title: 'Authentication Required',
+          description: 'Please sign in to submit a report.',
+          variant: 'destructive',
+        });
+        // Redirect to login with return path
+        window.location.href = '/login?redirect=/report-lost';
+        return;
+      }
+
       setSubmitting(true);
       const itemData: LostItemInput = {
-        user_id: user?.id || null,
+        user_id: user.id,
         item_name: values.item_name,
         description: values.description,
         category: values.category,

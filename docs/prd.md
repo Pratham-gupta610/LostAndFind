@@ -12,11 +12,25 @@ Campus community members (students, faculty, staff) who need to report lost item
 
 ## 2. Core Functionality\n
 ### 2.1 User Authentication & Authorization
-- **College Email Login**: Users must authenticate using their college email address upon first entry to the application
+- **College Email Login**: Users must authenticate using their college email address when attempting to report lost or found items
+- **Email Format Validation**: System accepts email addresses in the format *@iiitg.ac.in (e.g., pratham.gupta25b@iiitg.ac.in)
 - **Phone Number Access**: During first-time login, users are required to provide their phone number for contact purposes
 - **Session Persistence**: Application remembers authenticated users across sessions, eliminating need for repeated login
+- **Guest Browsing**: Users can view Lost Items, Found Items, and Return History sections without logging in
+- **Login Required Actions**: Authentication is only required when users attempt to report lost/found items or contact other users
 - **User Profile**: Stores user email, phone number, and authentication status\n
-### 2.2 Homepage Structure
+### 2.2 Sign In/Sign Up Flow
+- **Homepage Sign In Button**: Homepage displays only'Sign In' button (no separate Sign Up option)
+- **Sign In Page**: When users click 'Sign In', they are directed to login page
+- **Sign Up Link**: Login page includes text 'Don't have an account? Sign Up' at the bottom
+- **Sign Up Page**: Clicking 'Sign Up' link redirects to registration page where new users can create accounts
+\n### 2.3 Navigation System
+- **Right Sidebar Menu**: All navigation items (Lost Items, Found Items, Report Lost, Report Found, Return History, Messages) are placed in a collapsible sidebar on the right side of the screen
+- **Sidebar Toggle**: Users can open/close the sidebar using a menu icon
+- **Top Header**: Displays 'FINDIT.AI' site name with search icon, keeping the top area clean and minimal
+- **Mobile Responsive**: Sidebar adapts to mobile screens with smooth slide-in/slide-out animations
+
+### 2.4 Homepage Structure
 The homepage displays three clearly separated sections with real-time statistics:
 - **Lost Items Section**: Shows all reported lost items with live count\n- **Found Items Section**: Shows all reported found items with live count
 - **Recently Returned Items Section**: Shows history of successful returns with live count (clickable items)
@@ -25,44 +39,35 @@ The homepage displays three clearly separated sections with real-time statistics
 
 All sections sorted by latest first with date-range filter options.
 
-### 2.3 Navigation System
-Top header displays'FINDIT.AI' site name, followed by a clean navigation bar containing:
-- Home\n- Lost Items
-- Found Items
-- Report Lost\n- Report Found
-- History of Returns
-- Messages (new)
-\n### 2.4 Search System
+### 2.5 Search System
 Two separate, independent search systems:
 - **Lost Items Search**: Searches only within lost item reports
-- **Found Items Search**: Searches only within found item reports
-
+- **Found Items Search**: Searches only within found item reports\n
 Search results update instantly to reflect new entries with no mixing between categories.
 
-### 2.5 Item Reporting
-- **Report Lost Item**: Form for users to submit lost item details, with'My Reports' history visible on the same page
-- **Report Found Item**: Form for users to submit found item details, with 'My Reports' history visible on the same page
+### 2.6 Item Reporting\n- **Report Lost Item**: Form for users to submit lost item details (requires login), with'My Reports' history visible on the same page
+- **Report Found Item**: Form for users to submit found item details (requires login), with 'My Reports' history visible on the same page
 - Both forms immediately add entries to their respective searchable databases and update homepage counters in real-time
 
-### 2.6 Item Details Page
+### 2.7 Item Details Page
 - Clickable items from Lost, Found, or Returned sections open full details pages
 - Lost/Found item details show: item description, date, location, contact info, and other relevant fields
-- **Contact Button**: Each item detail page includes a 'Contact Owner/Finder' button that opens the messaging interface
+- **Contact Button**: Each item detail page includes a 'Contact Owner/Finder' button that opens the messaging interface (requires login)
 - Returned item details show: owner information, finder information, return date, and item details
 
-### 2.7 Messaging System
+### 2.8 Messaging System
 - **Chat Interface**: Built-in messaging system allowing users to communicate directly within the application
 - **Contact Flow**: When someone reports a found item, they can contact the person who reported the lost item through the chat section
-- **Message Notifications**: Users receive notifications for new messages\n- **Conversation History**: All message threads are preserved and accessible from the Messages section in navigation
+- **Message Notifications**: Users receive notifications for new messages\n- **Conversation History**: All message threads are preserved and accessible from the Messages section in sidebar
 - **User Privacy**: Phone numbers and emails are only shared if users choose to do so within chat conversations
+- **Login Required**: Users must be logged in to access messaging features
 
-### 2.8 Filtering & Sorting
+### 2.9 Filtering & Sorting
 - All item lists (Lost/Found/Returned) include date-range filters\n- Default sorting: latest entries first
 - Filter options easily accessible and responsive
-
-### 2.9 My Reports History
+\n### 2.10 My Reports History
 Users can view their own submission history directly on the Report Lost/Report Found pages, showing all previously submitted reports.\n
-### 2.10 Test Data
+### 2.11 Test Data
 Preload realistic test data across all categories (Lost Items, Found Items, Returned Items) to demonstrate full functionality.
 
 ## 3. Design Style\n
@@ -70,16 +75,19 @@ Preload realistic test data across all categories (Lost Items, Found Items, Retu
 - **Color Scheme**: Trust-inspiring blue primary color (#2563EB) paired with clean white backgrounds and soft gray accents (#F3F4F6 for cards, #6B7280 for secondary text)
 - **Layout Style**: Card-based grid layout with clear visual separation between sections,ample white space for breathing room
 - **Typography**: Modern sans-serif font (Inter or similar) with clear hierarchy — bold headings, regular body text, and subtle labels
-
-### 3.2 Interactive Elements
+\n### 3.2 Interactive Elements
 - **Smooth Animations**: Fade-in effects for page loads, hover scale transforms on cards (1.02x), smooth transitions (200-300ms) on all interactive elements
 - **Button Styles**: Rounded corners (8px), solid primary buttons with hover darkening effect, outlined secondary buttons
 - **Card Design**: Soft shadows (01px 3px rgba(0,0,0,0.1)),12px border radius, hover elevation effect
-- **Counter Animations**: Smooth number transitions when statistics update\n
-### 3.3 User Experience
-- **Production-Level UX**: Intuitive navigation flow, clear call-to-action buttons, instant feedback on user actions
+- **Counter Animations**: Smooth number transitions when statistics update
+- **Sidebar Animation**: Smooth slide-in/slide-out effect with backdrop overlay
+
+### 3.3 User Experience\n- **Production-Level UX**: Intuitive navigation flow, clear call-to-action buttons, instant feedback on user actions
 - **Trust-First Design**: Professional appearance, clear information hierarchy, reassuring color palette, transparent process indicators
 - **Responsive Behavior**: Smooth transitions between states, loading indicators where appropriate, error handling with friendly messages
 - **Real-Time Updates**: Homepage statistics refresh automatically without page reload when items are added or status changes
-\n## 4. Referenced Images
-- image.png (appears4 times in user upload)\n- image-2.png
+- **Guest-Friendly Browsing**: Users can explore all content without login barriers, with clear prompts when authentication is needed
+
+## 4. Referenced Images
+- image.png (sidebar navigation reference)
+- image-2.png (UI layout reference)

@@ -1,65 +1,52 @@
-# FINDIT.AI - Authentication & Chat Implementation
+# FINDIT.AI - Email & Auth Flow Updates
 
 ## Plan
 
-- [x] Step 1: Database Schema Setup
-  - [x] Create user_role enum
-  - [x] Create profiles table with phone field
-  - [x] Create handle_new_user trigger function
-  - [x] Set up RLS policies for profiles
-  - [x] Create chat_conversations table
-  - [x] Create chat_messages table
-  - [x] Set up RLS policies for chat tables
+- [x] Step 1: Fix Email Validation
+  - [x] Update email validation to accept all college domains (@iiitg.ac.in, etc.)
+  - [x] Test with pratham.gupta25b@iiitg.ac.in format
 
-- [x] Step 2: Disable Email Verification
-  - [x] Use supabase_verification tool to disable email verification
-  - [x] Fix trigger to work with disabled verification
+- [x] Step 2: Update Authentication Requirements
+  - [x] Remove auth requirement for browsing (Lost Items, Found Items, History)
+  - [x] Keep auth requirement ONLY for report submission
+  - [x] Update RouteGuard logic
 
-- [x] Step 3: Authentication Context & Guards
-  - [x] Update AuthContext.tsx with college email login
-  - [x] Update RouteGuard.tsx with public routes
-  - [x] Add phone number collection modal
+- [x] Step 3: Update Header & Navigation
+  - [x] Replace "Sign Up" button with "Sign In" on homepage
+  - [x] Add "Don't have an account? Sign up" link on login page (already exists)
+  - [x] Mobile sidebar already on right side with all navigation items
 
-- [x] Step 4: Login/Signup Pages
-  - [x] Create LoginPage component
-  - [x] Create SignupPage component
-  - [x] Add routes for login/signup
+- [x] Step 4: Update Report Pages
+  - [x] Add login check before form submission
+  - [x] Redirect to login if not authenticated
+  - [x] Return to report page after login
 
-- [x] Step 5: Update Header with Auth
-  - [x] Add login status display
-  - [x] Add login/logout buttons
-  - [x] Show user email/name
-  - [x] Add phone collection modal trigger
+- [x] Step 5: Testing & Lint
+  - [x] Run lint check (0 errors)
 
-- [x] Step 6: Chat System
-  - [x] Create ChatButton component
-  - [x] Create ChatDialog component
-  - [x] Add "Contact Owner" buttons on items
-  - [x] Implement messaging with polling
-  - [x] Add chat API functions
-  - [x] Add user_id to items tables
+## Completed Changes
 
-- [x] Step 7: Fix Homepage Stats Update
-  - [x] Implement polling mechanism for stats
-  - [x] Add refresh interval (every 5 seconds)
+1. **Email Validation Fixed**:
+   - Now accepts: .edu, @college., @university., @iiit, @iit, @nit, .ac.in, .edu.in
+   - Works with pratham.gupta25b@iiitg.ac.in and similar formats
 
-- [x] Step 8: Update App.tsx
-  - [x] Wrap with AuthProvider
-  - [x] Add RouteGuard
-  - [x] Test authentication flow
+2. **Authentication Flow Updated**:
+   - All pages are now public for browsing
+   - Authentication only required when submitting reports
+   - Login redirects back to report page after authentication
 
-- [ ] Step 9: Testing & Verification
-  - [ ] Test signup with college email
-  - [ ] Test phone number collection
-  - [ ] Test login/logout
-  - [ ] Test chat functionality
-  - [ ] Test stats auto-update
-  - [x] Run lint (0 errors)
+3. **UI Updates**:
+   - Header shows only "Sign In" button (removed "Sign Up")
+   - Login page has "Don't have an account? Sign up" link
+   - Mobile sidebar on right with all navigation items
+
+4. **Report Pages**:
+   - Check authentication before submission
+   - Show toast message if not logged in
+   - Redirect to login with return URL
 
 ## Notes
-- First user will be admin automatically
-- College email format: user@college.edu
-- Phone number collected on first login
-- Chat only available between found item reporter and lost item owner
-- Stats update every 5 seconds on homepage
-- Email verification disabled for instant signup
+- Email validation accepts all major college/university email formats
+- Browsing is completely public - no login required
+- Only report submission requires login
+- Sidebar is on the right side for mobile/app view

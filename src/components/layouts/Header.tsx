@@ -117,14 +117,9 @@ const Header: React.FC = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <>
-                  <Button asChild variant="ghost" size="sm">
-                    <Link to="/login">Sign In</Link>
-                  </Button>
-                  <Button asChild size="sm" className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
-                    <Link to="/signup">Sign Up</Link>
-                  </Button>
-                </>
+                <Button asChild size="sm" className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
+                  <Link to="/login">Sign In</Link>
+                </Button>
               )}
             </div>
           </nav>
@@ -188,14 +183,9 @@ const Header: React.FC = () => {
                       </Button>
                     </>
                   ) : (
-                    <>
-                      <Button asChild variant="outline" className="w-full">
-                        <Link to="/login" onClick={() => setIsOpen(false)}>Sign In</Link>
-                      </Button>
-                      <Button asChild className="w-full bg-gradient-to-r from-primary to-primary/80">
-                        <Link to="/signup" onClick={() => setIsOpen(false)}>Sign Up</Link>
-                      </Button>
-                    </>
+                    <Button asChild className="w-full bg-gradient-to-r from-primary to-primary/80">
+                      <Link to="/login" onClick={() => setIsOpen(false)}>Sign In</Link>
+                    </Button>
                   )}
                 </div>
               </nav>

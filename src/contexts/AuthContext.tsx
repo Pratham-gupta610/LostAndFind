@@ -68,9 +68,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = async (email: string, password: string) => {
     try {
-      // Validate college email format
-      if (!email.endsWith('.edu') && !email.includes('@college.') && !email.includes('@university.')) {
-        throw new Error('Please use a valid college email address');
+      // Validate college/university email format
+      // Accept: .edu, @college., @university., @iiit, @iit, @nit, .ac.in, etc.
+      const isCollegeEmail = 
+        email.endsWith('.edu') || 
+        email.includes('@college.') || 
+        email.includes('@university.') ||
+        email.includes('@iiit') ||
+        email.includes('@iit') ||
+        email.includes('@nit') ||
+        email.endsWith('.ac.in') ||
+        email.endsWith('.edu.in');
+      
+      if (!isCollegeEmail) {
+        throw new Error('Please use a valid college or university email address');
       }
 
       const { error } = await supabase.auth.signInWithPassword({
@@ -87,9 +98,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpWithEmail = async (email: string, password: string) => {
     try {
-      // Validate college email format
-      if (!email.endsWith('.edu') && !email.includes('@college.') && !email.includes('@university.')) {
-        throw new Error('Please use a valid college email address');
+      // Validate college/university email format
+      // Accept: .edu, @college., @university., @iiit, @iit, @nit, .ac.in, etc.
+      const isCollegeEmail = 
+        email.endsWith('.edu') || 
+        email.includes('@college.') || 
+        email.includes('@university.') ||
+        email.includes('@iiit') ||
+        email.includes('@iit') ||
+        email.includes('@nit') ||
+        email.endsWith('.ac.in') ||
+        email.endsWith('.edu.in');
+      
+      if (!isCollegeEmail) {
+        throw new Error('Please use a valid college or university email address');
       }
 
       const { error } = await supabase.auth.signUp({

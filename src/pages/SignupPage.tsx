@@ -111,7 +111,7 @@ const SignupPage = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="student@college.edu"
+                  placeholder="student@iiitg.ac.in"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -120,7 +120,7 @@ const SignupPage = () => {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Must be a valid college email (.edu, @college., @university.)
+                Use your college or university email address
               </p>
             </div>
 

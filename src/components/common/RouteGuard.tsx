@@ -7,7 +7,8 @@ interface RouteGuardProps {
 }
 
 // Public routes that don't require authentication
-// Most pages are public for browsing, only report/chat features require login
+// All pages are public for browsing
+// Authentication is only required when submitting forms (handled at component level)
 const PUBLIC_ROUTES = [
   '/',
   '/login',
@@ -17,6 +18,8 @@ const PUBLIC_ROUTES = [
   '/found-items',
   '/found-items/*',
   '/history',
+  '/report-lost',
+  '/report-found',
   '/item/*',
   '/403',
   '/404'

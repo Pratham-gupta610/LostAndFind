@@ -17,7 +17,10 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as any)?.from || '/';
+  // Check for redirect in both location.state and URL query params
+  const searchParams = new URLSearchParams(location.search);
+  const redirectParam = searchParams.get('redirect');
+  const from = redirectParam || (location.state as any)?.from || '/';
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -85,7 +88,7 @@ const LoginPage = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="student@college.edu"
+                  placeholder="student@iiitg.ac.in"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -94,7 +97,7 @@ const LoginPage = () => {
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Use your college email address (.edu domain)
+                Use your college or university email address
               </p>
             </div>
 
