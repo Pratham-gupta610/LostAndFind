@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Package, PackageCheck, PackageX, Search, Sparkles, Zap, Star, TrendingUp, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import ItemCard from '@/components/common/ItemCard';
 import { getRecentLostItems, getRecentFoundItems, getRecentReturnedItems, getLostItemsCount, getFoundItemsCount, getReturnedItemsCount } from '@/db/api';
 import type { LostItem, FoundItem, ReturnedItem } from '@/types/types';
@@ -14,40 +15,72 @@ const HomePage: React.FC = () => {
   const [foundCount, setFoundCount] = useState(0);
   const [returnedCount, setReturnedCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+
     const fetchData = async () => {
       try {
-        setLoading(true);
-        const [lost, found, returned, lostTotal, foundTotal, returnedTotal] = await Promise.all([
-          getRecentLostItems(12),
-          getRecentFoundItems(12),
-          getRecentReturnedItems(12),
+        // Set a timeout for the entire fetch operation (10 seconds max)
+        const fetchPromise = Promise.all([
+          getRecentLostItems(5),
+          getRecentFoundItems(5),
+          getRecentReturnedItems(5),
           getLostItemsCount(),
           getFoundItemsCount(),
           getReturnedItemsCount(),
         ]);
-        setLostItems(lost);
-        setFoundItems(found);
-        setReturnedItems(returned);
-        setLostCount(lostTotal);
-        setFoundCount(foundTotal);
-        setReturnedCount(returnedTotal);
-      } catch (error) {
-        console.error('Error fetching items:', error);
+
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Request timeout')), 10000);
+        });
+
+        const [lost, found, returned, lostTotal, foundTotal, returnedTotal] = await Promise.race([
+          fetchPromise,
+          timeoutPromise,
+        ]);
+
+        clearTimeout(timeoutId);
+
+        if (isMounted) {
+          setLostItems(lost || []);
+          setFoundItems(found || []);
+          setReturnedItems(returned || []);
+          setLostCount(lostTotal || 0);
+          setFoundCount(foundTotal || 0);
+          setReturnedCount(returnedTotal || 0);
+          setError(null);
+        }
+      } catch (err) {
+        console.error('Error fetching items:', err);
+        if (isMounted) {
+          setError('Unable to load data. Please check your connection.');
+          // Set empty arrays to prevent undefined errors
+          setLostItems([]);
+          setFoundItems([]);
+          setReturnedItems([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     // Initial fetch
     fetchData();
 
-    // Set up polling to refresh data every 5 seconds
-    const intervalId = setInterval(fetchData, 5000);
+    // Set up polling to refresh data every 30 seconds (reduced from 5 for mobile performance)
+    const intervalId = setInterval(fetchData, 30000);
 
-    // Cleanup interval on unmount
-    return () => clearInterval(intervalId);
+    // Cleanup
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   return (
@@ -237,14 +270,26 @@ const HomePage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="h-64 bg-muted animate-pulse rounded-xl" />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="bg-card rounded-xl border border-border p-6 space-y-4">
+                <Skeleton className="h-48 w-full bg-muted" />
+                <Skeleton className="h-6 w-3/4 bg-muted" />
+                <Skeleton className="h-4 w-full bg-muted" />
+                <Skeleton className="h-4 w-2/3 bg-muted" />
+              </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="text-center py-12 bg-card rounded-xl border border-border">
+            <PackageX className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Retry
+            </Button>
+          </div>
         ) : lostItems.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {lostItems.map((item, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">{lostItems.map((item, index) => (
               <div key={item.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                 <ItemCard item={item} type="lost" />
               </div>
@@ -279,13 +324,26 @@ const HomePage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="h-64 bg-muted animate-pulse rounded-xl" />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="bg-card rounded-xl border border-border p-6 space-y-4">
+                <Skeleton className="h-48 w-full bg-muted" />
+                <Skeleton className="h-6 w-3/4 bg-muted" />
+                <Skeleton className="h-4 w-full bg-muted" />
+                <Skeleton className="h-4 w-2/3 bg-muted" />
+              </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="text-center py-12 bg-card rounded-xl border border-border">
+            <PackageCheck className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Retry
+            </Button>
+          </div>
         ) : foundItems.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {foundItems.map((item, index) => (
               <div key={item.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                 <ItemCard item={item} type="found" />
@@ -321,13 +379,26 @@ const HomePage: React.FC = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="h-64 bg-muted animate-pulse rounded-xl" />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="bg-card rounded-xl border border-border p-6 space-y-4">
+                <Skeleton className="h-48 w-full bg-muted" />
+                <Skeleton className="h-6 w-3/4 bg-muted" />
+                <Skeleton className="h-4 w-full bg-muted" />
+                <Skeleton className="h-4 w-2/3 bg-muted" />
+              </div>
             ))}
           </div>
+        ) : error ? (
+          <div className="text-center py-12 bg-card rounded-xl border border-border">
+            <Sparkles className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()} variant="outline">
+              Retry
+            </Button>
+          </div>
         ) : returnedItems.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {returnedItems.map((item, index) => (
               <div key={item.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                 <ItemCard item={item} type="returned" />

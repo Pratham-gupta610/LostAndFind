@@ -474,17 +474,30 @@ export const markNotificationAsRead = async (notificationId: string) => {
 // Trigger auto-matching after item creation
 export const triggerAutoMatch = async (itemType: 'lost' | 'found', itemId: string) => {
   try {
-    const { data, error } = await supabase.functions.invoke('auto-match-items', {
+    // Fire and forget - don't wait for response, don't block UI
+    // Set a reasonable timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('AI matching timeout')), 15000)
+    );
+
+    const matchPromise = supabase.functions.invoke('auto-match-items', {
       body: { itemType, itemId },
     });
 
+    // Race between timeout and actual call
+    const { data, error } = await Promise.race([matchPromise, timeoutPromise]) as any;
+
     if (error) {
-      console.error('Error triggering auto-match:', error);
+      console.warn('AI matching error (non-critical):', error);
+      // Don't throw - this is background operation
+      return null;
     }
 
+    console.log('AI matching triggered successfully:', data);
     return data;
   } catch (error) {
-    console.error('Error calling auto-match function:', error);
+    // Log but don't throw - AI matching failure shouldn't block user
+    console.warn('AI matching failed (non-critical):', error);
     return null;
   }
 };

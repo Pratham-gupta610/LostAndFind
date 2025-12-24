@@ -27,10 +27,21 @@ const MatchesPage: React.FC = () => {
   const loadMatches = async () => {
     if (!user) return;
 
+    let timeoutId: NodeJS.Timeout;
+
     try {
       setLoading(true);
-      const data = await getUserMatches(user.id);
-      setMatches(data);
+
+      // Add timeout to prevent infinite loading
+      const fetchPromise = getUserMatches(user.id);
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('Request timeout')), 10000);
+      });
+
+      const data = await Promise.race([fetchPromise, timeoutPromise]);
+      
+      clearTimeout(timeoutId);
+      setMatches(data || []);
     } catch (error) {
       console.error('Error loading matches:', error);
       // Don't show error toast, just show empty state
