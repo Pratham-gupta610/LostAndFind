@@ -7,6 +7,8 @@ import HistoryPage from './pages/HistoryPage';
 import ItemDetailPage from './pages/ItemDetailPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ProfilePage from './pages/ProfilePage';
+import MatchesPage from './pages/MatchesPage';
 import type { ReactNode } from 'react';
 
 interface RouteConfig {
@@ -43,6 +45,11 @@ const routes: RouteConfig[] = [
     element: <ReportFoundPage />
   },
   {
+    name: 'Matches',
+    path: '/matches',
+    element: <MatchesPage />
+  },
+  {
     name: 'History',
     path: '/history',
     element: <HistoryPage />
@@ -63,6 +70,12 @@ const routes: RouteConfig[] = [
     name: 'Signup',
     path: '/signup',
     element: <SignupPage />,
+    visible: false
+  },
+  {
+    name: 'Profile',
+    path: '/profile',
+    element: <ProfilePage />,
     visible: false
   }
 ];

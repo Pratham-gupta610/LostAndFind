@@ -379,3 +379,140 @@ export const markMessagesAsRead = async (conversationId: string, userId: string)
     throw error;
   }
 };
+
+// Match API
+export const getUserMatches = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('matches')
+    .select(`
+      *,
+      lost_item:lost_items(*),
+      found_item:found_items(*)
+    `)
+    .or(`lost_items.user_id.eq.${userId},found_items.user_id.eq.${userId}`)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching matches:', error);
+    throw error;
+  }
+
+  return Array.isArray(data) ? data : [];
+};
+
+export const getMatchById = async (matchId: string) => {
+  const { data, error } = await supabase
+    .from('matches')
+    .select(`
+      *,
+      lost_item:lost_items(*),
+      found_item:found_items(*)
+    `)
+    .eq('id', matchId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching match:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const updateMatchStatus = async (matchId: string, status: 'confirmed' | 'rejected') => {
+  const { data, error } = await supabase
+    .from('matches')
+    .update({ status })
+    .eq('id', matchId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating match status:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+export const getUserNotifications = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('match_notifications')
+    .select(`
+      *,
+      match:matches(
+        *,
+        lost_item:lost_items(*),
+        found_item:found_items(*)
+      )
+    `)
+    .eq('user_id', userId)
+    .eq('notification_type', 'in_app')
+    .is('read_at', null)
+    .order('sent_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching notifications:', error);
+    throw error;
+  }
+
+  return Array.isArray(data) ? data : [];
+};
+
+export const markNotificationAsRead = async (notificationId: string) => {
+  const { error } = await supabase
+    .from('match_notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', notificationId);
+
+  if (error) {
+    console.error('Error marking notification as read:', error);
+    throw error;
+  }
+};
+
+// Trigger auto-matching after item creation
+export const triggerAutoMatch = async (itemType: 'lost' | 'found', itemId: string) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('auto-match-items', {
+      body: { itemType, itemId },
+    });
+
+    if (error) {
+      console.error('Error triggering auto-match:', error);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error calling auto-match function:', error);
+    return null;
+  }
+};
+
+// Chat deletion
+export const deleteChatHistory = async (conversationId: string, userId: string) => {
+  // Delete all messages in the conversation
+  const { error: deleteError } = await supabase
+    .from('chat_messages')
+    .delete()
+    .eq('conversation_id', conversationId);
+
+  if (deleteError) {
+    console.error('Error deleting messages:', deleteError);
+    throw deleteError;
+  }
+
+  // Update conversation to mark history as deleted
+  const { error: updateError } = await supabase
+    .from('chat_conversations')
+    .update({
+      history_deleted_at: new Date().toISOString(),
+      history_deleted_by: userId,
+    })
+    .eq('id', conversationId);
+
+  if (updateError) {
+    console.error('Error updating conversation:', updateError);
+    throw updateError;
+  }
+};

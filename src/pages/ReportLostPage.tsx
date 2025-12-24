@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { createLostItem, getLostItemById } from '@/db/api';
+import { createLostItem, getLostItemById, triggerAutoMatch } from '@/db/api';
 import ItemCard from '@/components/common/ItemCard';
 import type { LostItem, LostItemInput } from '@/types/types';
 import { CATEGORIES, CAMPUSES } from '@/types/types';
@@ -177,6 +177,9 @@ const ReportLostPage: React.FC = () => {
 
       const newItem = await createLostItem(itemData);
 
+      // Trigger AI matching in the background
+      triggerAutoMatch('lost', newItem.id);
+
       // Save to localStorage
       const reportIds = JSON.parse(localStorage.getItem('myLostReports') || '[]');
       reportIds.unshift(newItem.id);
@@ -184,7 +187,7 @@ const ReportLostPage: React.FC = () => {
 
       toast({
         title: 'Success!',
-        description: 'Your lost item report has been submitted.',
+        description: 'Your lost item report has been submitted. We\'ll notify you if we find a match!',
       });
 
       form.reset();

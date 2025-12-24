@@ -129,6 +129,9 @@ export interface ChatConversation {
   found_item_id: string | null;
   lost_item_owner_id: string;
   found_item_reporter_id: string;
+  match_id: string | null;
+  history_deleted_at: string | null;
+  history_deleted_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -140,4 +143,30 @@ export interface ChatMessage {
   message: string;
   created_at: string;
   read: boolean;
+  sent_after_deletion: boolean;
+}
+
+export type MatchStatus = 'pending' | 'confirmed' | 'rejected';
+
+export interface Match {
+  id: string;
+  lost_item_id: string;
+  found_item_id: string;
+  similarity_score: number;
+  match_reason: string;
+  status: MatchStatus;
+  created_at: string;
+  updated_at: string;
+  lost_item?: LostItem;
+  found_item?: FoundItem;
+}
+
+export interface MatchNotification {
+  id: string;
+  match_id: string;
+  user_id: string;
+  notification_type: 'email' | 'in_app';
+  sent_at: string;
+  read_at: string | null;
+  match?: Match;
 }

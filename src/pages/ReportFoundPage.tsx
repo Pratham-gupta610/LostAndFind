@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { createFoundItem, getFoundItemById } from '@/db/api';
+import { createFoundItem, getFoundItemById, triggerAutoMatch } from '@/db/api';
 import ItemCard from '@/components/common/ItemCard';
 import type { FoundItem, FoundItemInput } from '@/types/types';
 import { CATEGORIES, CAMPUSES } from '@/types/types';
@@ -177,6 +177,9 @@ const ReportFoundPage: React.FC = () => {
 
       const newItem = await createFoundItem(itemData);
 
+      // Trigger AI matching in the background
+      triggerAutoMatch('found', newItem.id);
+
       // Save to localStorage
       const reportIds = JSON.parse(localStorage.getItem('myFoundReports') || '[]');
       reportIds.unshift(newItem.id);
@@ -184,7 +187,7 @@ const ReportFoundPage: React.FC = () => {
 
       toast({
         title: 'Success!',
-        description: 'Your found item report has been submitted.',
+        description: 'Your found item report has been submitted. We\'ll notify you if we find a match!',
       });
 
       form.reset();

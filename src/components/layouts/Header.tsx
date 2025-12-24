@@ -41,6 +41,7 @@ const Header: React.FC = () => {
     { name: 'Found Items', path: '/found-items' },
     { name: 'Report Lost', path: '/report-lost' },
     { name: 'Report Found', path: '/report-found' },
+    { name: 'Matches', path: '/matches' },
     { name: 'History', path: '/history' },
   ];
 
@@ -110,6 +111,12 @@ const Header: React.FC = () => {
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="cursor-pointer">
+                        <User className="w-4 h-4 mr-2" />
+                        Edit Profile
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
