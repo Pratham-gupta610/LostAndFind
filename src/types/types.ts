@@ -5,8 +5,9 @@ export type UserRole = 'user' | 'admin';
 export interface Profile {
   id: string;
   email: string;
-  phone: string | null;
+  username: string | null;
   full_name: string | null;
+  phone: string | null;
   role: UserRole;
   created_at: string;
   updated_at: string;

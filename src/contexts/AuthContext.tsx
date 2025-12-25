@@ -26,7 +26,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   updatePhone: (phone: string) => Promise<{ error: Error | null }>;
-  updateProfile: (updates: { full_name?: string; phone?: string }) => Promise<{ error: Error | null }>;
+  updateProfile: (updates: { full_name?: string; username?: string; phone?: string }) => Promise<{ error: Error | null }>;
   requestPasswordReset: (email: string) => Promise<{ error: Error | null }>;
   resetPassword: (newPassword: string) => Promise<{ error: Error | null }>;
 }
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateProfile = async (updates: { full_name?: string; phone?: string }) => {
+  const updateProfile = async (updates: { full_name?: string; username?: string; phone?: string }) => {
     try {
       if (!user) throw new Error('No user logged in');
 

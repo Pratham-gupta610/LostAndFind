@@ -10,8 +10,7 @@ A modern, highly interactive multi-campus Lost & Found web application designed 
 ### 1.3 Target Users
 Campus community members (students, faculty, staff) who need to report lost items, search for found items, or help return items to their owners.
 
-## 2. Core Functionality
-
+## 2. Core Functionality\n
 ### 2.1 User Authentication & Authorization
 \n#### 2.1.1 First-Time User Authentication Flow
 - **Email Entry**: User enters college email address in format *@iiitg.ac.in\n- **New User Detection**: System checks if email exists in database
@@ -101,12 +100,66 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Sign Up Page**: New users create accounts with OTP verification on first registration
 
 ### 2.3 User Profile Management
-- **Clickable Profile**: User profile accessible from top navigation area
-- **Edit Profile**: Users can edit:\n  - Full Name
-  - Phone Number
-  - Email (display only, cannot be changed)
+
+#### 2.3.1 Profile Data Structure
+- **Database Table**: `profiles` table linked to authentication users
+- **Table Fields**:
+  - user_id (UUID, primary key, references auth.users)
+  - full_name (text, required)
+  - username (text, unique, required)
+  - email (read-only, fetched from auth)\n  - phone (text, optional)
+  - updated_at (timestamp, auto-updated)
+\n#### 2.3.2 Profile Page Access
+- **Access Control**: Profile page accessible only to logged-in users
+- **Navigation**: User profile accessible from top navigation area
+- **Security**: Users can only view and edit their OWN profile data
+- **Permission Enforcement**: Prevent viewing or editing of other users' profiles
+
+#### 2.3.3 Profile Display UI
+- **Profile View Mode**: Display current profile values inside input fields
+- **Field Display**:
+  - Full Name (editable)
+  - Username (editable)
+  - Email (visible but NOT editable, fetched from auth)
+  - Phone (editable, optional)
+- **Edit Profile Button**: Visible in view mode\n- **Loading State**: Show loading indicator while fetching profile data
+
+#### 2.3.4 Profile Edit & Save Behavior
+- **Edit Mode Activation**: Clicking'Edit Profile' enables input fields
+- **Action Buttons in Edit Mode**:
+  - 'Save Changes' button
+  - 'Cancel' button
+- **Save Changes Action**:
+  - Validate inputs (non-empty full name, valid unique username)
+  - Update profile record in database
+  - Show success message on successful update
+  - Show error message if validation fails or update fails
+  - Disable'Save' button while updating (prevent duplicate submissions)
+- **Cancel Action**:
+  - Revert all input fields to last saved values
+  - Return to view mode without saving changes
 - **Profile Update**: Changes saved immediately and reflected across application
-- **Profile Access**: Login required to access and edit profile
+- **Confirmation**: Show confirmation message on successful profile update
+
+#### 2.3.5 First-Time User Profile Handling
+- **Auto Profile Creation**: When user logs in for first time and no profile exists:\n  - Automatically create profile row in database
+  - Pre-fill email from auth system
+  - Set user_id from authenticated user
+- **Profile Completion Prompt**: Prompt user to complete missing required fields (full_name, username)
+- **Required Field Validation**: Ensure full_name and username are provided before allowing profile save
+
+#### 2.3.6 Profile Permissions & Security
+- **Row Level Security**: Implement database-level security to ensure users can only access their own profile
+- **Data Validation**: Validate all inputs on both client and server side
+- **Username Uniqueness**: Enforce unique username constraint at database level
+- **Session Persistence**: Profile changes persist across sessions
+\n#### 2.3.7 Profile UX Requirements
+- **Loading State**: Display loading indicator while fetching profile data
+- **Disabled Save Button**: Disable'Save Changes' button during update operation
+- **Success Confirmation**: Show clear confirmation message after successful profile update
+- **Error Handling**: Display user-friendly error messages for validation failures or update errors
+- **Smooth Transitions**: Smooth transitions between view and edit modes
+- **Real-Time Updates**: Use real-time updates only if profile changes need to be reflected immediately
 
 ### 2.4 Navigation System
 - **Right Sidebar Menu**: All navigation items (Lost Items, Found Items, Report Lost, Report Found, Return History, Messages) placed in collapsible sidebar on right side
@@ -143,8 +196,7 @@ Search results update instantly to reflect new entries with no mixing between ca
 - **Contact Button**: Each item detail page includes 'Contact Owner/Finder' button that opens messaging interface (requires login)
 - Returned item details show: owner information, finder information, return date, and item details
 - **Match Indicator**: If item is identified as potential match by AI system, badge displays match confidence percentage
-
-### 2.9 AI-Powered Lost & Found Matching Assistant
+\n### 2.9 AI-Powered Lost & Found Matching Assistant
 \n#### 2.9.1Matching Algorithm
 - **Automatic Evaluation**: When found item is reported, system automatically compares against all existing lost item reports
 - **Similarity Analysis**: AI evaluates matches based on:
@@ -167,7 +219,8 @@ Search results update instantly to reflect new entries with no mixing between ca
 #### 2.9.3 Match Output Format
 System generates match results in following structure:
 - similarity_score: numerical value (0-100)
-- is_match: boolean (true if score ≥ 75%)\n- reason: short explanation text
+- is_match: boolean (true if score ≥ 75%)
+- reason: short explanation text
 - actions: send_email (boolean), enable_chat (boolean)\n\n#### 2.9.4 Privacy & Safety Rules
 - Personal contact details (phone numbers, emails) never exposed directly in match notifications
 - Users must initiate contact through secure in-app messaging system
@@ -189,8 +242,7 @@ System generates match results in following structure:
   - Deletion changes reflect instantly in real-time chat
   - Other user cannot recover deleted messages
 - **Permission Control**: Users cannot edit or delete others' messages
-
-#### 2.10.3 Chat Features
+\n#### 2.10.3 Chat Features
 - **Real-Time Delivery**: Messages delivered instantly with real-time synchronization
 - **Message Notifications**: Users receive notifications for new messages
 - **Conversation History**: All message threads preserved and accessible from Messages section in sidebar
@@ -239,7 +291,8 @@ Preload realistic test data across all categories (Lost Items, Found Items, Retu
 
 ## 4. Technical Stack
 - **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
-- **Database**: Supabase PostgreSQL\n- **Real-Time Communication**: Supabase Realtime
+- **Database**: Supabase PostgreSQL
+- **Real-Time Communication**: Supabase Realtime
 - **Email Service**: Supabase Email Service
 \n## 5. Referenced Images
 - image.png (sidebar navigation reference)
