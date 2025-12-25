@@ -139,8 +139,8 @@ const Header: React.FC = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-card border-border">
-              <nav className="flex flex-col space-y-3 mt-8">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-card border-border overflow-y-auto">
+              <nav className="flex flex-col space-y-3 mt-8 pb-8">
                 <Link to="/" className="flex items-center space-x-3 mb-6 group relative" onClick={() => setIsOpen(false)}>
                   <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-primary/80 to-accent group-hover:scale-110 transition-all duration-300 shadow-lg shadow-primary/50">
                     <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 animate-pulse" />

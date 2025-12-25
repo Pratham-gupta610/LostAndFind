@@ -403,6 +403,59 @@ export const markMessagesAsRead = async (conversationId: string, userId: string)
   }
 };
 
+// Edit a message
+export const editMessage = async (
+  messageId: string,
+  newMessage: string
+): Promise<ChatMessage | null> => {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .update({
+      message: newMessage,
+      edited_at: new Date().toISOString(),
+    })
+    .eq('id', messageId)
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error editing message:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+// Soft delete a message (mark as deleted but keep in database)
+export const softDeleteMessage = async (messageId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('chat_messages')
+    .update({
+      is_deleted: true,
+      deleted_at: new Date().toISOString(),
+      message: '', // Clear the message content
+    })
+    .eq('id', messageId);
+
+  if (error) {
+    console.error('Error deleting message:', error);
+    throw error;
+  }
+};
+
+// Hard delete a message (remove from database)
+export const hardDeleteMessage = async (messageId: string): Promise<void> => {
+  const { error } = await supabase
+    .from('chat_messages')
+    .delete()
+    .eq('id', messageId);
+
+  if (error) {
+    console.error('Error deleting message:', error);
+    throw error;
+  }
+};
+
 // Match API
 export const getUserMatches = async (userId: string) => {
   const { data, error } = await supabase

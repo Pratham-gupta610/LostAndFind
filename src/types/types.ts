@@ -145,6 +145,9 @@ export interface ChatMessage {
   created_at: string;
   read: boolean;
   sent_after_deletion: boolean;
+  edited_at: string | null;
+  is_deleted: boolean;
+  deleted_at: string | null;
 }
 
 export type MatchStatus = 'pending' | 'confirmed' | 'rejected';
