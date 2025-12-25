@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Tag, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { LostItem, FoundItem, ReturnedItem } from '@/types/types';
+import type { LostItem, FoundItem, ReturnedItem, LostItemWithProfile, FoundItemWithProfile } from '@/types/types';
 
 interface ItemCardProps {
-  item: LostItem | FoundItem | ReturnedItem;
+  item: LostItemWithProfile | FoundItemWithProfile | ReturnedItem;
   type: 'lost' | 'found' | 'returned';
 }
 
@@ -27,8 +27,8 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
   };
 
   const getDateField = () => {
-    if (type === 'lost') return formatDate((item as LostItem).date_lost);
-    if (type === 'found') return formatDate((item as FoundItem).date_found);
+    if (type === 'lost') return formatDate((item as LostItemWithProfile).date_lost);
+    if (type === 'found') return formatDate((item as FoundItemWithProfile).date_found);
     return formatDate((item as ReturnedItem).return_date);
   };
 
@@ -42,7 +42,9 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
     if (type === 'returned') {
       return (item as ReturnedItem).owner_name;
     }
-    return (item as LostItem | FoundItem).contact_name;
+    // Get username or full_name from profile data (joined from profiles table)
+    const profileItem = item as LostItemWithProfile | FoundItemWithProfile;
+    return profileItem.username || profileItem.full_name || 'Anonymous';
   };
 
   const getBadgeClass = () => {

@@ -26,7 +26,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { createLostItem, getLostItemById, triggerAutoMatch } from '@/db/api';
 import ItemCard from '@/components/common/ItemCard';
-import type { LostItem, LostItemInput } from '@/types/types';
+import type { LostItemWithProfile, LostItemInput } from '@/types/types';
 import { CATEGORIES, CAMPUSES } from '@/types/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadImage } from '@/lib/storage';
@@ -46,7 +46,7 @@ const ReportLostPage: React.FC = () => {
   const { toast } = useToast();
   const { user, profile } = useAuth();
   const [submitting, setSubmitting] = useState(false);
-  const [myReports, setMyReports] = useState<LostItem[]>([]);
+  const [myReports, setMyReports] = useState<LostItemWithProfile[]>([]);
   const [loadingReports, setLoadingReports] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -76,7 +76,7 @@ const ReportLostPage: React.FC = () => {
       const reports = await Promise.all(
         reportIds.map((id: string) => getLostItemById(id))
       );
-      setMyReports(reports.filter((r): r is LostItem => r !== null));
+      setMyReports(reports.filter((r): r is LostItemWithProfile => r !== null));
     } catch (error) {
       console.error('Error loading reports:', error);
     } finally {
@@ -168,9 +168,6 @@ const ReportLostPage: React.FC = () => {
         date_lost: values.date_lost,
         location: values.location,
         campus: values.campus,
-        contact_name: profile?.full_name || 'Anonymous',
-        contact_email: profile?.email || undefined,
-        contact_phone: profile?.phone || undefined,
         additional_info: values.additional_info || undefined,
         image_url: imageUrl,
       };

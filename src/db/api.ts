@@ -1,14 +1,14 @@
 import { supabase } from './supabase';
-import type { LostItem, FoundItem, ReturnedItem, LostItemInput, FoundItemInput, ChatConversation, ChatMessage } from '@/types/types';
+import type { LostItem, FoundItem, ReturnedItem, LostItemInput, FoundItemInput, ChatConversation, ChatMessage, LostItemWithProfile, FoundItemWithProfile } from '@/types/types';
 
 // Lost Items API
 export const getLostItems = async (
   searchTerm?: string,
   dateFrom?: Date,
   dateTo?: Date
-): Promise<LostItem[]> => {
+): Promise<LostItemWithProfile[]> => {
   let query = supabase
-    .from('lost_items')
+    .from('lost_items_with_profile')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -36,9 +36,9 @@ export const getLostItems = async (
   return Array.isArray(data) ? data : [];
 };
 
-export const getLostItemById = async (id: string): Promise<LostItem | null> => {
+export const getLostItemById = async (id: string): Promise<LostItemWithProfile | null> => {
   const { data, error } = await supabase
-    .from('lost_items')
+    .from('lost_items_with_profile')
     .select('*')
     .eq('id', id)
     .maybeSingle();
@@ -71,9 +71,9 @@ export const getFoundItems = async (
   searchTerm?: string,
   dateFrom?: Date,
   dateTo?: Date
-): Promise<FoundItem[]> => {
+): Promise<FoundItemWithProfile[]> => {
   let query = supabase
-    .from('found_items')
+    .from('found_items_with_profile')
     .select('*')
     .order('created_at', { ascending: false });
 
@@ -101,9 +101,9 @@ export const getFoundItems = async (
   return Array.isArray(data) ? data : [];
 };
 
-export const getFoundItemById = async (id: string): Promise<FoundItem | null> => {
+export const getFoundItemById = async (id: string): Promise<FoundItemWithProfile | null> => {
   const { data, error } = await supabase
-    .from('found_items')
+    .from('found_items_with_profile')
     .select('*')
     .eq('id', id)
     .maybeSingle();
@@ -177,9 +177,9 @@ export const getReturnedItemById = async (id: string): Promise<ReturnedItem | nu
 };
 
 // Get recent items for homepage
-export const getRecentLostItems = async (limit = 6): Promise<LostItem[]> => {
+export const getRecentLostItems = async (limit = 6): Promise<LostItemWithProfile[]> => {
   const { data, error } = await supabase
-    .from('lost_items')
+    .from('lost_items_with_profile')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -192,9 +192,9 @@ export const getRecentLostItems = async (limit = 6): Promise<LostItem[]> => {
   return Array.isArray(data) ? data : [];
 };
 
-export const getRecentFoundItems = async (limit = 6): Promise<FoundItem[]> => {
+export const getRecentFoundItems = async (limit = 6): Promise<FoundItemWithProfile[]> => {
   const { data, error } = await supabase
-    .from('found_items')
+    .from('found_items_with_profile')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(limit);

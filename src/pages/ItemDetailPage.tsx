@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { getLostItemById, getFoundItemById, getReturnedItemById } from '@/db/api';
-import type { LostItem, FoundItem, ReturnedItem } from '@/types/types';
+import type { LostItem, FoundItem, ReturnedItem, LostItemWithProfile, FoundItemWithProfile } from '@/types/types';
 import ChatButton from '@/components/chat/ChatButton';
 
 type ItemType = 'lost' | 'found' | 'returned';
@@ -14,7 +14,7 @@ type ItemType = 'lost' | 'found' | 'returned';
 const ItemDetailPage: React.FC = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
   const navigate = useNavigate();
-  const [item, setItem] = useState<LostItem | FoundItem | ReturnedItem | null>(null);
+  const [item, setItem] = useState<LostItemWithProfile | FoundItemWithProfile | ReturnedItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -236,36 +236,38 @@ const ItemDetailPage: React.FC = () => {
                         <div>
                           <p className="text-sm font-medium">Contact Name</p>
                           <p className="text-muted-foreground">
-                            {(item as LostItem | FoundItem).contact_name}
+                            {(item as LostItemWithProfile | FoundItemWithProfile).username || 
+                             (item as LostItemWithProfile | FoundItemWithProfile).full_name || 
+                             'Anonymous'}
                           </p>
                         </div>
                       </div>
 
-                      {(item as LostItem | FoundItem).contact_email && (
+                      {(item as LostItemWithProfile | FoundItemWithProfile).email && (
                         <div className="flex items-start space-x-3">
                           <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
                           <div>
                             <p className="text-sm font-medium">Email</p>
                             <a
-                              href={`mailto:${(item as LostItem | FoundItem).contact_email}`}
+                              href={`mailto:${(item as LostItemWithProfile | FoundItemWithProfile).email}`}
                               className="text-primary hover:underline"
                             >
-                              {(item as LostItem | FoundItem).contact_email}
+                              {(item as LostItemWithProfile | FoundItemWithProfile).email}
                             </a>
                           </div>
                         </div>
                       )}
 
-                      {(item as LostItem | FoundItem).contact_phone && (
+                      {(item as LostItemWithProfile | FoundItemWithProfile).phone && (
                         <div className="flex items-start space-x-3">
                           <Phone className="w-5 h-5 text-muted-foreground mt-0.5" />
                           <div>
                             <p className="text-sm font-medium">Phone</p>
                             <a
-                              href={`tel:${(item as LostItem | FoundItem).contact_phone}`}
+                              href={`tel:${(item as LostItemWithProfile | FoundItemWithProfile).phone}`}
                               className="text-primary hover:underline"
                             >
-                              {(item as LostItem | FoundItem).contact_phone}
+                              {(item as LostItemWithProfile | FoundItemWithProfile).phone}
                             </a>
                           </div>
                         </div>
@@ -276,8 +278,8 @@ const ItemDetailPage: React.FC = () => {
                         <ChatButton
                           itemId={item.id}
                           itemType={itemType as 'lost' | 'found'}
-                          itemOwnerId={(item as LostItem | FoundItem).user_id}
-                          itemOwnerEmail={(item as LostItem | FoundItem).contact_email}
+                          itemOwnerId={(item as LostItemWithProfile | FoundItemWithProfile).user_id}
+                          itemOwnerEmail={(item as LostItemWithProfile | FoundItemWithProfile).email}
                         />
                       </div>
                     </>

@@ -4,11 +4,11 @@ import { ArrowRight, Package, PackageCheck, PackageX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ItemCard from '@/components/common/ItemCard';
 import { getRecentLostItems, getRecentFoundItems, getRecentReturnedItems } from '@/db/api';
-import type { LostItem, FoundItem, ReturnedItem } from '@/types/types';
+import type { LostItemWithProfile, FoundItemWithProfile, ReturnedItem } from '@/types/types';
 
 const HomePage: React.FC = () => {
-  const [lostItems, setLostItems] = useState<LostItem[]>([]);
-  const [foundItems, setFoundItems] = useState<FoundItem[]>([]);
+  const [lostItems, setLostItems] = useState<LostItemWithProfile[]>([]);
+  const [foundItems, setFoundItems] = useState<FoundItemWithProfile[]>([]);
   const [returnedItems, setReturnedItems] = useState<ReturnedItem[]>([]);
   const [loading, setLoading] = useState(true);
 

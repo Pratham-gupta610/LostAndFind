@@ -7,11 +7,11 @@ import ItemCard from '@/components/common/ItemCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { getFoundItems } from '@/db/api';
-import type { FoundItem } from '@/types/types';
+import type { FoundItemWithProfile } from '@/types/types';
 import { useDebounce } from '@/hooks/use-debounce';
 
 const FoundItemsPage: React.FC = () => {
-  const [items, setItems] = useState<FoundItem[]>([]);
+  const [items, setItems] = useState<FoundItemWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');

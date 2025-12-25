@@ -22,13 +22,18 @@ export interface LostItem {
   date_lost: string;
   location: string;
   campus: string;
-  contact_name: string;
-  contact_email: string | null;
-  contact_phone: string | null;
   additional_info: string | null;
   image_url: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// Lost item with profile data (from JOIN or view)
+export interface LostItemWithProfile extends LostItem {
+  username: string | null;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
 }
 
 export interface FoundItem {
@@ -40,13 +45,18 @@ export interface FoundItem {
   date_found: string;
   location: string;
   campus: string;
-  contact_name: string;
-  contact_email: string | null;
-  contact_phone: string | null;
   additional_info: string | null;
   image_url: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// Found item with profile data (from JOIN or view)
+export interface FoundItemWithProfile extends FoundItem {
+  username: string | null;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
 }
 
 export interface ReturnedItem {
@@ -74,9 +84,6 @@ export interface LostItemInput {
   date_lost: string;
   location: string;
   campus: string;
-  contact_name: string;
-  contact_email?: string;
-  contact_phone?: string;
   additional_info?: string;
   image_url?: string;
 }
@@ -89,9 +96,6 @@ export interface FoundItemInput {
   date_found: string;
   location: string;
   campus: string;
-  contact_name: string;
-  contact_email?: string;
-  contact_phone?: string;
   additional_info?: string;
   image_url?: string;
 }
