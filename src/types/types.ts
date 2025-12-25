@@ -16,6 +16,7 @@ export interface Profile {
 export type ItemStatus = 'active' | 'concluded';
 export type LostItemConclusionType = 'item_found' | 'item_not_found';
 export type FoundItemConclusionType = 'owner_found' | 'owner_not_found';
+export type HistoryType = 'ACTIVE' | 'USER_HISTORY' | 'MAIN_HISTORY';
 
 export interface LostItem {
   id: string;
@@ -32,6 +33,7 @@ export interface LostItem {
   conclusion_type: LostItemConclusionType | null;
   concluded_at: string | null;
   concluded_by: string | null;
+  history_type: HistoryType;
   created_at: string;
   updated_at: string;
 }
@@ -59,6 +61,7 @@ export interface FoundItem {
   conclusion_type: FoundItemConclusionType | null;
   concluded_at: string | null;
   concluded_by: string | null;
+  history_type: HistoryType;
   created_at: string;
   updated_at: string;
 }

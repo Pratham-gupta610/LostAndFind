@@ -6,6 +6,7 @@ import ReportFoundPage from './pages/ReportFoundPage';
 import HistoryPage from './pages/HistoryPage';
 import ChatHistoryPage from './pages/ChatHistoryPage';
 import ItemHistoryPage from './pages/ItemHistoryPage';
+import MainHistoryPage from './pages/MainHistoryPage';
 import ItemDetailPage from './pages/ItemDetailPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -52,6 +53,11 @@ const routes: RouteConfig[] = [
     name: 'Matches',
     path: '/matches',
     element: <MatchesPage />
+  },
+  {
+    name: 'Success Stories',
+    path: '/success-stories',
+    element: <MainHistoryPage />
   },
   {
     name: 'Chats',

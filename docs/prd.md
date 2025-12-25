@@ -217,7 +217,8 @@ Search results update instantly to reflect new entries with no mixing between ca
 #### 2.9.3 Match Output Format
 System generates match results in following structure:
 - similarity_score: numerical value (0-100)
-- is_match: boolean (true if score ≥ 75%)\n- reason: short explanation text
+- is_match: boolean (true if score ≥ 75%)
+- reason: short explanation text
 - actions: send_email (boolean), enable_chat (boolean)\n\n#### 2.9.4 Privacy & Safety Rules
 - Personal contact details (phone numbers, emails) never exposed directly in match notifications
 - Users must initiate contact through secure in-app messaging system
@@ -227,7 +228,8 @@ System generates match results in following structure:
 #### 2.10.1 Chat User Identity Display
 - **Username Display**: In every chat conversation, clearly display the username of the other person
 - **Dynamic Fetching**: Fetch usernames dynamically from profiles table using user_id
-- **Storage Rule**: Do NOT store usernames inside chat messages\n- **Real-Time Updates**: Username changes in profile reflect immediately in active chats
+- **Storage Rule**: Do NOT store usernames inside chat messages
+- **Real-Time Updates**: Username changes in profile reflect immediately in active chats
 
 #### 2.10.2 Chat Access & Initiation
 - **Chat Interface**: Built-in messaging system allowing users to communicate directly within application
@@ -322,25 +324,105 @@ System generates match results in following structure:
 - **Backend**: Supabase Auth for authentication, Supabase PostgreSQL for data storage
 - **Real-Time**: Supabase Realtime for instant message synchronization
 - **Security**: Row Level Security (RLS) ensures users cannot access chats they're not part of
-- **Data Model**: \n  - Messages table includes: id, chat_id, sender_id, content, is_deleted, edited_at, created_at
+- **Data Model**:
+  - Messages table includes: id, chat_id, sender_id, content, is_deleted, edited_at, created_at
   - Chat visibility table includes: chat_id, user_id, is_visible, deleted_at
-  - Item conclusions table includes: item_id, item_type, conclusion_status, concluded_at, concluded_by\n\n### 2.11 Item History Management
+  - Item conclusions table includes: item_id, item_type, conclusion_status, concluded_at, concluded_by\n\n### 2.11 Item History Management with Public History & Auto-Cleanup
 
-#### 2.11.1 Item History Rules
-- **Deleted Items Preservation**: Items deleted from active lists (Lost/Found) must:\n  - Be removed from active LOST/FOUND lists
-  - Still remain visible in user's ITEM HISTORY
-- **History Display**: History items must show:
-  - Status (Found/Not Found/Owner Found/Owner Not Found)
-  - Date of conclusion
-  - Original item details
-  - Conclusion timestamp
-\n#### 2.11.2 Item History Deletion (One at a Time)
-- **Individual Deletion**: Add a Delete option for EACH item in:\n  - Lost item history
-  - Found item history\n- **One-by-One Deletion**: Allow deletion of ONE item at a time
+#### 2.11.1 Item History Structure
+All items MUST belong to exactly one of these states:
+- **ACTIVE**: Items currently visible in Lost or Found lists
+- **USER_HISTORY**: Private history visible only to the item reporter
+- **MAIN_HISTORY**: Public history visible to ALL users
+\nEach item MUST store:
+- item_id (UUID, primary key)
+- reporter_user_id (UUID, references user who reported item)
+- item_type (LOST or FOUND)
+- title (text)
+- description (text)
+- category (text)
+- color (text)
+- brand (text)
+- location (text)
+- date_reported (timestamp)
+- status (ACTIVE | OWNER_FOUND | OWNER_NOT_FOUND | ITEM_FOUND | ITEM_NOT_FOUND)
+- concluded_at (timestamp, nullable)
+- history_type (ACTIVE | USER_HISTORY | MAIN_HISTORY)
+- images (array, optional)
+\n#### 2.11.2 Owner Found Conclusion Behavior
+If the item reporter selects conclusion = 'Owner Found', perform ALL actions atomically:
+1. Remove the item from ACTIVE list
+2. Set:\n   - status = OWNER_FOUND
+   - history_type = MAIN_HISTORY
+   - concluded_at = current timestamp
+3. Make the item visible in:\n   - Main History section (visible to ALL users)
+4. Remove the item from:\n   - Reporter's private Lost/Found list
+\nThis rule applies ONLY when conclusion is'Owner Found'.
+
+#### 2.11.3 Other Conclusion Behavior
+If conclusion is:\n- 'Owner Not Found'\n- 'Item Not Found'\n\nThen:
+1. Remove item from ACTIVE list (if required by logic)
+2. Set:
+   - history_type = USER_HISTORY
+   - status = OWNER_NOT_FOUND or ITEM_NOT_FOUND (as appropriate)
+   - concluded_at = current timestamp
+3. Item remains visible ONLY to the reporter
+4. Item MUST NOT appear in Main History
+
+#### 2.11.4 Main History Visibility
+- **Public Access**: MAIN_HISTORY items are readable by ALL users (including guests)
+- **Read-Only**: No user can edit or delete MAIN_HISTORY items manually
+- **Display**: Main History section shows all items with history_type = MAIN_HISTORY
+- **Sorting**: Items sorted by concluded_at timestamp (latest first)
+
+#### 2.11.5 Auto-Delete Policy (CRITICAL)
+Automatically delete items older than 6 months based on concluded_at timestamp.\n
+This auto-delete applies to ALL:\n- USER_HISTORY items
+- MAIN_HISTORY items
+- Any remaining inactive Lost/Found history\n- ACTIVE items in Lost/Found lists that are older than 6 months
+\nNO EXCEPTIONS.\n
+#### 2.11.6 Auto-Delete Execution
+- **Scheduled Task**: Run a scheduled cleanup task daily (e.g., using Supabase cron job or database trigger)
+- **Deletion Criteria**: Delete any item where:
+  - concluded_at < (current_date - 6 months) OR
+  - date_reported < (current_date - 6 months) AND status = ACTIVE
+- **Deletion Process**:
+  - Permanently remove item records from database
+  - Remove related chat references safely (cascade delete or set to null)
+  - Do not affect active items within 6-month window
+  - Log deletion events for audit trail
+
+#### 2.11.7 User History Delete Option
+- **Manual Deletion**: Users may manually delete their own USER_HISTORY items one at a time
+- **Delete Button**: Each USER_HISTORY item has individual delete button/icon
 - **Deletion Effects**:
-  - Deleting an item from history must NOT affect chats\n  - Deleting an item from history must NOT affect other items
+  - Deleting an item from USER_HISTORY does NOT affect chats\n  - Deleting an item from USER_HISTORY does NOT affect other items
   - Deletion is permanent and removes item from user's history view
-- **UI Implementation**: Each history item has its own delete button/icon
+- **Restrictions**: Users can NEVER delete MAIN_HISTORY items manually
+- **Auto-Delete Override**: Manual deletion does NOT bypass auto-delete rules (items still auto-deleted after 6 months)
+
+#### 2.11.8 Data Safety & Consistency
+- **Transactional Updates**: All state changes must be transactional (atomic operations)
+- **Single State Rule**: No item may exist in multiple history sections simultaneously
+- **State Derivation**: History state must be derived from history_type field only
+- **Validation**: Implement database constraints to enforce single-state rule
+- **Audit Logging**: Log all conclusion actions, deletions, and state transitions
+
+#### 2.11.9 Validation Rules
+Implementation is INVALID if:
+- 'Owner Found' items are not visible to all users
+- Old items remain after6 months
+- Users can delete public history manually
+- Items exist in multiple lists simultaneously
+- concluded_at or date_reported timestamps are not properly tracked
+
+#### 2.11.10 Expected Outcome
+- Owner-found items appear in public Main History section
+- Old history is auto-cleaned after 6 months
+- Active Lost/Found items older than 6 months are auto-removed
+- System remains clean, consistent, and scalable
+- Users can view public success stories in Main History
+- Private conclusions remain private to reporters
 
 ### 2.12 Filtering & Sorting
 - All item lists (Lost/Found/Returned) include date-range filters
@@ -373,9 +455,15 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Audit Trail**: Log all conclusions and deletions for security and dispute resolution
 - **Rollback Prevention**: Once conclusion is made, it cannot be undone (permanent action)
 
-### 2.15 Test Data\nPreload realistic test data across all categories (Lost Items, Found Items, Returned Items) to demonstrate full functionality including chat conversations with various states (concluded, not concluded, deleted by one user, etc.).
+### 2.15 Test Data\nPreload realistic test data across all categories (Lost Items, Found Items, Main History) to demonstrate full functionality including:
+- Active lost and found items
+- Items with various conclusion statuses
+- Public history items (Owner Found)
+- Private history items (Owner Not Found, Item Not Found)
+- Chat conversations with various states (concluded, not concluded, deleted by one user)
+- Items approaching6-month auto-delete threshold
 
-##3. Design Style\n
+## 3. Design Style\n
 ### 3.1 Visual Theme
 - **Color Scheme**: Trust-inspiring blue primary color (#2563EB) paired with clean white backgrounds and soft gray accents (#F3F4F6 for cards, #6B7280 for secondary text)
 - **Layout Style**: Card-based grid layout with clear visual separation between sections,ample white space for breathing room
@@ -388,7 +476,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Match Badges**: Distinctive badge design for AI-identified matches with confidence percentage display
 - **Conclusion Buttons**: Prominent, clearly labeled buttons with distinct styling for different conclusion options
 - **Disabled Button Styling**: Grayed-out appearance with reduced opacity (0.5) and no-cursor pointer for disabled Delete Chat button
-
+- **History Badges**: Clear visual indicators for MAIN_HISTORY items (public) vs USER_HISTORY items (private)\n
 ### 3.3 User Experience\n- **Production-Level UX**: Intuitive navigation flow, clear call-to-action buttons, instant feedback on user actions
 - **Trust-First Design**: Professional appearance, clear information hierarchy, reassuring color palette, transparent process indicators
 - **Responsive Behavior**: Smooth transitions between states, loading indicators where appropriate, error handling with friendly messages
@@ -399,11 +487,13 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Secure Password Recovery**: Clear, user-friendly password reset flow with helpful feedback messages
 - **Controlled Chat Lifecycle**: Clear visual indicators for chat states, conclusion requirements, and deletion permissions
 - **Role-Based Interface**: Different UI elements shown based on user role (item reporter vs. non-reporter)
-
+- **Public History Transparency**: Clear distinction between public Main History and private User History
+- **Auto-Cleanup Awareness**: Optional notification or indicator for items approaching 6-month auto-delete threshold\n
 ## 4. Technical Stack
 - **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
 - **Database**: Supabase PostgreSQL\n- **Real-Time Communication**: Supabase Realtime
 - **Email Service**: Supabase Email Service
+- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
 \n## 5. Referenced Images
 - image.png (sidebar navigation reference)
 - image-2.png (UI layout reference)

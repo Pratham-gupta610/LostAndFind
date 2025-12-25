@@ -1,70 +1,54 @@
-# Task: Refactor Chat System to Strict Source-of-Truth Architecture
-
-## CRITICAL REQUIREMENTS (NON-NEGOTIABLE)
-
-1. **NO stored usernames/item names in chat tables**
-2. **Single scroll container** (header + messages + input)
-3. **NO sticky/fixed positioning**
-4. **Item name as PRIMARY identifier** in chat list
-5. **Fetch from source tables ONLY**: profiles.username, items.item_name
+# Task: Implement Public Item History and Automatic Cleanup
 
 ## Plan
-
-- [x] Step 1: Database Schema Refactoring (Completed)
-  - [x] Simplify chat_conversations to use single item_id + item_type
-  - [x] Remove any redundant stored data
-  - [x] Ensure proper foreign key relationships
-  - [x] Update views to join with profiles and items tables
-
-- [x] Step 2: Update TypeScript Types (Completed)
-  - [x] Simplify ChatConversation interface
-  - [x] Add proper types for joined data
-  - [x] Update message types
-
-- [x] Step 3: Refactor API Functions (Completed)
-  - [x] Update getChatConversationsForUser to join profiles + items
-  - [x] Fetch username from profiles.username (NOT email)
-  - [x] Fetch item name from lost_items.item_name or found_items.item_name
-  - [x] Update getOrCreateConversation to use simplified schema
-  - [x] Ensure last message preview is included
-
-- [x] Step 4: Redesign Chat UI (CRITICAL) (Completed)
-  - [x] Remove DialogHeader from fixed position
-  - [x] Create single scroll container with:
-    1. Chat header (username + "Regarding: item_name")
-    2. Message list
-    3. Message input
-  - [x] Ensure header scrolls naturally with content
-  - [x] Remove all position: sticky/fixed
-
-- [x] Step 5: Update Chat List Display (Completed)
-  - [x] Show Item Name (BOLD) as primary text
-  - [x] Show username as secondary text
-  - [x] Show last message preview as tertiary
-  - [x] Update sorting and filtering
-
-- [x] Step 6: Testing and Validation (Completed)
-  - [x] Verify username fetched from profiles.username
-  - [x] Verify item name fetched from items table
-  - [x] Verify single scroll container works
-  - [x] Verify header is NOT sticky
-  - [x] Run lint check
-
-## Implementation Complete ✅
-
-All critical requirements have been successfully implemented:
-
-1. ✅ **Source of Truth Architecture**: Usernames fetched from profiles.username, item names from items.item_name
-2. ✅ **Single Scroll Container**: Header + messages + input in one scrollable area
-3. ✅ **NO Sticky/Fixed Positioning**: Header scrolls naturally with content
-4. ✅ **Item Name as PRIMARY Identifier**: Chat list shows item name in bold as primary text
-5. ✅ **Database View**: Created chat_conversations_with_details view for efficient joins
-6. ✅ **Simplified Schema**: Using item_id + item_type + participant_ids
-7. ✅ **Last Message Preview**: Included in chat list
-8. ✅ **Lint Check**: Passed with 0 errors
+- [x] Step 1: Database Schema Updates (Completed)
+  - [x] Add history_type column to lost_items and found_items tables
+  - [x] Add concluded_at timestamp column (already existed)
+  - [x] Create indexes for performance
+  - [x] Update existing concluded items with proper history_type
+- [x] Step 2: Create Database Functions (Completed)
+  - [x] Create function to handle "Owner Found" conclusion (MAIN_HISTORY)
+  - [x] Create function to handle other conclusions (USER_HISTORY)
+  - [x] Create function for auto-cleanup (6 months old items)
+  - [x] Create function for manual user history deletion
+- [x] Step 3: Update RLS Policies (Completed)
+  - [x] MAIN_HISTORY items readable by all authenticated users
+  - [x] USER_HISTORY items readable only by reporter
+  - [x] Prevent manual deletion of MAIN_HISTORY items
+- [ ] Step 4: Create Scheduled Cleanup
+  - [ ] Create Edge Function for daily cleanup task
+  - [ ] Configure to run daily via cron
+  - [ ] Delete items where concluded_at < (now - 6 months)
+- [ ] Step 5: Update TypeScript Types
+  - [ ] Add history_type enum
+  - [ ] Add concluded_at field
+  - [ ] Update item interfaces
+- [ ] Step 6: Update API Functions
+  - [ ] Update concludeItem to use new logic
+  - [ ] Create getMainHistory function
+  - [ ] Create getUserHistory function
+  - [ ] Create deleteUserHistoryItem function
+- [ ] Step 7: Create Main History UI
+  - [ ] Create MainHistory page component
+  - [ ] Display all MAIN_HISTORY items (public)
+  - [ ] Show item details with "Owner Found" badge
+- [ ] Step 8: Update User History UI
+  - [ ] Update existing history page
+  - [ ] Show only USER_HISTORY items
+  - [ ] Add delete button for user's own items
+- [ ] Step 9: Update Navigation
+  - [ ] Add "Success Stories" or "Main History" link
+  - [ ] Update routes
+- [ ] Step 10: Testing and Validation
+  - [ ] Test "Owner Found" → MAIN_HISTORY flow
+  - [ ] Test other conclusions → USER_HISTORY flow
+  - [ ] Test auto-cleanup logic
+  - [ ] Test manual deletion
+  - [ ] Run lint
 
 ## Notes
-- MUST fetch username from profiles.username (source of truth)
-- MUST fetch item name from lost_items/found_items (source of truth)
-- Header MUST be scrollable (not fixed/sticky)
-- Chat list MUST show item name as primary identifier
+- CRITICAL: "Owner Found" MUST create MAIN_HISTORY (public)
+- CRITICAL: Other conclusions MUST create USER_HISTORY (private)
+- CRITICAL: Auto-delete after 6 months based on concluded_at
+- CRITICAL: Users cannot delete MAIN_HISTORY items
+- CRITICAL: All state changes must be atomic/transactional

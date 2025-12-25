@@ -10,7 +10,7 @@ export const getLostItems = async (
   let query = supabase
     .from('lost_items_with_profile')
     .select('*')
-    .eq('status', 'active')
+    .eq('history_type', 'ACTIVE')
     .order('created_at', { ascending: false });
 
   if (searchTerm && searchTerm.trim() !== '') {
@@ -76,7 +76,7 @@ export const getFoundItems = async (
   let query = supabase
     .from('found_items_with_profile')
     .select('*')
-    .eq('status', 'active')
+    .eq('history_type', 'ACTIVE')
     .order('created_at', { ascending: false });
 
   if (searchTerm && searchTerm.trim() !== '') {
@@ -230,7 +230,8 @@ export const getRecentReturnedItems = async (limit = 6): Promise<ReturnedItem[]>
 export const getLostItemsCount = async (): Promise<number> => {
   const { count, error } = await supabase
     .from('lost_items')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact', head: true })
+    .eq('history_type', 'ACTIVE');
 
   if (error) {
     console.error('Error counting lost items:', error);
@@ -243,7 +244,8 @@ export const getLostItemsCount = async (): Promise<number> => {
 export const getFoundItemsCount = async (): Promise<number> => {
   const { count, error } = await supabase
     .from('found_items')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact', head: true })
+    .eq('history_type', 'ACTIVE');
 
   if (error) {
     console.error('Error counting found items:', error);
@@ -645,24 +647,35 @@ export const concludeItem = async (
   itemType: 'lost' | 'found',
   conclusionType: string,
   userId: string
-) => {
-  const table = itemType === 'lost' ? 'lost_items' : 'found_items';
-  
-  const { error } = await supabase
-    .from(table)
-    .update({
-      status: 'concluded',
-      conclusion_type: conclusionType,
-      concluded_at: new Date().toISOString(),
-      concluded_by: userId,
-    })
-    .eq('id', itemId)
-    .eq('user_id', userId); // Ensure only owner can conclude
+): Promise<{ success: boolean; message: string; historyType?: string }> => {
+  const { data, error } = await supabase
+    .rpc('conclude_item_with_history', {
+      p_item_id: itemId,
+      p_item_type: itemType,
+      p_conclusion_type: conclusionType,
+      p_user_id: userId
+    });
 
   if (error) {
     console.error('Error concluding item:', error);
-    throw error;
+    throw new Error(error.message || 'Failed to conclude item');
   }
+
+  if (!data || data.length === 0) {
+    throw new Error('No response from database');
+  }
+
+  const result = data[0];
+  
+  if (!result.success) {
+    throw new Error(result.message || 'Failed to conclude item');
+  }
+
+  return {
+    success: result.success,
+    message: result.message,
+    historyType: result.history_type
+  };
 };
 
 // Check if user can delete chat (has made conclusion if they're the reporter)
@@ -693,60 +706,164 @@ export const canDeleteChat = async (
 };
 
 // Get item history for user (concluded items)
+// Get user's item history (USER_HISTORY items only)
+// This function is kept for backward compatibility, but now uses getUserHistory
 export const getItemHistory = async (userId: string) => {
-  const { data: lostItems, error: lostError } = await supabase
-    .from('lost_items_with_profile')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('status', 'concluded')
-    .order('concluded_at', { ascending: false });
-
-  if (lostError) {
-    console.error('Error fetching lost item history:', lostError);
-    throw lostError;
-  }
-
-  const { data: foundItems, error: foundError } = await supabase
-    .from('found_items_with_profile')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('status', 'concluded')
-    .order('concluded_at', { ascending: false });
-
-  if (foundError) {
-    console.error('Error fetching found item history:', foundError);
-    throw foundError;
-  }
-
-  return {
-    lostItems: Array.isArray(lostItems) ? lostItems : [],
-    foundItems: Array.isArray(foundItems) ? foundItems : [],
-  };
+  return getUserHistory(userId);
 };
 
-// Delete item from history (permanent deletion)
+// Delete item from history (uses new database function for USER_HISTORY only)
 export const deleteItemFromHistory = async (
   itemId: string,
   itemType: 'lost' | 'found',
   userId: string
 ) => {
-  const table = itemType === 'lost' ? 'lost_items' : 'found_items';
-  
-  const { error } = await supabase
-    .from(table)
-    .delete()
-    .eq('id', itemId)
-    .eq('user_id', userId)
-    .eq('status', 'concluded'); // Only allow deletion of concluded items
-
-  if (error) {
-    console.error('Error deleting item from history:', error);
-    throw error;
-  }
+  return deleteUserHistoryItem(itemId, itemType, userId);
 };
 
 // Legacy function - kept for backward compatibility
 export const deleteChatHistory = async (conversationId: string, userId: string) => {
   // Use the new one-sided deletion instead
   await deleteChatForUser(conversationId, userId);
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// PUBLIC HISTORY & CLEANUP FUNCTIONS
+// ════════════════════════════════════════════════════════════════════════════
+
+// Get all MAIN_HISTORY items (public success stories)
+export const getMainHistory = async (): Promise<{
+  lostItems: LostItemWithProfile[];
+  foundItems: FoundItemWithProfile[];
+}> => {
+  // Get lost items with MAIN_HISTORY
+  const { data: lostData, error: lostError } = await supabase
+    .from('lost_items_with_profile')
+    .select('*')
+    .eq('history_type', 'MAIN_HISTORY')
+    .order('concluded_at', { ascending: false });
+
+  if (lostError) {
+    console.error('Error fetching main history lost items:', lostError);
+    throw lostError;
+  }
+
+  // Get found items with MAIN_HISTORY
+  const { data: foundData, error: foundError } = await supabase
+    .from('found_items_with_profile')
+    .select('*')
+    .eq('history_type', 'MAIN_HISTORY')
+    .order('concluded_at', { ascending: false });
+
+  if (foundError) {
+    console.error('Error fetching main history found items:', foundError);
+    throw foundError;
+  }
+
+  return {
+    lostItems: (lostData || []) as LostItemWithProfile[],
+    foundItems: (foundData || []) as FoundItemWithProfile[]
+  };
+};
+
+// Get user's private history (USER_HISTORY items)
+export const getUserHistory = async (userId: string): Promise<{
+  lostItems: LostItemWithProfile[];
+  foundItems: FoundItemWithProfile[];
+}> => {
+  // Get user's lost items with USER_HISTORY
+  const { data: lostData, error: lostError } = await supabase
+    .from('lost_items_with_profile')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('history_type', 'USER_HISTORY')
+    .order('concluded_at', { ascending: false });
+
+  if (lostError) {
+    console.error('Error fetching user history lost items:', lostError);
+    throw lostError;
+  }
+
+  // Get user's found items with USER_HISTORY
+  const { data: foundData, error: foundError } = await supabase
+    .from('found_items_with_profile')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('history_type', 'USER_HISTORY')
+    .order('concluded_at', { ascending: false });
+
+  if (foundError) {
+    console.error('Error fetching user history found items:', foundError);
+    throw foundError;
+  }
+
+  return {
+    lostItems: (lostData || []) as LostItemWithProfile[],
+    foundItems: (foundData || []) as FoundItemWithProfile[]
+  };
+};
+
+// Delete a user's history item (USER_HISTORY only)
+export const deleteUserHistoryItem = async (
+  itemId: string,
+  itemType: 'lost' | 'found',
+  userId: string
+): Promise<{ success: boolean; message: string }> => {
+  const { data, error } = await supabase
+    .rpc('delete_user_history_item', {
+      p_item_id: itemId,
+      p_item_type: itemType,
+      p_user_id: userId
+    });
+
+  if (error) {
+    console.error('Error deleting user history item:', error);
+    throw new Error(error.message || 'Failed to delete history item');
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error('No response from database');
+  }
+
+  const result = data[0];
+  
+  if (!result.success) {
+    throw new Error(result.message || 'Failed to delete history item');
+  }
+
+  return {
+    success: result.success,
+    message: result.message
+  };
+};
+
+// Trigger cleanup of old history items (6 months+)
+export const cleanupOldHistoryItems = async (): Promise<{
+  deletedLostItems: number;
+  deletedFoundItems: number;
+  deletedChats: number;
+}> => {
+  const { data, error } = await supabase
+    .rpc('cleanup_old_history_items');
+
+  if (error) {
+    console.error('Error cleaning up old history items:', error);
+    throw error;
+  }
+
+  if (!data || data.length === 0) {
+    return {
+      deletedLostItems: 0,
+      deletedFoundItems: 0,
+      deletedChats: 0
+    };
+  }
+
+  const result = data[0];
+  
+  return {
+    deletedLostItems: result.deleted_lost_items || 0,
+    deletedFoundItems: result.deleted_found_items || 0,
+    deletedChats: result.deleted_chats || 0
+  };
 };
