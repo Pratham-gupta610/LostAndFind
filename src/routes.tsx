@@ -8,6 +8,8 @@ import ChatHistoryPage from './pages/ChatHistoryPage';
 import ItemDetailPage from './pages/ItemDetailPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import MatchesPage from './pages/MatchesPage';
 import type { ReactNode } from 'react';
@@ -76,6 +78,18 @@ const routes: RouteConfig[] = [
     name: 'Signup',
     path: '/signup',
     element: <SignupPage />,
+    visible: false
+  },
+  {
+    name: 'Forgot Password',
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />,
+    visible: false
+  },
+  {
+    name: 'Reset Password',
+    path: '/reset-password',
+    element: <ResetPasswordPage />,
     visible: false
   },
   {

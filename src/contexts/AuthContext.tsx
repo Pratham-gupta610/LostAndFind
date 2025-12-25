@@ -27,6 +27,8 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
   updatePhone: (phone: string) => Promise<{ error: Error | null }>;
   updateProfile: (updates: { full_name?: string; phone?: string }) => Promise<{ error: Error | null }>;
+  requestPasswordReset: (email: string) => Promise<{ error: Error | null }>;
+  resetPassword: (newPassword: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -187,6 +189,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   };
 
+  const requestPasswordReset = async (email: string) => {
+    try {
+      // Validate college/university email format
+      const isCollegeEmail = 
+        email.endsWith('.edu') || 
+        email.includes('@college.') || 
+        email.includes('@university.') ||
+        email.includes('@iiit') ||
+        email.includes('@iit') ||
+        email.includes('@nit') ||
+        email.endsWith('.ac.in') ||
+        email.endsWith('.edu.in');
+      
+      if (!isCollegeEmail) {
+        throw new Error('Please use a valid college or university email address');
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
+  const resetPassword = async (newPassword: string) => {
+    try {
+      // Validate password strength
+      if (newPassword.length < 8) {
+        throw new Error('Password must be at least 8 characters long');
+      }
+      if (!/[A-Z]/.test(newPassword)) {
+        throw new Error('Password must contain at least one uppercase letter');
+      }
+      if (!/[0-9]/.test(newPassword)) {
+        throw new Error('Password must contain at least one number');
+      }
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+        throw new Error('Password must contain at least one special character');
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -197,7 +254,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut, 
       refreshProfile,
       updatePhone,
-      updateProfile
+      updateProfile,
+      requestPasswordReset,
+      resetPassword
     }}>
       {children}
     </AuthContext.Provider>

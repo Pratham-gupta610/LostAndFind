@@ -10,7 +10,8 @@ A modern, highly interactive multi-campus Lost & Found web application designed 
 ### 1.3 Target Users
 Campus community members (students, faculty, staff) who need to report lost items, search for found items, or help return items to their owners.
 
-## 2. Core Functionality\n
+## 2. Core Functionality
+
 ### 2.1 User Authentication & Authorization
 \n#### 2.1.1 First-Time User Authentication Flow
 - **Email Entry**: User enters college email address in format *@iiitg.ac.in\n- **New User Detection**: System checks if email exists in database
@@ -28,24 +29,78 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Session-Based Access**: Login maintained through secure session tokens or magic links
 - **No OTP Friction**: No verification email sent for returning users
 
-#### 2.1.3 Authentication Security Rules
+#### 2.1.3 Forgot Password Flow (Registered Users Only)
+\n**Entry Point**\n- **Sign-In Page**: 'Forgot Password?' link visible only on sign-in page
+\n**Step1: Password Reset Request**
+- User clicks 'Forgot Password?'
+- User enters registered email address
+- System checks if email exists in database and is verified
+- If email does NOT exist: show generic error message ('If this email is registered, you will receive a reset link')
+- If email exists: proceed to OTP generation
+
+**Step 2: Send OTP to Registered Email**
+- Generate secure, time-limited OTP
+- Send OTP to registered email address
+- OTP properties:\n  - Valid for 5-10 minutes\n  - Single-use only
+  - Rate-limited requests (prevent abuse)
+  - Stored securely (hashed)
+
+**Step 3: OTP Verification**
+- User enters OTP received via email
+- System verifies:\n  - OTP matches\n  - OTP is not expired
+  - OTP is unused
+- Invalid OTP: show error message with option to resend
+- Valid OTP: allow password reset
+
+**Step 4: Set New Password**
+- Prompt user to set new password
+- Enforce password rules:
+  - Minimum 8 characters
+  - At least 1 uppercase letter
+  - At least 1 number
+  - At least 1 special character
+- Require password confirmation before submission
+
+**Step 5: Password Update & Login**
+- Replace old password with new password
+- Invalidate all previous sessions
+- Invalidate any active reset tokens
+- Automatically log user in OR redirect to login page with success message
+
+**Security Rules for Password Reset**
+- OTP sent only to registered, verified email addresses
+- Do not reveal whether email exists publicly
+- Limit OTP resend attempts (max 3 attempts per15 minutes)
+- Log all reset attempts for security monitoring
+- Protect against brute-force attacks with rate limiting
+- Password reset OTP separate from first-time login OTP
+
+**UX Requirements**
+- Clear feedback messages:\n  - 'OTP sent to your email'
+  - 'OTP expired, please request a new one'
+  - 'Password updated successfully'
+- Smooth transitions between reset steps
+- Accessible UI for all users
+- Loading indicators during verification
+\n#### 2.1.4 Authentication Security Rules
 - **Email Format Validation**: Validate email format before processing
 - **OTP Security**: Single-use OTP, never stored in plain text, rate-limited requests
 - **Session Management**: Maintain user session across visits, auto-expire after inactivity
 - **Device Recognition**: Remember logged-in devices for seamless return access
 - **Manual Logout**: Users can manually end session at any time
 
-#### 2.1.4 Guest Access & Login Requirements
+#### 2.1.5 Guest Access & Login Requirements
 - **Guest Browsing**: Users can view Lost Items, Found Items, and Return History without authentication
 - **Login Required Actions**: Authentication required only when reporting items or contacting other users
 - **User Profile Storage**: Stores email, phone number, name, verification status, and login history
-
-### 2.2 Sign In/Sign Up Flow
+\n### 2.2 Sign In/Sign Up Flow
 - **Homepage Sign In Button**: Homepage displays only'Sign In' button (no separate Sign Up option)
-- **Sign In Page**: Clicking'Sign In' directs to login page
+- **Sign In Page**: Clicking 'Sign In' directs to login page
+- **Forgot Password Link**: Login page includes 'Forgot Password?' link for password recovery
 - **Sign Up Link**: Login page includes text 'Don't have an account? Sign Up' at bottom
 - **Sign Up Page**: New users create accounts with OTP verification on first registration
-\n### 2.3 User Profile Management
+
+### 2.3 User Profile Management
 - **Clickable Profile**: User profile accessible from top navigation area
 - **Edit Profile**: Users can edit:\n  - Full Name
   - Phone Number
@@ -57,9 +112,10 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Right Sidebar Menu**: All navigation items (Lost Items, Found Items, Report Lost, Report Found, Return History, Messages) placed in collapsible sidebar on right side
 - **Sidebar Toggle**: Open/close sidebar using menu icon
 - **Mobile Scrollable Sidebar**: On mobile devices (Android and iOS), sidebar content is fully scrollable to access all menu items comfortably
-- **Top Header**: Displays 'FINDIT.AI' site name with search icon, keeping top area clean and minimal
+- **Top Header**: Displays'FINDIT.AI' site name with search icon, keeping top area clean and minimal
 - **Mobile Responsive**: Sidebar adapts to mobile screens with smooth slide-in/slide-out animations
-\n### 2.5 Homepage Structure
+
+### 2.5 Homepage Structure
 The homepage displays three clearly separated sections with real-time statistics:
 - **Lost Items Section**: Shows all reported lost items with live count
 - **Found Items Section**: Shows all reported found items with live count
@@ -133,7 +189,8 @@ System generates match results in following structure:
   - Deletion changes reflect instantly in real-time chat
   - Other user cannot recover deleted messages
 - **Permission Control**: Users cannot edit or delete others' messages
-\n#### 2.10.3 Chat Features
+
+#### 2.10.3 Chat Features
 - **Real-Time Delivery**: Messages delivered instantly with real-time synchronization
 - **Message Notifications**: Users receive notifications for new messages
 - **Conversation History**: All message threads preserved and accessible from Messages section in sidebar
@@ -178,9 +235,10 @@ Preload realistic test data across all categories (Lost Items, Found Items, Retu
 - **Guest-Friendly Browsing**: Users can explore all content without login barriers, with clear prompts when authentication needed
 - **AI Transparency**: Clear indication when matches are AI-generated, with confidence scores visible to users
 - **Frictionless Return Access**: Returning users enjoy seamless login experience without OTP verification
+- **Secure Password Recovery**: Clear, user-friendly password reset flow with helpful feedback messages
 
 ## 4. Technical Stack
-- **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users)
+- **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
 - **Database**: Supabase PostgreSQL\n- **Real-Time Communication**: Supabase Realtime
 - **Email Service**: Supabase Email Service
 \n## 5. Referenced Images
