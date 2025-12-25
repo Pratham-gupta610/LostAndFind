@@ -25,11 +25,12 @@ const ItemDetailPage: React.FC = () => {
         setLoading(true);
         let data = null;
 
-        if (type === 'lost-item') {
+        // Handle both URL patterns: /lost/{id} and /lost-item/{id}
+        if (type === 'lost-item' || type === 'lost') {
           data = await getLostItemById(id);
-        } else if (type === 'found-item') {
+        } else if (type === 'found-item' || type === 'found') {
           data = await getFoundItemById(id);
-        } else if (type === 'returned-item') {
+        } else if (type === 'returned-item' || type === 'returned') {
           data = await getReturnedItemById(id);
         }
 
@@ -45,8 +46,8 @@ const ItemDetailPage: React.FC = () => {
   }, [id, type]);
 
   const getItemType = (): ItemType => {
-    if (type === 'lost-item') return 'lost';
-    if (type === 'found-item') return 'found';
+    if (type === 'lost-item' || type === 'lost') return 'lost';
+    if (type === 'found-item' || type === 'found') return 'found';
     return 'returned';
   };
 
