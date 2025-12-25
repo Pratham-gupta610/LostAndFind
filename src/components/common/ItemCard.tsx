@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Tag, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { LostItem, FoundItem, ReturnedItem, LostItemWithProfile, FoundItemWithProfile } from '@/types/types';
+import type { LostItemWithProfile, FoundItemWithProfile } from '@/types/types';
 
 interface ItemCardProps {
-  item: LostItemWithProfile | FoundItemWithProfile | ReturnedItem;
+  item: LostItemWithProfile | FoundItemWithProfile;
   type: 'lost' | 'found' | 'returned';
 }
 
@@ -14,7 +14,14 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/${type}-item/${item.id}`);
+    // For returned items, determine the original type
+    if (type === 'returned') {
+      // Check if it has date_lost or date_found to determine type
+      const itemType = 'date_lost' in item ? 'lost' : 'found';
+      navigate(`/${itemType}/${item.id}`);
+    } else {
+      navigate(`/${type}/${item.id}`);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -27,24 +34,25 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
   };
 
   const getDateField = () => {
+    if (type === 'returned') {
+      // For returned items, show the concluded_at date
+      return formatDate(item.concluded_at || item.created_at);
+    }
     if (type === 'lost') return formatDate((item as LostItemWithProfile).date_lost);
     if (type === 'found') return formatDate((item as FoundItemWithProfile).date_found);
-    return formatDate((item as ReturnedItem).return_date);
+    return formatDate(item.created_at);
   };
 
   const getDateLabel = () => {
+    if (type === 'returned') return 'Returned on';
     if (type === 'lost') return 'Lost on';
     if (type === 'found') return 'Found on';
-    return 'Returned on';
+    return 'Date';
   };
 
   const getContactName = () => {
-    if (type === 'returned') {
-      return (item as ReturnedItem).owner_name;
-    }
     // Get username or full_name from profile data (joined from profiles table)
-    const profileItem = item as LostItemWithProfile | FoundItemWithProfile;
-    return profileItem.username || profileItem.full_name || 'Anonymous';
+    return item.username || item.full_name || 'Anonymous';
   };
 
   const getBadgeClass = () => {

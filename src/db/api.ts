@@ -134,33 +134,71 @@ export const createFoundItem = async (item: FoundItemInput): Promise<FoundItem> 
 };
 
 // Returned Items API
+// Get returned items with date filtering (MAIN_HISTORY items)
 export const getReturnedItems = async (
   dateFrom?: Date,
   dateTo?: Date
-): Promise<ReturnedItem[]> => {
-  let query = supabase
-    .from('returned_items')
+): Promise<Array<LostItemWithProfile | FoundItemWithProfile>> => {
+  // Build query for lost items
+  let lostQuery = supabase
+    .from('lost_items_with_profile')
     .select('*')
-    .order('return_date', { ascending: false });
+    .eq('history_type', 'MAIN_HISTORY')
+    .order('concluded_at', { ascending: false });
 
   if (dateFrom) {
-    query = query.gte('return_date', dateFrom.toISOString());
+    lostQuery = lostQuery.gte('concluded_at', dateFrom.toISOString());
   }
 
   if (dateTo) {
     const endOfDay = new Date(dateTo);
     endOfDay.setHours(23, 59, 59, 999);
-    query = query.lte('return_date', endOfDay.toISOString());
+    lostQuery = lostQuery.lte('concluded_at', endOfDay.toISOString());
   }
 
-  const { data, error } = await query;
+  // Build query for found items
+  let foundQuery = supabase
+    .from('found_items_with_profile')
+    .select('*')
+    .eq('history_type', 'MAIN_HISTORY')
+    .order('concluded_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching returned items:', error);
-    throw error;
+  if (dateFrom) {
+    foundQuery = foundQuery.gte('concluded_at', dateFrom.toISOString());
   }
 
-  return Array.isArray(data) ? data : [];
+  if (dateTo) {
+    const endOfDay = new Date(dateTo);
+    endOfDay.setHours(23, 59, 59, 999);
+    foundQuery = foundQuery.lte('concluded_at', endOfDay.toISOString());
+  }
+
+  const [{ data: lostData, error: lostError }, { data: foundData, error: foundError }] = await Promise.all([
+    lostQuery,
+    foundQuery
+  ]);
+
+  if (lostError) {
+    console.error('Error fetching returned lost items:', lostError);
+  }
+
+  if (foundError) {
+    console.error('Error fetching returned found items:', foundError);
+  }
+
+  // Combine and sort by concluded_at
+  const combined = [
+    ...(Array.isArray(lostData) ? lostData.map(item => ({ ...item, itemType: 'lost' as const })) : []),
+    ...(Array.isArray(foundData) ? foundData.map(item => ({ ...item, itemType: 'found' as const })) : [])
+  ];
+
+  combined.sort((a, b) => {
+    const dateA = new Date(a.concluded_at || a.created_at);
+    const dateB = new Date(b.concluded_at || b.created_at);
+    return dateB.getTime() - dateA.getTime();
+  });
+
+  return combined;
 };
 
 export const getReturnedItemById = async (id: string): Promise<ReturnedItem | null> => {
@@ -211,19 +249,46 @@ export const getRecentFoundItems = async (limit = 6): Promise<FoundItemWithProfi
   return Array.isArray(data) ? data : [];
 };
 
-export const getRecentReturnedItems = async (limit = 6): Promise<ReturnedItem[]> => {
-  const { data, error } = await supabase
-    .from('returned_items')
+// Get recent returned items (MAIN_HISTORY items - public success stories)
+export const getRecentReturnedItems = async (limit = 6): Promise<Array<LostItemWithProfile | FoundItemWithProfile>> => {
+  // Get recent lost items that were found (MAIN_HISTORY)
+  const { data: lostData, error: lostError } = await supabase
+    .from('lost_items_with_profile')
     .select('*')
-    .order('return_date', { ascending: false })
-    .limit(limit);
+    .eq('history_type', 'MAIN_HISTORY')
+    .order('concluded_at', { ascending: false })
+    .limit(Math.ceil(limit / 2));
 
-  if (error) {
-    console.error('Error fetching recent returned items:', error);
-    throw error;
+  if (lostError) {
+    console.error('Error fetching recent returned lost items:', lostError);
   }
 
-  return Array.isArray(data) ? data : [];
+  // Get recent found items where owner was found (MAIN_HISTORY)
+  const { data: foundData, error: foundError } = await supabase
+    .from('found_items_with_profile')
+    .select('*')
+    .eq('history_type', 'MAIN_HISTORY')
+    .order('concluded_at', { ascending: false })
+    .limit(Math.ceil(limit / 2));
+
+  if (foundError) {
+    console.error('Error fetching recent returned found items:', foundError);
+  }
+
+  // Combine and sort by concluded_at
+  const combined = [
+    ...(Array.isArray(lostData) ? lostData.map(item => ({ ...item, itemType: 'lost' as const })) : []),
+    ...(Array.isArray(foundData) ? foundData.map(item => ({ ...item, itemType: 'found' as const })) : [])
+  ];
+
+  // Sort by concluded_at (newest first) and limit
+  combined.sort((a, b) => {
+    const dateA = new Date(a.concluded_at || a.created_at);
+    const dateB = new Date(b.concluded_at || b.created_at);
+    return dateB.getTime() - dateA.getTime();
+  });
+
+  return combined.slice(0, limit);
 };
 
 // Count functions for stats
@@ -256,16 +321,27 @@ export const getFoundItemsCount = async (): Promise<number> => {
 };
 
 export const getReturnedItemsCount = async (): Promise<number> => {
-  const { count, error } = await supabase
-    .from('returned_items')
-    .select('*', { count: 'exact', head: true });
+  // Count lost items with MAIN_HISTORY
+  const { count: lostCount, error: lostError } = await supabase
+    .from('lost_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('history_type', 'MAIN_HISTORY');
 
-  if (error) {
-    console.error('Error counting returned items:', error);
-    return 0;
+  if (lostError) {
+    console.error('Error counting returned lost items:', lostError);
   }
 
-  return count || 0;
+  // Count found items with MAIN_HISTORY
+  const { count: foundCount, error: foundError } = await supabase
+    .from('found_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('history_type', 'MAIN_HISTORY');
+
+  if (foundError) {
+    console.error('Error counting returned found items:', foundError);
+  }
+
+  return (lostCount || 0) + (foundCount || 0);
 };
 
 // Chat API

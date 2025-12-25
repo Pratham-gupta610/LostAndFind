@@ -141,7 +141,11 @@ export const CAMPUSES = [
   'Annex-1',
   'Annex-2',
   'Girls Hostel',
-  'Lake Side'
+  'Lake Side',
+  'Student Activity Centre',
+  'Day Canteen',
+  'Night Canteen',
+  'Others'
 ] as const;
 
 export interface ChatConversation {

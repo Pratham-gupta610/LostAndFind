@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import ItemCard from '@/components/common/ItemCard';
 import { getRecentLostItems, getRecentFoundItems, getRecentReturnedItems, getLostItemsCount, getFoundItemsCount, getReturnedItemsCount } from '@/db/api';
-import type { LostItemWithProfile, FoundItemWithProfile, ReturnedItem } from '@/types/types';
+import type { LostItemWithProfile, FoundItemWithProfile } from '@/types/types';
 
 const HomePage: React.FC = () => {
   const [lostItems, setLostItems] = useState<LostItemWithProfile[]>([]);
   const [foundItems, setFoundItems] = useState<FoundItemWithProfile[]>([]);
-  const [returnedItems, setReturnedItems] = useState<ReturnedItem[]>([]);
+  const [returnedItems, setReturnedItems] = useState<Array<LostItemWithProfile | FoundItemWithProfile>>([]);
   const [lostCount, setLostCount] = useState(0);
   const [foundCount, setFoundCount] = useState(0);
   const [returnedCount, setReturnedCount] = useState(0);

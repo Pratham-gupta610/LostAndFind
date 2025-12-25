@@ -4,10 +4,10 @@ import { DateRange } from 'react-day-picker';
 import DateRangeFilter from '@/components/common/DateRangeFilter';
 import ItemCard from '@/components/common/ItemCard';
 import { getReturnedItems } from '@/db/api';
-import type { ReturnedItem } from '@/types/types';
+import type { LostItemWithProfile, FoundItemWithProfile } from '@/types/types';
 
 const HistoryPage: React.FC = () => {
-  const [items, setItems] = useState<ReturnedItem[]>([]);
+  const [items, setItems] = useState<Array<LostItemWithProfile | FoundItemWithProfile>>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
