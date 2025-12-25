@@ -12,15 +12,22 @@ interface ChatButtonProps {
   itemType: 'lost' | 'found';
   itemOwnerId?: string;
   itemOwnerEmail?: string;
+  itemOwnerUsername?: string;
+  itemOwnerFullName?: string;
 }
 
-const ChatButton = ({ itemId, itemType, itemOwnerId, itemOwnerEmail }: ChatButtonProps) => {
+const ChatButton = ({ itemId, itemType, itemOwnerId, itemOwnerEmail, itemOwnerUsername, itemOwnerFullName }: ChatButtonProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [chatOpen, setChatOpen] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversation, setConversation] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
+  const getOtherUserName = () => {
+    return itemOwnerUsername || itemOwnerFullName || itemOwnerEmail || 'User';
+  };
 
   const handleStartChat = async () => {
     if (!user) {
@@ -56,15 +63,16 @@ const ChatButton = ({ itemId, itemType, itemOwnerId, itemOwnerEmail }: ChatButto
       setLoading(true);
       
       // Create or get conversation
-      const conversation = await getOrCreateConversation(
+      const conv = await getOrCreateConversation(
         itemType === 'lost' ? itemId : null,
         itemType === 'found' ? itemId : null,
         itemType === 'lost' ? itemOwnerId : user.id,
         itemType === 'found' ? itemOwnerId : user.id
       );
 
-      if (conversation) {
-        setConversationId(conversation.id);
+      if (conv) {
+        setConversationId(conv.id);
+        setConversation(conv);
         setChatOpen(true);
       }
     } catch (error) {
@@ -90,12 +98,13 @@ const ChatButton = ({ itemId, itemType, itemOwnerId, itemOwnerEmail }: ChatButto
         {loading ? 'Loading...' : 'Contact Owner'}
       </Button>
 
-      {conversationId && itemOwnerEmail && (
+      {conversationId && (
         <ChatDialog
           open={chatOpen}
           onClose={() => setChatOpen(false)}
           conversationId={conversationId}
-          otherUserEmail={itemOwnerEmail}
+          otherUserName={getOtherUserName()}
+          conversation={conversation}
         />
       )}
     </>

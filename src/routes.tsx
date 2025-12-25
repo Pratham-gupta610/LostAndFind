@@ -5,6 +5,7 @@ import ReportLostPage from './pages/ReportLostPage';
 import ReportFoundPage from './pages/ReportFoundPage';
 import HistoryPage from './pages/HistoryPage';
 import ChatHistoryPage from './pages/ChatHistoryPage';
+import ItemHistoryPage from './pages/ItemHistoryPage';
 import ItemDetailPage from './pages/ItemDetailPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -56,6 +57,11 @@ const routes: RouteConfig[] = [
     name: 'Chats',
     path: '/chats',
     element: <ChatHistoryPage />
+  },
+  {
+    name: 'Item History',
+    path: '/item-history',
+    element: <ItemHistoryPage />
   },
   {
     name: 'History',

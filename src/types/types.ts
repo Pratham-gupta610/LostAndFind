@@ -13,6 +13,10 @@ export interface Profile {
   updated_at: string;
 }
 
+export type ItemStatus = 'active' | 'concluded';
+export type LostItemConclusionType = 'item_found' | 'item_not_found';
+export type FoundItemConclusionType = 'owner_found' | 'owner_not_found';
+
 export interface LostItem {
   id: string;
   user_id: string | null;
@@ -24,6 +28,10 @@ export interface LostItem {
   campus: string;
   additional_info: string | null;
   image_url: string | null;
+  status: ItemStatus;
+  conclusion_type: LostItemConclusionType | null;
+  concluded_at: string | null;
+  concluded_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -47,6 +55,10 @@ export interface FoundItem {
   campus: string;
   additional_info: string | null;
   image_url: string | null;
+  status: ItemStatus;
+  conclusion_type: FoundItemConclusionType | null;
+  concluded_at: string | null;
+  concluded_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -136,6 +148,7 @@ export interface ChatConversation {
   lost_item_owner_id: string;
   found_item_reporter_id: string;
   match_id: string | null;
+  deleted_by_user_ids: string[];
   history_deleted_at: string | null;
   history_deleted_by: string | null;
   created_at: string;

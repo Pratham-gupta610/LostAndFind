@@ -280,6 +280,8 @@ const ItemDetailPage: React.FC = () => {
                           itemType={itemType as 'lost' | 'found'}
                           itemOwnerId={(item as LostItemWithProfile | FoundItemWithProfile).user_id}
                           itemOwnerEmail={(item as LostItemWithProfile | FoundItemWithProfile).email}
+                          itemOwnerUsername={(item as LostItemWithProfile | FoundItemWithProfile).username}
+                          itemOwnerFullName={(item as LostItemWithProfile | FoundItemWithProfile).full_name}
                         />
                       </div>
                     </>

@@ -10,6 +10,7 @@ export const getLostItems = async (
   let query = supabase
     .from('lost_items_with_profile')
     .select('*')
+    .eq('status', 'active')
     .order('created_at', { ascending: false });
 
   if (searchTerm && searchTerm.trim() !== '') {
@@ -75,6 +76,7 @@ export const getFoundItems = async (
   let query = supabase
     .from('found_items_with_profile')
     .select('*')
+    .eq('status', 'active')
     .order('created_at', { ascending: false });
 
   if (searchTerm && searchTerm.trim() !== '') {
@@ -181,6 +183,7 @@ export const getRecentLostItems = async (limit = 6): Promise<LostItemWithProfile
   const { data, error } = await supabase
     .from('lost_items_with_profile')
     .select('*')
+    .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(limit);
 
@@ -196,6 +199,7 @@ export const getRecentFoundItems = async (limit = 6): Promise<FoundItemWithProfi
   const { data, error } = await supabase
     .from('found_items_with_profile')
     .select('*')
+    .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(limit);
 
@@ -578,30 +582,201 @@ export const triggerAutoMatch = async (itemType: 'lost' | 'found', itemId: strin
   }
 };
 
-// Chat deletion
-export const deleteChatHistory = async (conversationId: string, userId: string) => {
-  // Delete all messages in the conversation
-  const { error: deleteError } = await supabase
-    .from('chat_messages')
-    .delete()
-    .eq('conversation_id', conversationId);
+// Chat deletion (one-sided)
+export const deleteChatForUser = async (conversationId: string, userId: string) => {
+  // Get current conversation
+  const { data: conversation, error: fetchError } = await supabase
+    .from('chat_conversations')
+    .select('deleted_by_user_ids')
+    .eq('id', conversationId)
+    .maybeSingle();
 
-  if (deleteError) {
-    console.error('Error deleting messages:', deleteError);
-    throw deleteError;
+  if (fetchError) {
+    console.error('Error fetching conversation:', fetchError);
+    throw fetchError;
   }
 
-  // Update conversation to mark history as deleted
+  if (!conversation) {
+    throw new Error('Conversation not found');
+  }
+
+  // Add user to deleted_by_user_ids array
+  const deletedByUserIds = conversation.deleted_by_user_ids || [];
+  if (!deletedByUserIds.includes(userId)) {
+    deletedByUserIds.push(userId);
+  }
+
+  // Update conversation
   const { error: updateError } = await supabase
     .from('chat_conversations')
-    .update({
-      history_deleted_at: new Date().toISOString(),
-      history_deleted_by: userId,
-    })
+    .update({ deleted_by_user_ids: deletedByUserIds })
     .eq('id', conversationId);
 
   if (updateError) {
     console.error('Error updating conversation:', updateError);
     throw updateError;
   }
+};
+
+// Get conversations for user (excluding deleted ones)
+export const getChatConversationsForUser = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('chat_conversations')
+    .select(`
+      *,
+      lost_item:lost_items_with_profile!lost_item_id(*),
+      found_item:found_items_with_profile!found_item_id(*),
+      lost_owner:profiles!lost_item_owner_id(id, username, full_name, email, phone),
+      found_reporter:profiles!found_item_reporter_id(id, username, full_name, email, phone)
+    `)
+    .or(`lost_item_owner_id.eq.${userId},found_item_reporter_id.eq.${userId}`)
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching conversations:', error);
+    throw error;
+  }
+
+  // Filter out conversations deleted by this user (client-side filter due to RLS)
+  const filtered = (data || []).filter(conv => {
+    const deletedBy = conv.deleted_by_user_ids || [];
+    return !deletedBy.includes(userId);
+  });
+
+  return filtered;
+};
+
+// Conclude an item (lost or found)
+export const concludeItem = async (
+  itemId: string,
+  itemType: 'lost' | 'found',
+  conclusionType: string,
+  userId: string
+) => {
+  const table = itemType === 'lost' ? 'lost_items' : 'found_items';
+  
+  const { error } = await supabase
+    .from(table)
+    .update({
+      status: 'concluded',
+      conclusion_type: conclusionType,
+      concluded_at: new Date().toISOString(),
+      concluded_by: userId,
+    })
+    .eq('id', itemId)
+    .eq('user_id', userId); // Ensure only owner can conclude
+
+  if (error) {
+    console.error('Error concluding item:', error);
+    throw error;
+  }
+};
+
+// Check if user can delete chat (has made conclusion if they're the reporter)
+export const canDeleteChat = async (
+  conversationId: string,
+  userId: string
+): Promise<{ canDelete: boolean; reason?: string }> => {
+  const { data: conversation, error } = await supabase
+    .from('chat_conversations')
+    .select('*, lost_item:lost_items!lost_item_id(status, user_id), found_item:found_items!found_item_id(status, user_id)')
+    .eq('id', conversationId)
+    .maybeSingle();
+
+  if (error || !conversation) {
+    return { canDelete: false, reason: 'Conversation not found' };
+  }
+
+  // Check if user is the lost item owner
+  const isLostItemOwner = conversation.lost_item_owner_id === userId;
+  const isFoundItemReporter = conversation.found_item_reporter_id === userId;
+
+  // If user is the lost item owner and there's a lost item
+  if (isLostItemOwner && conversation.lost_item) {
+    const lostItem = Array.isArray(conversation.lost_item) 
+      ? conversation.lost_item[0] 
+      : conversation.lost_item;
+    
+    if (lostItem && lostItem.user_id === userId) {
+      // Must conclude the item first
+      if (lostItem.status !== 'concluded') {
+        return { canDelete: false, reason: 'Please conclude the item first' };
+      }
+    }
+  }
+
+  // If user is the found item reporter and there's a found item
+  if (isFoundItemReporter && conversation.found_item) {
+    const foundItem = Array.isArray(conversation.found_item)
+      ? conversation.found_item[0]
+      : conversation.found_item;
+    
+    if (foundItem && foundItem.user_id === userId) {
+      // Must conclude the item first
+      if (foundItem.status !== 'concluded') {
+        return { canDelete: false, reason: 'Please conclude the item first' };
+      }
+    }
+  }
+
+  return { canDelete: true };
+};
+
+// Get item history for user (concluded items)
+export const getItemHistory = async (userId: string) => {
+  const { data: lostItems, error: lostError } = await supabase
+    .from('lost_items_with_profile')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'concluded')
+    .order('concluded_at', { ascending: false });
+
+  if (lostError) {
+    console.error('Error fetching lost item history:', lostError);
+    throw lostError;
+  }
+
+  const { data: foundItems, error: foundError } = await supabase
+    .from('found_items_with_profile')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'concluded')
+    .order('concluded_at', { ascending: false });
+
+  if (foundError) {
+    console.error('Error fetching found item history:', foundError);
+    throw foundError;
+  }
+
+  return {
+    lostItems: Array.isArray(lostItems) ? lostItems : [],
+    foundItems: Array.isArray(foundItems) ? foundItems : [],
+  };
+};
+
+// Delete item from history (permanent deletion)
+export const deleteItemFromHistory = async (
+  itemId: string,
+  itemType: 'lost' | 'found',
+  userId: string
+) => {
+  const table = itemType === 'lost' ? 'lost_items' : 'found_items';
+  
+  const { error } = await supabase
+    .from(table)
+    .delete()
+    .eq('id', itemId)
+    .eq('user_id', userId)
+    .eq('status', 'concluded'); // Only allow deletion of concluded items
+
+  if (error) {
+    console.error('Error deleting item from history:', error);
+    throw error;
+  }
+};
+
+// Legacy function - kept for backward compatibility
+export const deleteChatHistory = async (conversationId: string, userId: string) => {
+  // Use the new one-sided deletion instead
+  await deleteChatForUser(conversationId, userId);
 };

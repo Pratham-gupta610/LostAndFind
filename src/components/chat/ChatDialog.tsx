@@ -27,8 +27,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Send, AlertCircle, Loader2, Trash2, MoreVertical, Edit2, X, Check } from 'lucide-react';
-import { getConversationMessages, sendMessage, markMessagesAsRead, deleteChatHistory, editMessage, softDeleteMessage } from '@/db/api';
+import { Send, AlertCircle, Loader2, Trash2, MoreVertical, Edit2, X, Check, CheckCircle } from 'lucide-react';
+import { getConversationMessages, sendMessage, markMessagesAsRead, deleteChatForUser, editMessage, softDeleteMessage, concludeItem, canDeleteChat } from '@/db/api';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import type { ChatMessage } from '@/types/types';
@@ -37,10 +37,11 @@ interface ChatDialogProps {
   open: boolean;
   onClose: () => void;
   conversationId: string;
-  otherUserEmail: string;
+  otherUserName: string;
+  conversation?: any; // Full conversation object with item details
 }
 
-const ChatDialog = ({ open, onClose, conversationId, otherUserEmail }: ChatDialogProps) => {
+const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation }: ChatDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -49,7 +50,12 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserEmail }: ChatDialo
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showConclusionDialog, setShowConclusionDialog] = useState(false);
+  const [conclusionType, setConclusionType] = useState<string>('');
   const [deleting, setDeleting] = useState(false);
+  const [concluding, setConcluding] = useState(false);
+  const [canDelete, setCanDelete] = useState(false);
+  const [deleteReason, setDeleteReason] = useState<string>('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
@@ -58,6 +64,7 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserEmail }: ChatDialo
   useEffect(() => {
     if (open && conversationId) {
       loadMessages();
+      checkCanDelete();
       // Poll for new messages every 3 seconds
       const interval = setInterval(loadMessages, 3000);
       return () => clearInterval(interval);
@@ -109,31 +116,127 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserEmail }: ChatDialo
     }
   };
 
-  const handleDeleteHistory = async () => {
+  const checkCanDelete = async () => {
+    if (!user || !conversationId) return;
+
+    try {
+      const result = await canDeleteChat(conversationId, user.id);
+      setCanDelete(result.canDelete);
+      setDeleteReason(result.reason || '');
+    } catch (err) {
+      console.error('Error checking delete permission:', err);
+      setCanDelete(false);
+    }
+  };
+
+  const handleConcludeItem = async (type: string) => {
+    if (!user || !conversation) return;
+
+    try {
+      setConcluding(true);
+      
+      // Determine if this is a lost or found item
+      const isLostItemOwner = conversation.lost_item_owner_id === user.id;
+      const itemId = isLostItemOwner ? conversation.lost_item_id : conversation.found_item_id;
+      const itemType = isLostItemOwner ? 'lost' : 'found';
+
+      if (!itemId) {
+        throw new Error('Item not found');
+      }
+
+      await concludeItem(itemId, itemType, type, user.id);
+
+      toast({
+        title: 'Item Concluded',
+        description: `Item marked as ${type.replace('_', ' ')}`,
+      });
+
+      setShowConclusionDialog(false);
+      setConclusionType('');
+      
+      // Refresh delete permission
+      await checkCanDelete();
+    } catch (err) {
+      console.error('Error concluding item:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to conclude item',
+        variant: 'destructive',
+      });
+    } finally {
+      setConcluding(false);
+    }
+  };
+
+  const handleDeleteChat = async () => {
     if (!user || !conversationId) return;
 
     try {
       setDeleting(true);
-      await deleteChatHistory(conversationId, user.id);
+      await deleteChatForUser(conversationId, user.id);
       
       toast({
-        title: 'Chat History Deleted',
-        description: 'All messages have been permanently removed. The other user has been notified.',
+        title: 'Chat Deleted',
+        description: 'This chat has been removed from your list',
       });
 
-      setMessages([]);
       setShowDeleteDialog(false);
+      onClose();
     } catch (err) {
-      console.error('Error deleting chat history:', err);
+      console.error('Error deleting chat:', err);
       toast({
         title: 'Error',
-        description: 'Failed to delete chat history',
+        description: 'Failed to delete chat',
         variant: 'destructive',
       });
     } finally {
       setDeleting(false);
     }
   };
+
+  const shouldShowConclusionButton = () => {
+    if (!user || !conversation) return false;
+
+    const isLostItemOwner = conversation.lost_item_owner_id === user.id;
+    const isFoundItemReporter = conversation.found_item_reporter_id === user.id;
+
+    // Check if the item is already concluded
+    if (isLostItemOwner && conversation.lost_item) {
+      const lostItem = Array.isArray(conversation.lost_item) 
+        ? conversation.lost_item[0] 
+        : conversation.lost_item;
+      return lostItem && lostItem.status !== 'concluded';
+    }
+
+    if (isFoundItemReporter && conversation.found_item) {
+      const foundItem = Array.isArray(conversation.found_item)
+        ? conversation.found_item[0]
+        : conversation.found_item;
+      return foundItem && foundItem.status !== 'concluded';
+    }
+
+    return false;
+  };
+
+  const getConclusionOptions = () => {
+    if (!user || !conversation) return [];
+
+    const isLostItemOwner = conversation.lost_item_owner_id === user.id;
+
+    if (isLostItemOwner) {
+      return [
+        { value: 'item_found', label: 'Item Found' },
+        { value: 'item_not_found', label: 'Item Not Found' },
+      ];
+    } else {
+      return [
+        { value: 'owner_found', label: 'Owner Found' },
+        { value: 'owner_not_found', label: 'Owner Not Found' },
+      ];
+    }
+  };
+
+  const handleDeleteHistory = handleDeleteChat;
 
   const handleStartEdit = (message: ChatMessage) => {
     setEditingMessageId(message.id);
@@ -215,19 +318,43 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserEmail }: ChatDialo
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div>
-                <DialogTitle>Chat with {otherUserEmail}</DialogTitle>
+                <DialogTitle>Chat with {otherUserName}</DialogTitle>
                 <DialogDescription>
                   Discuss item details and arrange return
                 </DialogDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowDeleteDialog(true)}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex gap-2">
+                {shouldShowConclusionButton() && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowConclusionDialog(true)}
+                    className="text-primary hover:text-primary"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Conclude
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (canDelete) {
+                      setShowDeleteDialog(true);
+                    } else {
+                      toast({
+                        title: 'Cannot Delete',
+                        description: deleteReason || 'Please conclude the item first',
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
+                  disabled={!canDelete}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </DialogHeader>
 
@@ -369,13 +496,13 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserEmail }: ChatDialo
         </DialogContent>
       </Dialog>
 
-      {/* Delete entire chat history dialog */}
+      {/* Delete chat dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Chat History?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Chat?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete all messages in this conversation. The other user will be notified that the chat history was cleared. This action cannot be undone.
+              This will remove this chat from your list. The other user will still be able to see the conversation. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -392,6 +519,47 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserEmail }: ChatDialo
                 </>
               ) : (
                 'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Conclusion dialog */}
+      <AlertDialog open={showConclusionDialog} onOpenChange={setShowConclusionDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Conclude Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please select the outcome for this item. This will remove the item from active listings and move it to your history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-4">
+            {getConclusionOptions().map((option) => (
+              <Button
+                key={option.value}
+                variant={conclusionType === option.value ? 'default' : 'outline'}
+                className="w-full"
+                onClick={() => setConclusionType(option.value)}
+                disabled={concluding}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={concluding}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => conclusionType && handleConcludeItem(conclusionType)}
+              disabled={!conclusionType || concluding}
+            >
+              {concluding ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Concluding...
+                </>
+              ) : (
+                'Confirm'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

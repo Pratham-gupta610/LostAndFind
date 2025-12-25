@@ -5,7 +5,7 @@
 ### 1.1 Application Name
 FINDIT.AI\n
 ### 1.2 Application Description
-A modern, highly interactive multi-campus Lost & Found web application designed to help users report and search for lost or found items across multiple campus locations, with a focus on trust-first design and seamless user experience. Features secure college email authentication with OTP verification for first-time users only, built-in messaging system with editable and deletable messages for direct communication between users, and AI-powered intelligent matching to automatically identify potential matches between lost and found items.
+A modern, highly interactive multi-campus Lost & Found web application designed to help users report and search for lost or found items across multiple campus locations, with a focus on trust-first design and seamless user experience. Features secure college email authentication with OTP verification for first-time users only, built-in messaging system with advanced chat management including one-sided deletion, role-based conclusion system, and editable/deletable messages for direct communication between users, and AI-powered intelligent matching to automatically identify potential matches between lost and found items.
 
 ### 1.3 Target Users
 Campus community members (students, faculty, staff) who need to report lost items, search for found items, or help return items to their owners.
@@ -100,8 +100,7 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Sign Up Page**: New users create accounts with OTP verification on first registration
 
 ### 2.3 User Profile Management
-
-#### 2.3.1 Profile Data Structure
+\n#### 2.3.1 Profile Data Structure
 - **Database Table**: `profiles` table linked to authentication users
 - **Table Fields**:
   - user_id (UUID, primary key, references auth.users)
@@ -165,7 +164,7 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Right Sidebar Menu**: All navigation items (Lost Items, Found Items, Report Lost, Report Found, Return History, Messages) placed in collapsible sidebar on right side
 - **Sidebar Toggle**: Open/close sidebar using menu icon
 - **Mobile Scrollable Sidebar**: On mobile devices (Android and iOS), sidebar content is fully scrollable to access all menu items comfortably
-- **Top Header**: Displays'FINDIT.AI' site name with search icon, keeping top area clean and minimal
+- **Top Header**: Displays 'FINDIT.AI' site name with search icon, keeping top area clean and minimal
 - **Mobile Responsive**: Sidebar adapts to mobile screens with smooth slide-in/slide-out animations
 
 ### 2.5 Homepage Structure
@@ -173,8 +172,7 @@ The homepage displays three clearly separated sections with real-time statistics
 - **Lost Items Section**: Shows all reported lost items with live count
 - **Found Items Section**: Shows all reported found items with live count
 - **Recently Returned Items Section**: Shows history of successful returns with live count (clickable items)
-
-**Real-Time Counter Updates**: All three section counters automatically update immediately when new items are added or status changes occur.
+\n**Real-Time Counter Updates**: All three section counters automatically update immediately when new items are added or status changes occur.
 
 All sections sorted by latest first with date-range filter options.
 
@@ -219,20 +217,87 @@ Search results update instantly to reflect new entries with no mixing between ca
 #### 2.9.3 Match Output Format
 System generates match results in following structure:
 - similarity_score: numerical value (0-100)
-- is_match: boolean (true if score ≥ 75%)
-- reason: short explanation text
+- is_match: boolean (true if score ≥ 75%)\n- reason: short explanation text
 - actions: send_email (boolean), enable_chat (boolean)\n\n#### 2.9.4 Privacy & Safety Rules
 - Personal contact details (phone numbers, emails) never exposed directly in match notifications
 - Users must initiate contact through secure in-app messaging system
 - Conservative matching approach: only scores ≥ 75% trigger notifications
-\n### 2.10 Messaging System
-\n#### 2.10.1 Chat Access & Initiation
+\n### 2.10 Advanced Messaging System with Controlled Deletion & Conclusions
+
+#### 2.10.1 Chat User Identity Display
+- **Username Display**: In every chat conversation, clearly display the username of the other person
+- **Dynamic Fetching**: Fetch usernames dynamically from profiles table using user_id
+- **Storage Rule**: Do NOT store usernames inside chat messages\n- **Real-Time Updates**: Username changes in profile reflect immediately in active chats
+
+#### 2.10.2 Chat Access & Initiation
 - **Chat Interface**: Built-in messaging system allowing users to communicate directly within application
 - **Contact Flow**: When someone reports found item, they can contact person who reported lost item through chat section
 - **AI Match Integration**: When potential match identified, private chat session automatically enabled between owner and finder
 - **Login Required**: Users must be logged in to access messaging features
-- **Private Sessions**: Chat sessions accessible only to matched users involved\n
-#### 2.10.2 Message Management Features
+- **Private Sessions**: Chat sessions accessible only to matched users involved
+
+#### 2.10.3 One-Sided Chat Deletion (Device/User-Specific)
+- **User-Specific Deletion**: Deleting a chat must be DEVICE/USER-SPECIFIC\n- **Deletion Behavior**:
+  - If User A deletes a chat: chat is removed ONLY from User A's chat list
+  - Chat MUST remain visible for User B\n- **Implementation Mechanism**: Use `chat_visibility` or `deleted_by_user_ids` field to track which users have deleted the chat
+- **Database Structure**: Never hard-delete chat messages globally unless both users delete manually
+- **Visibility Control**: Each user maintains their own visibility state for each chat
+
+#### 2.10.4 Role-Based Conclusion System
+\n**General Rules**:\n- A conclusion system must exist before allowing chat deletion
+- Conclusion requirements depend on who reported the item
+- Only item reporters can trigger conclusions
+- Non-reporters have unrestricted delete access
+\n**When User Reported a FOUND Item**:
+\n- **UI Elements**:
+  - User who reported found item sees'Conclusion' button near Delete Chat button
+  - Delete Chat button is DISABLED by default
+\n- **Conclusion Options**:
+  1. Owner Found\n  2. Owner Not Found
+\n- **If'Owner Found' Selected**:
+  - Show confirmation dialog:'Are you sure the owner is found?'
+  - On confirmation:\n    - Delete the found item from FOUND ITEMS list
+    - Keep the item in item history with status 'Owner Found'
+    - Enable the Delete Chat button
+\n- **If 'Owner Not Found' Selected**:
+  - Show confirmation dialog: 'Are you sure the owner is not found?'\n  - On confirmation:
+    - DO NOT delete the found item from found list
+    - Keep item active and searchable\n    - Enable the Delete Chat button
+
+- **If No Conclusion Selected**:
+  - Delete Chat button remains DISABLED
+  - User cannot delete chat until conclusion is made
+
+**When User Reported a LOST Item**:
+
+- **UI Elements**:
+  - Lost item owner sees 'Conclusion' button\n  - Delete Chat button is DISABLED until conclusion is selected
+
+- **Conclusion Options**:
+  1. Item Found
+  2. Item Not Found
+
+- **If 'Item Found' Selected**:
+  - Show confirmation dialog: 'Are you sure the item is found?'
+  - On confirmation:
+    - Delete the item from LOST ITEMS list
+    - Keep the item in item history with status 'Item Found'
+    - Enable Delete Chat button
+
+- **If 'Item Not Found' Selected**:
+  - Show confirmation dialog: 'Are you sure the item is not found?'
+  - On confirmation:
+    - DO NOT delete item from lost items list
+    - Keep item active and searchable
+    - Enable Delete Chat button
+
+**For Non-Reporter Users**:
+- User who DID NOT report the item:\n  - Must NOT see the Conclusion button
+  - Must have Delete Chat button ENABLED at all times
+  - Their delete action affects only their own chat view (one-sided deletion)
+  - Can delete chat freely without any conclusion requirement
+
+#### 2.10.5 Message Management Features
 - **Editable Messages**: Users can edit only their own messages
   - Edited messages update in real-time for both participants
   - Show'edited' label with timestamp after modification
@@ -242,43 +307,87 @@ System generates match results in following structure:
   - Deletion changes reflect instantly in real-time chat
   - Other user cannot recover deleted messages
 - **Permission Control**: Users cannot edit or delete others' messages
-\n#### 2.10.3 Chat Features
+\n#### 2.10.6 Chat Features
 - **Real-Time Delivery**: Messages delivered instantly with real-time synchronization
 - **Message Notifications**: Users receive notifications for new messages
 - **Conversation History**: All message threads preserved and accessible from Messages section in sidebar
 - **Chat History Deletion**:
-  - Users can delete entire chat history at any time from within conversation
-  - Deletion is permanent and removes all messages from storage
-  - When one user deletes chat history, other user receives notification that chat history was cleared
-  - Deleted messages never regenerated or recovered
+  - Users can delete entire chat history at any time from within conversation (subject to conclusion requirements for item reporters)
+  - Deletion is user-specific (one-sided) and removes chat from that user's view only
+  - When one user deletes chat history, other user receives notification that chat history was cleared by the other party
+  - Deleted chats never regenerated or recovered for the user who deleted them
 - **User Privacy**: Phone numbers and emails only shared if users choose to do so within chat conversations
 
-#### 2.10.4 Technical Implementation
+#### 2.10.7 Technical Implementation
 - **Backend**: Supabase Auth for authentication, Supabase PostgreSQL for data storage
 - **Real-Time**: Supabase Realtime for instant message synchronization
 - **Security**: Row Level Security (RLS) ensures users cannot access chats they're not part of
-- **Data Model**: Messages table includes: id, chat_id, sender_id, content, is_deleted, edited_at, created_at
-\n### 2.11 Filtering & Sorting
+- **Data Model**: \n  - Messages table includes: id, chat_id, sender_id, content, is_deleted, edited_at, created_at
+  - Chat visibility table includes: chat_id, user_id, is_visible, deleted_at
+  - Item conclusions table includes: item_id, item_type, conclusion_status, concluded_at, concluded_by\n\n### 2.11 Item History Management
+
+#### 2.11.1 Item History Rules
+- **Deleted Items Preservation**: Items deleted from active lists (Lost/Found) must:\n  - Be removed from active LOST/FOUND lists
+  - Still remain visible in user's ITEM HISTORY
+- **History Display**: History items must show:
+  - Status (Found/Not Found/Owner Found/Owner Not Found)
+  - Date of conclusion
+  - Original item details
+  - Conclusion timestamp
+\n#### 2.11.2 Item History Deletion (One at a Time)
+- **Individual Deletion**: Add a Delete option for EACH item in:\n  - Lost item history
+  - Found item history\n- **One-by-One Deletion**: Allow deletion of ONE item at a time
+- **Deletion Effects**:
+  - Deleting an item from history must NOT affect chats\n  - Deleting an item from history must NOT affect other items
+  - Deletion is permanent and removes item from user's history view
+- **UI Implementation**: Each history item has its own delete button/icon
+
+### 2.12 Filtering & Sorting
 - All item lists (Lost/Found/Returned) include date-range filters
 - Default sorting: latest entries first
 - Filter options easily accessible and responsive
-\n### 2.12 My Reports History
-Users can view their own submission history directly on Report Lost/Report Found pages, showing all previously submitted reports.\n
-### 2.13 Test Data
-Preload realistic test data across all categories (Lost Items, Found Items, Returned Items) to demonstrate full functionality.
 
-## 3. Design Style\n
+### 2.13 My Reports History
+Users can view their own submission history directly on Report Lost/Report Found pages, showing all previously submitted reports.\n
+### 2.14 UI/UX Requirements for Chat System
+
+#### 2.14.1 Visual Feedback
+- **Disabled State**: Delete Chat button visually disabled (grayed out) until conclusion is made (for item reporters)
+- **Loading States**: Show loading indicator while applying conclusion
+- **Success Feedback**: Display success message after conclusion is applied
+- **Error Handling**: Show user-friendly error messages if conclusion fails
+- **Confirmation Dialogs**: Clear, concise confirmation messages for all conclusion actions
+
+#### 2.14.2 Interaction Design
+- **Prevent Double Actions**: Disable conclusion buttons after first click to prevent multiple conclusions
+- **Clear Button States**: Visually distinguish between enabled and disabled Delete Chat button
+- **Smooth Transitions**: Animate state changes (button enabling, item removal from lists)
+- **Notification Display**: Show clear notification when other user deletes chat history
+
+#### 2.14.3 Data Integrity & Security
+- **Authorization Rules**:
+  - Only item owners can conclude items
+  - Only chat participants can delete their own chat view
+  - Never allow one user to delete chats or items for another user
+- **Validation**: Validate user permissions before allowing any conclusion or deletion action
+- **Audit Trail**: Log all conclusions and deletions for security and dispute resolution
+- **Rollback Prevention**: Once conclusion is made, it cannot be undone (permanent action)
+
+### 2.15 Test Data\nPreload realistic test data across all categories (Lost Items, Found Items, Returned Items) to demonstrate full functionality including chat conversations with various states (concluded, not concluded, deleted by one user, etc.).
+
+##3. Design Style\n
 ### 3.1 Visual Theme
 - **Color Scheme**: Trust-inspiring blue primary color (#2563EB) paired with clean white backgrounds and soft gray accents (#F3F4F6 for cards, #6B7280 for secondary text)
 - **Layout Style**: Card-based grid layout with clear visual separation between sections,ample white space for breathing room
 - **Typography**: Modern sans-serif font (Inter or similar) with clear hierarchy — bold headings, regular body text, and subtle labels
 \n### 3.2 Interactive Elements
 - **Smooth Animations**: Fade-in effects for page loads, hover scale transforms on cards (1.02x), smooth transitions (200-300ms) on all interactive elements
-- **Button Styles**: Rounded corners (8px), solid primary buttons with hover darkening effect, outlined secondary buttons
-- **Card Design**: Soft shadows (01px 3px rgba(0,0,0,0.1)),12px border radius, hover elevation effect
-- **Counter Animations**: Smooth number transitions when statistics update
+- **Button Styles**: Rounded corners (8px), solid primary buttons with hover darkening effect, outlined secondary buttons, disabled state with reduced opacity
+- **Card Design**: Soft shadows (01px 3px rgba(0,0,0,0.1)),12px border radius, hover elevation effect\n- **Counter Animations**: Smooth number transitions when statistics update
 - **Sidebar Animation**: Smooth slide-in/slide-out effect with backdrop overlay, fully scrollable on mobile devices
 - **Match Badges**: Distinctive badge design for AI-identified matches with confidence percentage display
+- **Conclusion Buttons**: Prominent, clearly labeled buttons with distinct styling for different conclusion options
+- **Disabled Button Styling**: Grayed-out appearance with reduced opacity (0.5) and no-cursor pointer for disabled Delete Chat button
 
 ### 3.3 User Experience\n- **Production-Level UX**: Intuitive navigation flow, clear call-to-action buttons, instant feedback on user actions
 - **Trust-First Design**: Professional appearance, clear information hierarchy, reassuring color palette, transparent process indicators
@@ -288,11 +397,12 @@ Preload realistic test data across all categories (Lost Items, Found Items, Retu
 - **AI Transparency**: Clear indication when matches are AI-generated, with confidence scores visible to users
 - **Frictionless Return Access**: Returning users enjoy seamless login experience without OTP verification
 - **Secure Password Recovery**: Clear, user-friendly password reset flow with helpful feedback messages
+- **Controlled Chat Lifecycle**: Clear visual indicators for chat states, conclusion requirements, and deletion permissions
+- **Role-Based Interface**: Different UI elements shown based on user role (item reporter vs. non-reporter)
 
 ## 4. Technical Stack
 - **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
-- **Database**: Supabase PostgreSQL
-- **Real-Time Communication**: Supabase Realtime
+- **Database**: Supabase PostgreSQL\n- **Real-Time Communication**: Supabase Realtime
 - **Email Service**: Supabase Email Service
 \n## 5. Referenced Images
 - image.png (sidebar navigation reference)

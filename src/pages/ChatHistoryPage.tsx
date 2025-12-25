@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MessageSquare, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserConversationsWithDetails } from '@/db/api';
+import { getChatConversationsForUser } from '@/db/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -65,7 +65,7 @@ const ChatHistoryPage: React.FC = () => {
       setError(null);
 
       // Add timeout protection
-      const fetchPromise = getUserConversationsWithDetails(user.id);
+      const fetchPromise = getChatConversationsForUser(user.id);
       const timeoutPromise = new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => reject(new Error('Request timeout')), 10000);
       });
@@ -103,6 +103,11 @@ const ChatHistoryPage: React.FC = () => {
     } else {
       return conversation.lost_owner;
     }
+  };
+
+  const getOtherUserName = (otherUser: any) => {
+    if (!otherUser) return 'User';
+    return otherUser.username || otherUser.full_name || otherUser.email || 'User';
   };
 
   const getItemInfo = (conversation: ConversationWithDetails) => {
@@ -214,7 +219,7 @@ const ChatHistoryPage: React.FC = () => {
                               {itemInfo?.item_name || 'Item'}
                             </h3>
                             <p className="text-sm text-muted-foreground truncate">
-                              Chat with {otherUser?.full_name || otherUser?.email || 'User'}
+                              Chat with {getOtherUserName(otherUser)}
                             </p>
                           </div>
                           <Badge variant="secondary" className="flex-shrink-0">
@@ -253,9 +258,8 @@ const ChatHistoryPage: React.FC = () => {
           open={chatOpen}
           onClose={handleCloseChat}
           conversationId={selectedConversation.id}
-          otherUserEmail={
-            getOtherUser(selectedConversation)?.email || 'User'
-          }
+          otherUserName={getOtherUserName(getOtherUser(selectedConversation))}
+          conversation={selectedConversation}
         />
       )}
     </div>
