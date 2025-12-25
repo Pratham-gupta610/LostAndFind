@@ -135,10 +135,9 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
     try {
       setConcluding(true);
       
-      // Determine if this is a lost or found item
-      const isLostItemOwner = conversation.lost_item_owner_id === user.id;
-      const itemId = isLostItemOwner ? conversation.lost_item_id : conversation.found_item_id;
-      const itemType = isLostItemOwner ? 'lost' : 'found';
+      // Use item_type from conversation
+      const itemId = conversation.item_id;
+      const itemType = conversation.item_type;
 
       if (!itemId) {
         throw new Error('Item not found');
@@ -173,20 +172,20 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
 
     try {
       setDeleting(true);
-      await deleteChatForUser(conversationId, user.id);
+      const result = await deleteChatForUser(conversationId, user.id);
       
       toast({
         title: 'Chat Deleted',
-        description: 'This chat has been removed from your list',
+        description: result.message || 'This chat has been removed from your list',
       });
 
       setShowDeleteDialog(false);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting chat:', err);
       toast({
-        title: 'Error',
-        description: 'Failed to delete chat',
+        title: 'Cannot Delete Chat',
+        description: err.message || 'Failed to delete chat',
         variant: 'destructive',
       });
     } finally {
@@ -194,46 +193,36 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
     }
   };
 
+  // CRITICAL: Show conclusion button ONLY to item reporter when item not concluded
   const shouldShowConclusionButton = () => {
     if (!user || !conversation) return false;
 
-    const isLostItemOwner = conversation.lost_item_owner_id === user.id;
-    const isFoundItemReporter = conversation.found_item_reporter_id === user.id;
-
-    // Check if the item is already concluded
-    if (isLostItemOwner && conversation.lost_item) {
-      const lostItem = Array.isArray(conversation.lost_item) 
-        ? conversation.lost_item[0] 
-        : conversation.lost_item;
-      return lostItem && lostItem.status !== 'concluded';
-    }
-
-    if (isFoundItemReporter && conversation.found_item) {
-      const foundItem = Array.isArray(conversation.found_item)
-        ? conversation.found_item[0]
-        : conversation.found_item;
-      return foundItem && foundItem.status !== 'concluded';
-    }
-
-    return false;
+    // Check if current user is the item reporter
+    const isItemReporter = conversation.item_reporter_id === user.id;
+    
+    // Show button ONLY if:
+    // 1. Current user is the item reporter
+    // 2. Item has NOT been concluded yet
+    return isItemReporter && conversation.conclusion_status === null;
   };
 
   const getConclusionOptions = () => {
     if (!user || !conversation) return [];
 
-    const isLostItemOwner = conversation.lost_item_owner_id === user.id;
-
-    if (isLostItemOwner) {
+    // Options based on item type
+    if (conversation.item_type === 'lost') {
       return [
         { value: 'item_found', label: 'Item Found' },
         { value: 'item_not_found', label: 'Item Not Found' },
       ];
-    } else {
+    } else if (conversation.item_type === 'found') {
       return [
         { value: 'owner_found', label: 'Owner Found' },
         { value: 'owner_not_found', label: 'Owner Not Found' },
       ];
     }
+
+    return [];
   };
 
   const handleDeleteHistory = handleDeleteChat;

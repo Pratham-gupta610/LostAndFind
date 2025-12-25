@@ -591,39 +591,30 @@ export const triggerAutoMatch = async (itemType: 'lost' | 'found', itemId: strin
 };
 
 // Chat deletion (one-sided)
-export const deleteChatForUser = async (conversationId: string, userId: string) => {
-  // Get current conversation
-  const { data: conversation, error: fetchError } = await supabase
-    .from('chat_conversations')
-    .select('deleted_by_user_ids')
-    .eq('id', conversationId)
-    .maybeSingle();
+// Delete chat for current user (one-sided deletion using database function)
+export const deleteChatForUser = async (conversationId: string, userId: string): Promise<{ success: boolean; message: string }> => {
+  const { data, error } = await supabase
+    .rpc('delete_chat_for_user', {
+      p_conversation_id: conversationId,
+      p_user_id: userId
+    });
 
-  if (fetchError) {
-    console.error('Error fetching conversation:', fetchError);
-    throw fetchError;
+  if (error) {
+    console.error('Error deleting chat:', error);
+    throw new Error('Failed to delete chat: ' + error.message);
   }
 
-  if (!conversation) {
-    throw new Error('Conversation not found');
+  if (!data || data.length === 0) {
+    throw new Error('No response from delete operation');
   }
 
-  // Add user to deleted_by_user_ids array
-  const deletedByUserIds = conversation.deleted_by_user_ids || [];
-  if (!deletedByUserIds.includes(userId)) {
-    deletedByUserIds.push(userId);
+  const result = data[0];
+  
+  if (!result.success) {
+    throw new Error(result.message);
   }
 
-  // Update conversation
-  const { error: updateError } = await supabase
-    .from('chat_conversations')
-    .update({ deleted_by_user_ids: deletedByUserIds })
-    .eq('id', conversationId);
-
-  if (updateError) {
-    console.error('Error updating conversation:', updateError);
-    throw updateError;
-  }
+  return result;
 };
 
 // Get conversations for user (excluding deleted ones)
@@ -675,53 +666,30 @@ export const concludeItem = async (
 };
 
 // Check if user can delete chat (has made conclusion if they're the reporter)
+// Check if user can delete a chat (using database function)
 export const canDeleteChat = async (
   conversationId: string,
   userId: string
 ): Promise<{ canDelete: boolean; reason?: string }> => {
-  const { data: conversation, error } = await supabase
-    .from('chat_conversations')
-    .select('*, lost_item:lost_items!lost_item_id(status, user_id), found_item:found_items!found_item_id(status, user_id)')
-    .eq('id', conversationId)
-    .maybeSingle();
+  const { data, error } = await supabase
+    .rpc('can_user_delete_chat', {
+      p_conversation_id: conversationId,
+      p_user_id: userId
+    });
 
-  if (error || !conversation) {
-    return { canDelete: false, reason: 'Conversation not found' };
+  if (error) {
+    console.error('Error checking delete permission:', error);
+    return { canDelete: false, reason: 'Error checking permissions' };
   }
 
-  // Check if user is the lost item owner
-  const isLostItemOwner = conversation.lost_item_owner_id === userId;
-  const isFoundItemReporter = conversation.found_item_reporter_id === userId;
-
-  // If user is the lost item owner and there's a lost item
-  if (isLostItemOwner && conversation.lost_item) {
-    const lostItem = Array.isArray(conversation.lost_item) 
-      ? conversation.lost_item[0] 
-      : conversation.lost_item;
-    
-    if (lostItem && lostItem.user_id === userId) {
-      // Must conclude the item first
-      if (lostItem.status !== 'concluded') {
-        return { canDelete: false, reason: 'Please conclude the item first' };
-      }
-    }
+  if (!data || data.length === 0) {
+    return { canDelete: false, reason: 'Unable to verify permissions' };
   }
 
-  // If user is the found item reporter and there's a found item
-  if (isFoundItemReporter && conversation.found_item) {
-    const foundItem = Array.isArray(conversation.found_item)
-      ? conversation.found_item[0]
-      : conversation.found_item;
-    
-    if (foundItem && foundItem.user_id === userId) {
-      // Must conclude the item first
-      if (foundItem.status !== 'concluded') {
-        return { canDelete: false, reason: 'Please conclude the item first' };
-      }
-    }
-  }
-
-  return { canDelete: true };
+  return {
+    canDelete: data[0].can_delete,
+    reason: data[0].reason
+  };
 };
 
 // Get item history for user (concluded items)

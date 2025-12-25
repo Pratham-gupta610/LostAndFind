@@ -165,6 +165,8 @@ export interface ChatParticipant {
 
 export interface ChatConversationWithDetails extends ChatConversation {
   item_name: string;
+  item_reporter_id: string; // User ID of the person who reported the item
+  conclusion_status: string | null; // Conclusion type from item
   item_details: LostItem | FoundItem;
   participants: ChatParticipant[];
   last_message: {
