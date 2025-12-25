@@ -1,52 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { MessageSquare, Loader2, Package } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getChatConversationsForUser } from '@/db/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import ChatDialog from '@/components/chat/ChatDialog';
 import { formatDistanceToNow } from 'date-fns';
-
-interface ConversationWithDetails {
-  id: string;
-  lost_item_id: string | null;
-  found_item_id: string | null;
-  lost_item_owner_id: string;
-  found_item_reporter_id: string;
-  created_at: string;
-  updated_at: string;
-  lost_item?: {
-    id: string;
-    item_name: string;
-    image_url: string | null;
-    category: string;
-  } | null;
-  found_item?: {
-    id: string;
-    item_name: string;
-    image_url: string | null;
-    category: string;
-  } | null;
-  lost_owner?: {
-    id: string;
-    full_name: string | null;
-    email: string;
-  } | null;
-  found_reporter?: {
-    id: string;
-    full_name: string | null;
-    email: string;
-  } | null;
-}
+import type { ChatConversationWithDetails } from '@/types/types';
 
 const ChatHistoryPage: React.FC = () => {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
+  const [conversations, setConversations] = useState<ChatConversationWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedConversation, setSelectedConversation] = useState<ConversationWithDetails | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<ChatConversationWithDetails | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
@@ -83,7 +52,7 @@ const ChatHistoryPage: React.FC = () => {
     }
   };
 
-  const handleOpenChat = (conversation: ConversationWithDetails) => {
+  const handleOpenChat = (conversation: ChatConversationWithDetails) => {
     setSelectedConversation(conversation);
     setChatOpen(true);
   };
@@ -95,30 +64,17 @@ const ChatHistoryPage: React.FC = () => {
     loadConversations();
   };
 
-  const getOtherUser = (conversation: ConversationWithDetails) => {
-    if (!user) return null;
-    
-    if (conversation.lost_item_owner_id === user.id) {
-      return conversation.found_reporter;
-    } else {
-      return conversation.lost_owner;
-    }
+  // Get other participant from participants array
+  const getOtherParticipant = (conversation: ChatConversationWithDetails) => {
+    if (!user || !conversation.participants) return null;
+    return conversation.participants.find(p => p.id !== user.id) || null;
   };
 
-  const getOtherUserName = (otherUser: any) => {
+  // Get username (prioritize username over full_name over email)
+  const getOtherUserName = (conversation: ChatConversationWithDetails) => {
+    const otherUser = getOtherParticipant(conversation);
     if (!otherUser) return 'User';
     return otherUser.username || otherUser.full_name || otherUser.email || 'User';
-  };
-
-  const getItemInfo = (conversation: ConversationWithDetails) => {
-    // Prefer the item that belongs to the other user
-    if (!user) return null;
-    
-    if (conversation.lost_item_owner_id === user.id) {
-      return conversation.found_item;
-    } else {
-      return conversation.lost_item;
-    }
   };
 
   if (!user) {
@@ -187,8 +143,8 @@ const ChatHistoryPage: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {conversations.map((conversation) => {
-              const otherUser = getOtherUser(conversation);
-              const itemInfo = getItemInfo(conversation);
+              const itemName = conversation.item_name || 'Item';
+              const lastMessage = conversation.last_message;
               
               return (
                 <Card 
@@ -198,49 +154,42 @@ const ChatHistoryPage: React.FC = () => {
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start space-x-4">
-                      {/* Item Image */}
-                      <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {itemInfo?.image_url ? (
-                          <img 
-                            src={itemInfo.image_url} 
-                            alt={itemInfo.item_name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <MessageSquare className="w-8 h-8 text-muted-foreground" />
-                        )}
+                      {/* Item Icon */}
+                      <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Package className="w-8 h-8 text-primary" />
                       </div>
 
                       {/* Conversation Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-lg truncate">
-                              {itemInfo?.item_name || 'Item'}
+                            {/* PRIMARY: Item Name (BOLD) */}
+                            <h3 className="font-bold text-lg truncate">
+                              {itemName}
                             </h3>
+                            {/* SECONDARY: Username */}
                             <p className="text-sm text-muted-foreground truncate">
-                              Chat with {getOtherUserName(otherUser)}
+                              with {getOtherUserName(conversation)}
                             </p>
+                            {/* TERTIARY: Last message preview */}
+                            {lastMessage && (
+                              <p className="text-xs text-muted-foreground truncate mt-1">
+                                {lastMessage.message}
+                              </p>
+                            )}
                           </div>
                           <Badge variant="secondary" className="flex-shrink-0">
-                            {itemInfo?.category || 'Item'}
+                            {conversation.item_type}
                           </Badge>
                         </div>
 
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
                           <span>
-                            Last message: {formatDistanceToNow(new Date(conversation.updated_at), { addSuffix: true })}
+                            {lastMessage 
+                              ? formatDistanceToNow(new Date(lastMessage.created_at), { addSuffix: true })
+                              : formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true })
+                            }
                           </span>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenChat(conversation);
-                            }}
-                          >
-                            Open Chat
-                          </Button>
                         </div>
                       </div>
                     </div>
@@ -258,7 +207,7 @@ const ChatHistoryPage: React.FC = () => {
           open={chatOpen}
           onClose={handleCloseChat}
           conversationId={selectedConversation.id}
-          otherUserName={getOtherUserName(getOtherUser(selectedConversation))}
+          otherUserName={getOtherUserName(selectedConversation)}
           conversation={selectedConversation}
         />
       )}

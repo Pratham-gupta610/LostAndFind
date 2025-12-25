@@ -143,16 +143,36 @@ export const CAMPUSES = [
 
 export interface ChatConversation {
   id: string;
+  item_id: string;
+  item_type: 'lost' | 'found';
+  participant_ids: string[];
+  // Legacy fields (kept for backward compatibility)
   lost_item_id: string | null;
   found_item_id: string | null;
   lost_item_owner_id: string;
   found_item_reporter_id: string;
-  match_id: string | null;
-  deleted_by_user_ids: string[];
-  history_deleted_at: string | null;
-  history_deleted_by: string | null;
+  deleted_by_user_ids: string[] | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ChatParticipant {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  email: string;
+}
+
+export interface ChatConversationWithDetails extends ChatConversation {
+  item_name: string;
+  item_details: LostItem | FoundItem;
+  participants: ChatParticipant[];
+  last_message: {
+    id: string;
+    message: string;
+    sender_id: string;
+    created_at: string;
+  } | null;
 }
 
 export interface ChatMessage {

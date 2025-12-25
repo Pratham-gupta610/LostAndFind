@@ -314,185 +314,195 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
   return (
     <>
       <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-        <DialogContent className="sm:max-w-2xl h-[600px] flex flex-col">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle>Chat with {otherUserName}</DialogTitle>
-                <DialogDescription>
-                  Discuss item details and arrange return
-                </DialogDescription>
-              </div>
-              <div className="flex gap-2">
-                {shouldShowConclusionButton() && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowConclusionDialog(true)}
-                    className="text-primary hover:text-primary"
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Conclude
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    if (canDelete) {
-                      setShowDeleteDialog(true);
-                    } else {
-                      toast({
-                        title: 'Cannot Delete',
-                        description: deleteReason || 'Please conclude the item first',
-                        variant: 'destructive',
-                      });
-                    }
-                  }}
-                  disabled={!canDelete}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
-            <div className="space-y-4">
-              {loading && messages.length === 0 ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No messages yet. Start the conversation!
-                </div>
-              ) : (
-                messages.map((msg) => {
-                  const isOwnMessage = msg.sender_id === user?.id;
-                  const isEditing = editingMessageId === msg.id;
-                  
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                          isOwnMessage
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-secondary text-secondary-foreground'
-                        }`}
+        <DialogContent className="sm:max-w-2xl h-[600px] p-0 flex flex-col">
+          {/* SINGLE SCROLL CONTAINER - Contains header + messages + input */}
+          <div className="flex-1 overflow-y-auto" ref={scrollRef}>
+            <div className="flex flex-col min-h-full">
+              {/* SCROLLABLE HEADER - Shows username and item name */}
+              <div className="sticky top-0 z-10 bg-background border-b px-6 py-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    {/* PRIMARY: Other user's username */}
+                    <h2 className="text-xl font-bold truncate">
+                      {otherUserName}
+                    </h2>
+                    {/* SECONDARY: Item name */}
+                    <p className="text-sm text-muted-foreground truncate">
+                      Regarding: <span className="font-medium">{conversation?.item_name || 'Item'}</span>
+                    </p>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    {shouldShowConclusionButton() && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowConclusionDialog(true)}
+                        className="text-primary hover:text-primary"
                       >
-                        {isEditing ? (
-                          <div className="space-y-2">
-                            <Input
-                              value={editingText}
-                              onChange={(e) => setEditingText(e.target.value)}
-                              className="text-sm"
-                              autoFocus
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleSaveEdit(msg.id)}
-                                className="h-7 px-2"
-                              >
-                                <Check className="w-3 h-3 mr-1" />
-                                Save
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={handleCancelEdit}
-                                className="h-7 px-2"
-                              >
-                                <X className="w-3 h-3 mr-1" />
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="text-sm flex-1">
-                                {msg.is_deleted ? (
-                                  <span className="italic opacity-70">This message was deleted</span>
-                                ) : (
-                                  msg.message
-                                )}
-                              </p>
-                              {isOwnMessage && !msg.is_deleted && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-6 w-6 opacity-70 hover:opacity-100"
-                                    >
-                                      <MoreVertical className="w-3 h-3" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleStartEdit(msg)}>
-                                      <Edit2 className="w-3 h-3 mr-2" />
-                                      Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => setMessageToDelete(msg.id)}
-                                      className="text-destructive"
-                                    >
-                                      <Trash2 className="w-3 h-3 mr-2" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs opacity-70 mt-1">
-                              <span>
-                                {new Date(msg.created_at).toLocaleTimeString([], { 
-                                  hour: '2-digit', 
-                                  minute: '2-digit' 
-                                })}
-                              </span>
-                              {msg.edited_at && !msg.is_deleted && (
-                                <span className="italic">
-                                  (edited {formatDistanceToNow(new Date(msg.edited_at), { addSuffix: true })})
-                                </span>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </ScrollArea>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Conclude
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (canDelete) {
+                          setShowDeleteDialog(true);
+                        } else {
+                          toast({
+                            title: 'Cannot Delete',
+                            description: deleteReason || 'Please conclude the item first',
+                            variant: 'destructive',
+                          });
+                        }
+                      }}
+                      disabled={!canDelete}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
 
-          <form onSubmit={handleSend} className="flex gap-2 pt-4 border-t">
-            <Input
-              placeholder="Type your message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              disabled={sending}
-              className="flex-1"
-            />
-            <Button type="submit" disabled={sending || !newMessage.trim()} size="icon">
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </Button>
-          </form>
+              {/* Error Alert */}
+              {error && (
+                <div className="px-6 pt-4">
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                </div>
+              )}
+
+              {/* MESSAGES AREA */}
+              <div className="flex-1 px-6 py-4 space-y-4">
+                {loading && messages.length === 0 ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No messages yet. Start the conversation!
+                  </div>
+                ) : (
+                  messages.map((msg) => {
+                    const isOwnMessage = msg.sender_id === user?.id;
+                    const isEditing = editingMessageId === msg.id;
+                    
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                            isOwnMessage
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-secondary text-secondary-foreground'
+                          }`}
+                        >
+                          {isEditing ? (
+                            <div className="space-y-2">
+                              <Input
+                                value={editingText}
+                                onChange={(e) => setEditingText(e.target.value)}
+                                className="text-sm"
+                                autoFocus
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleSaveEdit(msg.id)}
+                                  className="h-7 px-2"
+                                >
+                                  <Check className="w-3 h-3 mr-1" />
+                                  Save
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleCancelEdit}
+                                  className="h-7 px-2"
+                                >
+                                  <X className="w-3 h-3 mr-1" />
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm flex-1">
+                                  {msg.is_deleted ? (
+                                    <span className="italic opacity-70">This message was deleted</span>
+                                  ) : (
+                                    msg.message
+                                  )}
+                                </p>
+                                {isOwnMessage && !msg.is_deleted && (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 opacity-70 hover:opacity-100"
+                                      >
+                                        <MoreVertical className="w-3 h-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => handleStartEdit(msg)}>
+                                        <Edit2 className="w-3 h-3 mr-2" />
+                                        Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => setMessageToDelete(msg.id)}
+                                        className="text-destructive"
+                                      >
+                                        <Trash2 className="w-3 h-3 mr-2" />
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className="text-xs opacity-70">
+                                  {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                                </p>
+                                {msg.edited_at && (
+                                  <span className="text-xs opacity-70 italic">(edited)</span>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* MESSAGE INPUT - At bottom of scroll container */}
+              <div className="sticky bottom-0 bg-background border-t px-6 py-4">
+                <form onSubmit={handleSend} className="flex gap-2">
+                  <Input
+                    placeholder="Type your message..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    disabled={sending}
+                    className="flex-1"
+                  />
+                  <Button type="submit" disabled={sending || !newMessage.trim()} size="icon">
+                    {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  </Button>
+                </form>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

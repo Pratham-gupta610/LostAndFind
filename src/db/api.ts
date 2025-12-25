@@ -273,19 +273,23 @@ export const getOrCreateConversation = async (
   lostItemOwnerId: string,
   foundItemReporterId: string
 ): Promise<ChatConversation | null> => {
+  // Determine item_id and item_type
+  const itemId = lostItemId || foundItemId;
+  const itemType = lostItemId ? 'lost' : 'found';
+  const participantIds = [lostItemOwnerId, foundItemReporterId];
+
+  if (!itemId) {
+    throw new Error('Either lostItemId or foundItemId must be provided');
+  }
+
   // First try to get existing conversation
-  let query = supabase
+  const { data: existing } = await supabase
     .from('chat_conversations')
-    .select('*');
-
-  if (lostItemId) {
-    query = query.eq('lost_item_id', lostItemId);
-  }
-  if (foundItemId) {
-    query = query.eq('found_item_id', foundItemId);
-  }
-
-  const { data: existing } = await query.maybeSingle();
+    .select('*')
+    .eq('item_id', itemId)
+    .eq('item_type', itemType)
+    .contains('participant_ids', participantIds)
+    .maybeSingle();
 
   if (existing) {
     return existing;
@@ -295,6 +299,10 @@ export const getOrCreateConversation = async (
   const { data, error } = await supabase
     .from('chat_conversations')
     .insert({
+      item_id: itemId,
+      item_type: itemType,
+      participant_ids: participantIds,
+      // Keep legacy fields for backward compatibility
       lost_item_id: lostItemId,
       found_item_id: foundItemId,
       lost_item_owner_id: lostItemOwnerId,
@@ -621,15 +629,9 @@ export const deleteChatForUser = async (conversationId: string, userId: string) 
 // Get conversations for user (excluding deleted ones)
 export const getChatConversationsForUser = async (userId: string) => {
   const { data, error } = await supabase
-    .from('chat_conversations')
-    .select(`
-      *,
-      lost_item:lost_items_with_profile!lost_item_id(*),
-      found_item:found_items_with_profile!found_item_id(*),
-      lost_owner:profiles!lost_item_owner_id(id, username, full_name, email, phone),
-      found_reporter:profiles!found_item_reporter_id(id, username, full_name, email, phone)
-    `)
-    .or(`lost_item_owner_id.eq.${userId},found_item_reporter_id.eq.${userId}`)
+    .from('chat_conversations_with_details')
+    .select('*')
+    .contains('participant_ids', [userId])
     .order('updated_at', { ascending: false });
 
   if (error) {
@@ -637,7 +639,7 @@ export const getChatConversationsForUser = async (userId: string) => {
     throw error;
   }
 
-  // Filter out conversations deleted by this user (client-side filter due to RLS)
+  // Filter out conversations deleted by this user
   const filtered = (data || []).filter(conv => {
     const deletedBy = conv.deleted_by_user_ids || [];
     return !deletedBy.includes(userId);
