@@ -5,13 +5,12 @@
 ### 1.1 Application Name
 FINDIT.AI\n
 ### 1.2 Application Description
-A modern, highly interactive multi-campus Lost & Found web application designed to help users report and search for lost or found items across multiple campus locations, with a focus on trust-first design and seamless user experience. Features secure college email authentication with OTP verification for first-time users only, built-in messaging system with advanced chat management including one-sided deletion, role-based conclusion system, and editable/deletable messages for direct communication between users, and AI-powered intelligent matching to automatically identify potential matches between lost and found items.
+A modern, highly interactive multi-campus Lost & Found web application designed to help users report and search for lost or found items across multiple campus locations, with a focus on trust-first design and seamless user experience. Features secure college email authentication with OTP verification for first-time users only, built-in real-time messaging system with WhatsApp-like delivery states, blue tick read receipts, intelligent popup notifications, advanced chat management including one-sided deletion, role-based conclusion system, and editable/deletable messages for direct communication between users, and AI-powered intelligent matching to automatically identify potential matches between lost and found items.
 
 ### 1.3 Target Users
 Campus community members (students, faculty, staff) who need to report lost items, search for found items, or help return items to their owners.
 
-## 2. Core Functionality
-
+## 2. Core Functionality\n
 ### 2.1 User Authentication & Authorization
 \n#### 2.1.1 First-Time User Authentication Flow
 - **Email Entry**: User enters college email address in format *@iiitg.ac.in
@@ -69,11 +68,12 @@ Campus community members (students, faculty, staff) who need to report lost item
 **Security Rules for Password Reset**
 - OTP sent only to registered, verified email addresses
 - Do not reveal whether email exists publicly
-- Limit OTP resend attempts (max 3 attempts per15 minutes)
+- Limit OTP resend attempts (max 3 attempts per 15 minutes)
 - Log all reset attempts for security monitoring
 - Protect against brute-force attacks with rate limiting
 - Password reset OTP separate from first-time login OTP
-\n**UX Requirements**
+
+**UX Requirements**
 - Clear feedback messages:\n  - 'OTP sent to your email'
   - 'OTP expired, please request a new one'
   - 'Password updated successfully'
@@ -92,7 +92,7 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Login Required Actions**: Authentication required only when reporting items or contacting other users
 - **User Profile Storage**: Stores email, phone number, name, verification status, and login history
 \n### 2.2 Sign In/Sign Up Flow
-- **Homepage Sign In Button**: Homepage displays only'Sign In' button (no separate Sign Up option)
+- **Homepage Sign In Button**: Homepage displays only 'Sign In' button (no separate Sign Up option)
 - **Sign In Page**: Clicking 'Sign In' directs to login page
 - **Forgot Password Link**: Login page includes 'Forgot Password?' link for password recovery
 - **Sign Up Link**: Login page includes text 'Don't have an account? Sign Up' at bottom
@@ -131,7 +131,7 @@ Campus community members (students, faculty, staff) who need to report lost item
   - Validate inputs (non-empty full name, valid unique username)\n  - Update profile record in database
   - Show success message on successful update
   - Show error message if validation fails or update fails
-  - Disable'Save' button while updating (prevent duplicate submissions)
+  - Disable 'Save' button while updating (prevent duplicate submissions)
 - **Cancel Action**:
   - Revert all input fields to last saved values
   - Return to view mode without saving changes
@@ -161,17 +161,17 @@ Campus community members (students, faculty, staff) who need to report lost item
 
 ### 2.4 Navigation System
 - **Right Sidebar Menu**: All navigation items (Lost Items, Found Items, Report Lost, Report Found, Return History, Messages) placed in collapsible sidebar on right side
-- **Sidebar Toggle**: Open/close sidebar using menu icon
+- **Sidebar Toggle**: Open/close sidebar using three-line hamburger menu icon (☰)
 - **Mobile Scrollable Sidebar**: On mobile devices (Android and iOS), sidebar content is fully scrollable to access all menu items comfortably
-- **Top Header**: Displays'FINDIT.AI' site name with search icon, keeping top area clean and minimal
-- **Mobile Responsive**: Sidebar adapts to mobile screens with smooth slide-in/slide-out animations\n
+- **Top Header**: Displays 'FINDIT.AI' site name with search icon, keeping top area clean and minimal
+- **Mobile Responsive**: Sidebar adapts to mobile screens with smooth slide-in/slide-out animations
+
 ### 2.5 Homepage Structure
 The homepage displays three clearly separated sections with real-time statistics:
 - **Lost Items Section**: Shows all reported lost items with live count
 - **Found Items Section**: Shows all reported found items with live count
 - **Public Return Section**: Shows history of successful returns with live count (clickable items), displaying most recent returns at the top
-
-**Real-Time Counter Updates**: All three section counters automatically update immediately when:\n- New items are added\n- Status changes occur\n- Items are concluded as 'Item Found' or 'Owner Found' (counters adjust accordingly: Lost/Found counts decrease, Return count increases)
+\n**Real-Time Counter Updates**: All three section counters automatically update immediately when:\n- New items are added\n- Status changes occur\n- Items are concluded as 'Item Found' or 'Owner Found' (counters adjust accordingly: Lost/Found counts decrease, Return count increases)
 
 All sections sorted by latest first with date-range filter options.
 
@@ -180,12 +180,13 @@ Two separate, independent search systems:
 - **Lost Items Search**: Searches only within lost item reports
 - **Found Items Search**: Searches only within found item reports\n\nSearch results update instantly to reflect new entries with no mixing between categories.
 
-### 2.7 Item Reporting\n- **Report Lost Item**: Form for users to submit lost item details (requires login), with'My Reports' history visible on same page
+### 2.7 Item Reporting\n- **Report Lost Item**: Form for users to submit lost item details (requires login), with 'My Reports' history visible on same page
   - Fields include: title, description, category, color, brand, location, date, optional images
   - **Location Suggestions**: When user enters location, system provides quick-select suggestions including:\n    - Student Activity Centre
     - Day Canteen
     - Night Canteen
-    - Others\n    - (Plus any other relevant campus locations)
+    - Others
+    - (Plus any other relevant campus locations)
 - **Report Found Item**: Form for users to submit found item details (requires login), with 'My Reports' history visible on same page
   - Fields include: title, description, category, color, brand, location, date, optional images
   - **Location Suggestions**: Same location suggestions as Report Lost Item form
@@ -198,7 +199,7 @@ Two separate, independent search systems:
 - Returned item details show: owner information, finder information, return date, and item details
 - **Match Indicator**: If item is identified as potential match by AI system, badge displays match confidence percentage
 \n### 2.9 AI-Powered Lost & Found Matching Assistant
-\n#### 2.9.1Matching Algorithm
+\n#### 2.9.1 Matching Algorithm
 - **Automatic Evaluation**: When found item is reported, system automatically compares against all existing lost item reports
 - **Similarity Analysis**: AI evaluates matches based on:
   - Text similarity (title, description, category)
@@ -220,32 +221,90 @@ Two separate, independent search systems:
 #### 2.9.3 Match Output Format
 System generates match results in following structure:
 - similarity_score: numerical value (0-100)
-- is_match: boolean (true if score ≥ 75%)\n- reason: short explanation text
+- is_match: boolean (true if score ≥ 75%)
+- reason: short explanation text
 - actions: send_email (boolean), enable_chat (boolean)\n\n#### 2.9.4 Privacy & Safety Rules
 - Personal contact details (phone numbers, emails) never exposed directly in match notifications
 - Users must initiate contact through secure in-app messaging system
 - Conservative matching approach: only scores ≥ 75% trigger notifications
-\n### 2.10 Advanced Messaging System with Controlled Deletion & Conclusions
+\n### 2.10 Advanced Real-Time Messaging System with WhatsApp-Like Features
 
-#### 2.10.1 Chat User Identity Display
+#### 2.10.1 Chat Visibility & Creation Rule
+- **Chat Creation Trigger**: A chat conversation is created and appears in the chat list ONLY AFTER one user sends the first text message
+- **No Empty Chats**: If two users have never exchanged messages, the chat must NOT appear in either user's chat list
+- **Database Behavior**: Chat record is created in database only when first message is sent
+- **Real-Time Appearance**: Once first message is sent, chat appears immediately in both users' chat lists
+
+#### 2.10.2 Message Delivery States
+Each message must track the following states:
+- **sent**: Message stored on server
+- **delivered**: Message delivered to receiver device
+- **read**: Receiver has opened the chat and seen the message
+\n**Database Fields**:
+- message_id (UUID, primary key)\n- chat_id (UUID, references chats table)
+- sender_id (UUID, references users)\n- receiver_id (UUID, references users)
+- content (text)\n- sent_at (timestamp)\n- delivered (boolean, default false)
+- delivered_at (timestamp, nullable)
+- read (boolean, default false)
+- read_at (timestamp, nullable)
+- is_deleted (boolean, default false)
+- edited_at (timestamp, nullable)
+\n#### 2.10.3 Blue Tick Read Receipts (WhatsApp-Style)
+- **Tick Icons**:
+  - ✔️ (single gray tick) = sent\n  - ✔️✔️ (double gray ticks) = delivered
+  - 💙✔️✔️ (double blue ticks) = read/seen
+\n- **Read Receipt Behavior**:
+  - When receiver opens the chat:\n    - Mark all unread messages as read in database
+    - Set read = true and read_at = current timestamp
+    - Notify sender in real time via Supabase Realtime\n    - Update sender UI to show blue ticks immediately
+  - Blue ticks appear only after receiver has opened and viewed the chat
+  - Delivered ticks appear when message reaches receiver device
+
+#### 2.10.4 Popup Notification System
+- **Trigger**: When a user receives a new message\n- **Popup Appearance**:
+  - Show in-app popup notification near the three-line hamburger icon (☰)
+  - Popup contains:
+    - Sender username (fetched dynamically from profiles table)
+    - Message text preview (first 50 characters)
+  - Popup appears immediately in real time using Supabase Realtime\n  - Popup auto-dismisses after 5 seconds or when user clicks it
+
+- **Important Rule**: At this stage, DO NOT show unread badge in the chat list yet
+- **Popup Click Behavior**: Clicking popup opens the chat directly and marks messages as read
+\n#### 2.10.5 Three-Line Icon (☰) Interaction & Unread Badge Logic
+- **Three-Line Icon Purpose**: Represents opening the chat panel/sidebar
+- **Unread Badge Display Rule**:
+  - Unread badge/dot/count appears on chat items ONLY when user clicks the three-line icon (☰) to open chat list
+  - Badge shows number of unread messages for each chat
+  - Badge color: red or blue to indicate unread status
+\n- **Unread Message Indicator Logic**:
+  - If message arrives and chat is not open:
+    - Show popup near ☰ icon
+    - Do NOT show unread badge yet
+  - When ☰ icon is clicked:
+    - Display chat list\n    - Show unread badge on chats with unseen messages
+  - When user opens a specific chat:
+    - Clear unread badge for that chat
+    - Mark all messages in that chat as read\n    - Trigger blue ticks for the sender in real time
+
+#### 2.10.6 Chat User Identity Display
 - **Username Display**: In every chat conversation, clearly display the username of the other person
 - **Dynamic Fetching**: Fetch usernames dynamically from profiles table using user_id
-- **Storage Rule**: Do NOT store usernames inside chat messages\n- **Real-Time Updates**: Username changes in profile reflect immediately in active chats
+- **Storage Rule**: Do NOT store usernames inside chat messages
+- **Real-Time Updates**: Username changes in profile reflect immediately in active chats
 
-#### 2.10.2 Chat Access & Initiation
+#### 2.10.7 Chat Access & Initiation
 - **Chat Interface**: Built-in messaging system allowing users to communicate directly within application
 - **Contact Flow**: When someone reports found item, they can contact person who reported lost item through chat section
 - **AI Match Integration**: When potential match identified, private chat session automatically enabled between owner and finder
 - **Login Required**: Users must be logged in to access messaging features
 - **Private Sessions**: Chat sessions accessible only to matched users involved\n
-#### 2.10.3 One-Sided Chat Deletion (Device/User-Specific)
+#### 2.10.8 One-Sided Chat Deletion (Device/User-Specific)
 - **User-Specific Deletion**: Deleting a chat must be DEVICE/USER-SPECIFIC\n- **Deletion Behavior**:
-  - If User A deletes a chat: chat is removed ONLY from User A's chat list
-  - Chat MUST remain visible for User B\n- **Implementation Mechanism**: Use `chat_visibility` or `deleted_by_user_ids` field to track which users have deleted the chat
+  - If User A deletes a chat: chat is removed ONLY from User A's chat list\n  - Chat MUST remain visible for User B\n- **Implementation Mechanism**: Use `chat_visibility` table or `deleted_by_user_ids` field to track which users have deleted the chat
 - **Database Structure**: Never hard-delete chat messages globally unless both users delete manually
 - **Visibility Control**: Each user maintains their own visibility state for each chat
 
-#### 2.10.4 Role-Based Conclusion System
+#### 2.10.9 Role-Based Conclusion System
 \n**General Rules**:
 - A conclusion system must exist before allowing chat deletion
 - Conclusion requirements depend on who reported the item
@@ -253,20 +312,19 @@ System generates match results in following structure:
 - Non-reporters have unrestricted delete access
 \n**When User Reported a FOUND Item**:
 \n- **UI Elements**:
-  - User who reported found item sees'Conclusion' button near Delete Chat button
+  - User who reported found item sees 'Conclusion' button near Delete Chat button
   - Delete Chat button is DISABLED by default
 \n- **Conclusion Options**:
   1. Owner Found\n  2. Owner Not Found
-\n- **If'Owner Found' Selected**:
-  - Show confirmation dialog:'Are you sure the owner is found?'
+\n- **If 'Owner Found' Selected**:
+  - Show confirmation dialog: 'Are you sure the owner is found?'
   - On confirmation:\n    - Delete the found item from FOUND ITEMS list
     - Add the item to Public Return Section at the top (most recent first)
     - Update homepage statistics: decrease Found Items count, increase Return Items count
     - Keep the item in item history with status 'Owner Found'
     - Enable the Delete Chat button
 \n- **If 'Owner Not Found' Selected**:
-  - Show confirmation dialog: 'Are you sure the owner is not found?'
-  - On confirmation:
+  - Show confirmation dialog: 'Are you sure the owner is not found?'\n  - On confirmation:
     - DO NOT delete the found item from found list
     - Keep item active and searchable\n    - Enable the Delete Chat button
 
@@ -301,19 +359,25 @@ System generates match results in following structure:
   - Their delete action affects only their own chat view (one-sided deletion)
   - Can delete chat freely without any conclusion requirement
 
-#### 2.10.5 Message Management Features
+#### 2.10.10 Message Management Features
 - **Editable Messages**: Users can edit only their own messages
   - Edited messages update in real-time for both participants
-  - Show'edited' label with timestamp after modification
+  - Show 'edited' label with timestamp after modification
   - Edit history not visible to other user
 - **Deletable Messages**: Users can delete only their own messages
   - Support both soft delete (message replaced with 'Deleted') and hard delete (removed from database)
   - Deletion changes reflect instantly in real-time chat
   - Other user cannot recover deleted messages
 - **Permission Control**: Users cannot edit or delete others' messages
-\n#### 2.10.6 Chat Features
-- **Real-Time Delivery**: Messages delivered instantly with real-time synchronization
-- **Message Notifications**: Users receive notifications for new messages
+\n#### 2.10.11 Real-Time Requirements
+- **Real-Time Delivery**: Messages delivered instantly with real-time synchronization using Supabase Realtime\n- **Real-Time Tick Updates**: Delivery and read states update in real time without page reload
+- **Real-Time Popup Notifications**: Popups appear immediately when messages arrive
+- **Real-Time Unread Badges**: Unread counts update instantly when messages are read
+- **No Page Reloads**: All updates happen seamlessly without requiring page refresh
+- **Multiple Chats Support**: System correctly handles multiple simultaneous chats and users
+
+#### 2.10.12 Chat Features
+- **Message Notifications**: Users receive popup notifications for new messages near ☰ icon
 - **Conversation History**: All message threads preserved and accessible from Messages section in sidebar
 - **Chat History Deletion**:
   - Users can delete entire chat history at any time from within conversation (subject to conclusion requirements for item reporters)
@@ -321,15 +385,59 @@ System generates match results in following structure:
   - When one user deletes chat history, other user receives notification that chat history was cleared by the other party
   - Deleted chats never regenerated or recovered for the user who deleted them
 - **User Privacy**: Phone numbers and emails only shared if users choose to do so within chat conversations
+\n#### 2.10.13 Persistence Across Sessions
+- **Unread State Persistence**: Unread and read states must persist across:\n  - App reloads\n  - Logout/login\n  - Device switches
+- **Database Storage**: All message states (sent, delivered, read) stored in database
+- **Session Recovery**: When user logs back in, unread badges and message states restored correctly
+\n#### 2.10.14 Database Schema for Messaging
+\n**chats table**:
+- chat_id (UUID, primary key)
+- item_id (UUID, references items table)
+- user1_id (UUID, references users)\n- user2_id (UUID, references users)
+- created_at (timestamp, set when first message is sent)
+- last_message_at (timestamp, updated with each new message)
+\n**messages table**:
+- message_id (UUID, primary key)
+- chat_id (UUID, references chats table)
+- sender_id (UUID, references users)
+- receiver_id (UUID, references users)
+- content (text)
+- sent_at (timestamp)
+- delivered (boolean, default false)
+- delivered_at (timestamp, nullable)\n- read (boolean, default false)
+- read_at (timestamp, nullable)
+- is_deleted (boolean, default false)
+- edited_at (timestamp, nullable)\n
+**chat_visibility table**:
+- visibility_id (UUID, primary key)\n- chat_id (UUID, references chats table)
+- user_id (UUID, references users)\n- is_visible (boolean, default true)
+- deleted_at (timestamp, nullable)
 
-#### 2.10.7 Technical Implementation
-- **Backend**: Supabase Auth for authentication, Supabase PostgreSQL for data storage
-- **Real-Time**: Supabase Realtime for instant message synchronization
-- **Security**: Row Level Security (RLS) ensures users cannot access chats they're not part of
-- **Data Model**:
-  - Messages table includes: id, chat_id, sender_id, content, is_deleted, edited_at, created_at
-  - Chat visibility table includes: chat_id, user_id, is_visible, deleted_at
-  - Item conclusions table includes: item_id, item_type, conclusion_status, concluded_at, concluded_by\n\n### 2.11 Item History Management with Public History & Auto-Cleanup
+**item_conclusions table**:
+- conclusion_id (UUID, primary key)
+- item_id (UUID, references items table)
+- item_type (LOST or FOUND)
+- conclusion_status (OWNER_FOUND | OWNER_NOT_FOUND | ITEM_FOUND | ITEM_NOT_FOUND)\n- concluded_at (timestamp)\n- concluded_by (UUID, references users)
+\n#### 2.10.15 Backend Logic Requirements
+- **Chat Creation**: Create chat record in database only after first message is sent
+- **Delivered State Update**: Mark message as delivered when it reaches receiver device
+- **Read State Update**: Mark messages as read when receiver opens chat
+- **Real-Time Events**: Emit real-time events for:\n  - New messages
+  - Delivery confirmations
+  - Read receipts
+  - Popup notifications
+  - Unread badge updates
+- **Row Level Security**: Ensure users can only access chats they are part of
+
+#### 2.10.16 Frontend Logic Requirements
+- **Popup Near ☰ Icon**: Display popup notification near hamburger menu icon when new message arrives
+- **Chat List Rendering**: Render chat list only when ☰ icon is clicked
+- **Unread Badge Handling**: Show unread badges on chat items when chat list is opened
+- **Blue Tick UI Updates**: Update message ticks in real time based on delivery and read states
+- **Smooth Animations**: Animate popup appearance, badge updates, and tick changes
+- **Loading States**: Show loading indicators during message sending and state updates
+
+### 2.11 Item History Management with Public History & Auto-Cleanup
 
 #### 2.11.1 Item History Structure
 All items MUST belong to exactly one of these states:
@@ -356,14 +464,14 @@ If the item reporter selects conclusion = 'Owner Found' (for found items) OR 'It
 2. Set:\n   - status = OWNER_FOUND (for found items) or ITEM_FOUND (for lost items)
    - history_type = MAIN_HISTORY\n   - concluded_at = current timestamp
 3. Add the item to Public Return Section at the top (most recent first)
-4. Update homepage statistics in real-time:\n   - Decrease Lost Items count (if lost item concluded as'Item Found')
+4. Update homepage statistics in real-time:\n   - Decrease Lost Items count (if lost item concluded as 'Item Found')
    - Decrease Found Items count (if found item concluded as 'Owner Found')
    - Increase Return Items count\n5. Make the item visible in:\n   - Public Return Section (visible to ALL users)
 6. Remove the item from:\n   - Reporter's private Lost/Found list
-\nThis rule applies when conclusion is'Owner Found' or 'Item Found'.
-
-#### 2.11.3 Other Conclusion Behavior
-If conclusion is:\n- 'Owner Not Found'\n- 'Item Not Found'\n\nThen:
+\nThis rule applies when conclusion is 'Owner Found' or 'Item Found'.
+\n#### 2.11.3 Other Conclusion Behavior
+If conclusion is:\n- 'Owner Not Found'\n- 'Item Not Found'\n
+Then:
 1. Remove item from ACTIVE list (if required by logic)
 2. Set:\n   - history_type = USER_HISTORY
    - status = OWNER_NOT_FOUND or ITEM_NOT_FOUND (as appropriate)
@@ -377,9 +485,11 @@ If conclusion is:\n- 'Owner Not Found'\n- 'Item Not Found'\n\nThen:
 - **Read-Only**: No user can edit or delete MAIN_HISTORY items manually
 - **Display**: Public Return Section shows all items with history_type = MAIN_HISTORY
 - **Sorting**: Items sorted by concluded_at timestamp (latest first, most recent at top)
-- **Real-Time Updates**: Public Return Section updates immediately when items are concluded as 'Owner Found' or 'Item Found'\n
+- **Real-Time Updates**: Public Return Section updates immediately when items are concluded as 'Owner Found' or 'Item Found'
+
 #### 2.11.5 Auto-Delete Policy (CRITICAL)
-Automatically delete items older than 6 months based on concluded_at timestamp.\n\nThis auto-delete applies to ALL:\n- USER_HISTORY items
+Automatically delete items older than 6 months based on concluded_at timestamp.\n
+This auto-delete applies to ALL:\n- USER_HISTORY items
 - MAIN_HISTORY items
 - Any remaining inactive Lost/Found history\n- ACTIVE items in Lost/Found lists that are older than 6 months
 \nNO EXCEPTIONS.\n
@@ -391,7 +501,7 @@ Automatically delete items older than 6 months based on concluded_at timestamp.\
 - **Deletion Process**:
   - Permanently remove item records from database
   - Remove related chat references safely (cascade delete or set to null)
-  - Do not affect active items within6-month window
+  - Do not affect active items within 6-month window
   - Log deletion events for audit trail
   - Update homepage statistics accordingly when items are auto-deleted
 
@@ -415,7 +525,7 @@ Automatically delete items older than 6 months based on concluded_at timestamp.\
 #### 2.11.9 Validation Rules
 Implementation is INVALID if:
 - 'Owner Found' or 'Item Found' items are not visible to all users in Public Return Section
-- Homepage statistics do not update when items are concluded\n- Old items remain after6 months
+- Homepage statistics do not update when items are concluded\n- Old items remain after 6 months
 - Users can delete public history manually
 - Items exist in multiple lists simultaneously
 - concluded_at or date_reported timestamps are not properly tracked
@@ -440,10 +550,13 @@ Users can view their own submission history directly on Report Lost/Report Found
 
 #### 2.14.1 Visual Feedback
 - **Disabled State**: Delete Chat button visually disabled (grayed out) until conclusion is made (for item reporters)
-- **Loading States**: Show loading indicator while applying conclusion
+- **Loading States**: Show loading indicator while applying conclusion or sending messages
 - **Success Feedback**: Display success message after conclusion is applied
-- **Error Handling**: Show user-friendly error messages if conclusion fails
+- **Error Handling**: Show user-friendly error messages if conclusion fails or message sending fails
 - **Confirmation Dialogs**: Clear, concise confirmation messages for all conclusion actions
+- **Tick Animations**: Smooth transitions when ticks change from gray to blue
+- **Popup Animations**: Smooth slide-in animation for popup notifications near ☰ icon
+- **Badge Animations**: Smooth appearance and disappearance of unread badges
 
 #### 2.14.2 Interaction Design
 - **Prevent Double Actions**: Disable conclusion buttons after first click to prevent multiple conclusions
@@ -451,39 +564,49 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Smooth Transitions**: Animate state changes (button enabling, item removal from lists, item addition to Public Return Section)
 - **Notification Display**: Show clear notification when other user deletes chat history
 - **Statistics Animation**: Smooth counter transitions when homepage statistics update
+- **Popup Click Behavior**: Clicking popup opens chat directly and marks messages as read
+- **Badge Click Behavior**: Clicking chat with unread badge opens chat and clears badge
 
 #### 2.14.3 Data Integrity & Security
 - **Authorization Rules**:
   - Only item owners can conclude items
   - Only chat participants can delete their own chat view
   - Never allow one user to delete chats or items for another user
-- **Validation**: Validate user permissions before allowing any conclusion or deletion action
-- **Audit Trail**: Log all conclusions and deletions for security and dispute resolution
+  - Only message senders can edit or delete their own messages
+- **Validation**: Validate user permissions before allowing any conclusion, deletion, or message action
+- **Audit Trail**: Log all conclusions, deletions, message edits, and state changes for security and dispute resolution
 - **Rollback Prevention**: Once conclusion is made, it cannot be undone (permanent action)
+- **Real-Time Security**: Ensure real-time updates respect Row Level Security policies
 
 ### 2.15 Test Data\nPreload realistic test data across all categories (Lost Items, Found Items, Public Return Section) to demonstrate full functionality including:
 - Active lost and found items
 - Items with various conclusion statuses
 - Public history items (Owner Found, Item Found) displayed in Public Return Section
-- Private history items (Owner Not Found, Item Not Found)\n- Chat conversations with various states (concluded, not concluded, deleted by one user)\n- Items approaching6-month auto-delete threshold
+- Private history items (Owner Not Found, Item Not Found)\n- Chat conversations with various states (concluded, not concluded, deleted by one user)\n- Messages with different delivery states (sent, delivered, read)
+- Unread messages to test popup notifications and badge behavior
+- Items approaching 6-month auto-delete threshold
 - Accurate homepage statistics reflecting current counts
 
 ## 3. Design Style\n
 ### 3.1 Visual Theme
 - **Color Scheme**: Trust-inspiring blue primary color (#2563EB) paired with clean white backgrounds and soft gray accents (#F3F4F6 for cards, #6B7280 for secondary text)
-- **Layout Style**: Card-based grid layout with clear visual separation between sections,ample white space for breathing room
+- **Layout Style**: Card-based grid layout with clear visual separation between sections, ample white space for breathing room
 - **Typography**: Modern sans-serif font (Inter or similar) with clear hierarchy — bold headings, regular body text, and subtle labels
 \n### 3.2 Interactive Elements
 - **Smooth Animations**: Fade-in effects for page loads, hover scale transforms on cards (1.02x), smooth transitions (200-300ms) on all interactive elements
 - **Button Styles**: Rounded corners (8px), solid primary buttons with hover darkening effect, outlined secondary buttons, disabled state with reduced opacity
-- **Card Design**: Soft shadows (01px 3px rgba(0,0,0,0.1)),12px border radius, hover elevation effect\n- **Counter Animations**: Smooth number transitions when statistics update (including real-time updates when conclusions are made)
+- **Card Design**: Soft shadows (0 1px 3px rgba(0,0,0,0.1)), 12px border radius, hover elevation effect\n- **Counter Animations**: Smooth number transitions when statistics update (including real-time updates when conclusions are made)
 - **Sidebar Animation**: Smooth slide-in/slide-out effect with backdrop overlay, fully scrollable on mobile devices
 - **Match Badges**: Distinctive badge design for AI-identified matches with confidence percentage display
 - **Conclusion Buttons**: Prominent, clearly labeled buttons with distinct styling for different conclusion options
 - **Disabled Button Styling**: Grayed-out appearance with reduced opacity (0.5) and no-cursor pointer for disabled Delete Chat button
 - **History Badges**: Clear visual indicators for MAIN_HISTORY items (public) vs USER_HISTORY items (private)\n- **Location Suggestions**: Dropdown or autocomplete UI for location field with quick-select options (Student Activity Centre, Day Canteen, Night Canteen, Others, etc.)
+- **Message Tick Icons**: WhatsApp-style tick icons (✔️, ✔️✔️, 💙✔️✔️) with smooth color transitions
+- **Popup Notification Design**: Clean, modern popup near ☰ icon with sender name and message preview, auto-dismiss after 5 seconds
+- **Unread Badge Design**: Red or blue circular badge with unread count, positioned on chat items in chat list
 
-### 3.3 User Experience\n- **Production-Level UX**: Intuitive navigation flow, clear call-to-action buttons, instant feedback on user actions\n- **Trust-First Design**: Professional appearance, clear information hierarchy, reassuring color palette, transparent process indicators
+### 3.3 User Experience\n- **Production-Level UX**: Intuitive navigation flow, clear call-to-action buttons, instant feedback on user actions
+- **Trust-First Design**: Professional appearance, clear information hierarchy, reassuring color palette, transparent process indicators
 - **Responsive Behavior**: Smooth transitions between states, loading indicators where appropriate, error handling with friendly messages
 - **Real-Time Updates**: Homepage statistics refresh automatically without page reload when items added, status changes occur, or conclusions are made
 - **Guest-Friendly Browsing**: Users can explore all content without login barriers, with clear prompts when authentication needed
@@ -493,13 +616,15 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Controlled Chat Lifecycle**: Clear visual indicators for chat states, conclusion requirements, and deletion permissions
 - **Role-Based Interface**: Different UI elements shown based on user role (item reporter vs. non-reporter)
 - **Public History Transparency**: Clear distinction between public Public Return Section and private User History\n- **Auto-Cleanup Awareness**: Optional notification or indicator for items approaching 6-month auto-delete threshold\n- **Location Input Convenience**: Quick-select location suggestions improve reporting speed and consistency
+- **WhatsApp-Like Messaging**: Familiar messaging experience with delivery states, blue ticks, and popup notifications
+- **Intelligent Notification System**: Popup notifications appear immediately near ☰ icon, unread badges shown only when chat list is opened
+- **Seamless Real-Time Experience**: All message states, ticks, popups, and badges update instantly without page reloads
 
 ## 4. Technical Stack
 - **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
 - **Database**: Supabase PostgreSQL
-- **Real-Time Communication**: Supabase Realtime
-- **Email Service**: Supabase Email Service
-- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
+- **Real-Time Communication**: Supabase Realtime (for messages, delivery states, read receipts, popup notifications, unread badges)
+- **Email Service**: Supabase Email Service\n- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
 \n## 5. Referenced Images
 - image.png (sidebar navigation reference)
 - image-2.png (UI layout reference)
