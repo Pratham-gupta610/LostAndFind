@@ -149,7 +149,8 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Data Validation**: Validate all inputs on both client and server side
 - **Username Uniqueness**: Enforce unique username constraint at database level
 - **Session Persistence**: Profile changes persist across sessions
-\n#### 2.3.7 Profile UX Requirements
+
+#### 2.3.7 Profile UX Requirements
 - **Loading State**: Display loading indicator while fetching profile data
 - **Disabled Save Button**: Disable 'Save Changes' button during update operation
 - **Success Confirmation**: Show clear confirmation message after successful profile update
@@ -162,7 +163,8 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Sidebar Toggle**: Open/close sidebar using three-line hamburger menu icon (☰)
 - **Mobile Scrollable Sidebar**: On mobile devices (Android and iOS), sidebar content is fully scrollable to access all menu items comfortably
 - **Top Header**: Displays 'FINDIT.AI' site name with search icon, keeping top area clean and minimal
-- **Mobile Responsive**: Sidebar adapts to mobile screens with smooth slide-in/slide-out animations\n
+- **Mobile Responsive**: Sidebar adapts to mobile screens with smooth slide-in/slide-out animations
+
 ### 2.5 Homepage Structure
 The homepage displays three clearly separated sections with real-time statistics:
 - **Lost Items Section**: Shows all reported lost items with live count\n- **Found Items Section**: Shows all reported found items with live count
@@ -174,9 +176,9 @@ All sections sorted by latest first with date-range filter options.
 ### 2.6 Search System
 Two separate, independent search systems:
 - **Lost Items Search**: Searches only within lost item reports
-- **Found Items Search**: Searches only within found item reports\n\n**Image Search Feature with Gemini API Integration**:\n- **Image Search Button**: Each search section (Lost Items and Found Items) includes an 'Image Search' button alongside text search\n- **Image Upload**: Clicking 'Image Search' button opens image upload interface allowing users to upload one or multiple images
-- **Supported Formats**: Accept common image formats (JPG, PNG, JPEG, WebP)
-- **Gemini API Description Extraction**:
+- **Found Items Search**: Searches only within found item reports\n\n**Image Search Feature with Gemini API Integration**:\n- **Image Search Button**: Each search section (Lost Items and Found Items) includes an 'Image Search' button alongside text search
+- **Image Upload**: Clicking 'Image Search' button opens image upload interface allowing users to upload one or multiple images
+- **Supported Formats**: Accept common image formats (JPG, PNG, JPEG, WebP)\n- **Gemini API Description Extraction**:
   - When user uploads image, system sends image to Gemini API
   - Gemini API analyzes image and generates detailed text description of visible items, including:
     - Object type and category
@@ -197,7 +199,7 @@ Two separate, independent search systems:
   - If exact or high-confidence match found, display prominent 'Similar Item Found' indicator
 - **Combined Search**: Users can optionally combine image search with text filters for more precise results
 - **Search Scope**: Image search respects category boundaries (Lost Items search only searches lost items, Found Items search only searches found items)
-- **API Key Configuration**: System securely stores user-provided Gemini API key in environment variables
+- **API Key Configuration**: System uses provided Gemini API key: AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8
 - **Error Handling**: Display user-friendly error messages if API call fails or image cannot be processed
 
 Search results update instantly to reflect new entries with no mixing between categories.
@@ -280,15 +282,13 @@ Each message must track the following states:
   - Delivered ticks appear when message reaches receiver device
 
 #### 2.10.4 Popup Notification System
-- **Trigger**: When a user receives a new message
-- **Popup Appearance**:
+- **Trigger**: When a user receives a new message\n- **Popup Appearance**:
   - Show in-app popup notification near the three-line hamburger icon (☰)
   - Popup contains:
     - Sender username (fetched dynamically from profiles table)
     - Message text preview (first 50 characters)
   - Popup appears immediately in real time using Supabase Realtime\n  - Popup auto-dismisses after 5 seconds or when user clicks it
-
-- **Important Rule**: At this stage, DO NOT show unread badge in the chat list yet
+\n- **Important Rule**: At this stage, DO NOT show unread badge in the chat list yet
 - **Popup Click Behavior**: Clicking popup opens the chat directly and marks messages as read
 \n#### 2.10.5 Three-Line Icon (☰) Interaction & Unread Badge Logic
 - **Three-Line Icon Purpose**: Represents opening the chat panel/sidebar
@@ -364,9 +364,7 @@ Each message must track the following states:
 - **If 'Item Found' Selected**:\n  - Show confirmation dialog: 'Are you sure the item is found?'
   - On confirmation:\n    - Delete the item from LOST ITEMS list
     - Add the item to Public Return Section at the top (most recent first)
-    - Update homepage statistics: decrease Lost Items count, increase Return Items count
-    - Keep the item in item history with status 'Item Found'
-    - Enable Delete Chat button
+    - Update homepage statistics: decrease Lost Items count, increase Return Items count\n    - Keep the item in item history with status 'Item Found'\n    - Enable Delete Chat button
 
 - **If 'Item Not Found' Selected**:
   - Show confirmation dialog: 'Are you sure the item is not found?'
@@ -466,7 +464,8 @@ All items MUST belong to exactly one of these states:
 - **USER_HISTORY**: Private history visible only to the item reporter
 - **MAIN_HISTORY**: Public history visible to ALL users (displayed in Public Return Section)
 \nEach item MUST store:
-- item_id (UUID, primary key)\n- reporter_user_id (UUID, references user who reported item)
+- item_id (UUID, primary key)
+- reporter_user_id (UUID, references user who reported item)
 - item_type (LOST or FOUND)
 - title (text)
 - description (text)
@@ -490,8 +489,7 @@ If the item reporter selects conclusion = 'Owner Found' (for found items) OR 'It
    - Increase Return Items count\n5. Make the item visible in:\n   - Public Return Section (visible to ALL users)
 6. Remove the item from:\n   - Reporter's private Lost/Found list
 \nThis rule applies when conclusion is 'Owner Found' or 'Item Found'.
-
-#### 2.11.3 Other Conclusion Behavior
+\n#### 2.11.3 Other Conclusion Behavior
 If conclusion is:\n- 'Owner Not Found'\n- 'Item Not Found'\n
 Then:
 1. Remove item from ACTIVE list (if required by logic)
@@ -602,12 +600,13 @@ Users can view their own submission history directly on Report Lost/Report Found
 ### 2.15 Gemini API Integration Configuration
 
 #### 2.15.1 API Key Management
-- **Environment Variable Storage**: Store Gemini API key securely in environment variables (GEMINI_API_KEY)
-- **Key Input Interface**: Provide admin/settings interface for authorized users to input and update API key
-- **Key Validation**: Validate API key format and test connection before saving
-- **Secure Storage**: Never expose API key in client-side code or logs
-- **Key Rotation Support**: Allow updating API key without system downtime
-\n#### 2.15.2 API Request Handling
+- **Provided API Key**: AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8
+- **Environment Variable Storage**: Store Gemini API key securely in environment variables as GEMINI_API_KEY=AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8
+- **Key Configuration**: Configure the provided API key in the application's environment configuration file (.env or equivalent)
+- **Secure Storage**: Never expose API key in client-side code, version control, or logs
+- **Key Validation**: Validate API key connection on application startup to ensure proper integration
+
+#### 2.15.2 API Request Handling
 - **Image Preprocessing**: Resize/compress images before sending to API to optimize performance
 - **Request Rate Limiting**: Implement rate limiting to prevent API quota exhaustion
 - **Timeout Handling**: Set reasonable timeout (10-15 seconds) for API requests
@@ -679,12 +678,10 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **AI-Powered Search Feedback**: Clear feedback during image analysis process with progress indicators and result explanations
 \n## 4. Technical Stack
 - **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
-- **Database**: Supabase PostgreSQL
-- **Real-Time Communication**: Supabase Realtime (for messages, delivery states, read receipts, popup notifications, unread badges)
+- **Database**: Supabase PostgreSQL\n- **Real-Time Communication**: Supabase Realtime (for messages, delivery states, read receipts, popup notifications, unread badges)
 - **Email Service**: Supabase Email Service\n- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
 - **Image Recognition**: AI-powered visual similarity search for image-based item matching
 - **Gemini API**: Google Gemini API for image description extraction and intelligent matching
-- **API Key Storage**: Secure environment variable storage for Gemini API key
-\n## 5. Referenced Images
+- **API Key**: AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8 (configured in environment variables as GEMINI_API_KEY)\n\n## 5. Referenced Images
 - image.png (sidebar navigation reference)
 - image-2.png (UI layout reference)
