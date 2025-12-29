@@ -13,7 +13,7 @@ import SignupPage from './pages/SignupPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
-import MatchesPage from './pages/MatchesPage';
+import ImageSearchPage from './pages/ImageSearchPage';
 import type { ReactNode } from 'react';
 
 interface RouteConfig {
@@ -50,9 +50,9 @@ const routes: RouteConfig[] = [
     element: <ReportFoundPage />
   },
   {
-    name: 'Matches',
-    path: '/matches',
-    element: <MatchesPage />
+    name: 'Image Search',
+    path: '/image-search',
+    element: <ImageSearchPage />
   },
   {
     name: 'Success Stories',

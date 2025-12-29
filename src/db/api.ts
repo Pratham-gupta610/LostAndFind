@@ -943,3 +943,25 @@ export const cleanupOldHistoryItems = async (): Promise<{
     deletedChats: result.deleted_chats || 0
   };
 };
+
+// Image Search API
+export const searchItemsByImage = async (imageFile: File): Promise<Array<LostItemWithProfile | FoundItemWithProfile>> => {
+  try {
+    // For now, return all active items as a placeholder
+    // In a real implementation, this would use AI image similarity matching
+    const [lostItems, foundItems] = await Promise.all([
+      getLostItems(),
+      getFoundItems()
+    ]);
+
+    // Combine and return all items
+    // TODO: Implement actual image similarity matching using AI
+    const allItems = [...lostItems, ...foundItems];
+    
+    // Return a subset for better UX (top 20 results)
+    return allItems.slice(0, 20);
+  } catch (error) {
+    console.error('Error searching by image:', error);
+    throw error;
+  }
+};

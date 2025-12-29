@@ -72,8 +72,7 @@ Campus community members (students, faculty, staff) who need to report lost item
 - Log all reset attempts for security monitoring
 - Protect against brute-force attacks with rate limiting
 - Password reset OTP separate from first-time login OTP
-
-**UX Requirements**
+\n**UX Requirements**
 - Clear feedback messages:\n  - 'OTP sent to your email'
   - 'OTP expired, please request a new one'
   - 'Password updated successfully'
@@ -125,8 +124,7 @@ Campus community members (students, faculty, staff) who need to report lost item
 #### 2.3.4 Profile Edit & Save Behavior
 - **Edit Mode Activation**: Clicking 'Edit Profile' enables input fields
 - **Action Buttons in Edit Mode**:
-  - 'Save Changes' button
-  - 'Cancel' button
+  - 'Save Changes' button\n  - 'Cancel' button
 - **Save Changes Action**:
   - Validate inputs (non-empty full name, valid unique username)\n  - Update profile record in database
   - Show success message on successful update
@@ -150,8 +148,7 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Data Validation**: Validate all inputs on both client and server side
 - **Username Uniqueness**: Enforce unique username constraint at database level
 - **Session Persistence**: Profile changes persist across sessions
-
-#### 2.3.7 Profile UX Requirements
+\n#### 2.3.7 Profile UX Requirements
 - **Loading State**: Display loading indicator while fetching profile data
 - **Disabled Save Button**: Disable 'Save Changes' button during update operation
 - **Success Confirmation**: Show clear confirmation message after successful profile update
@@ -164,12 +161,10 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Sidebar Toggle**: Open/close sidebar using three-line hamburger menu icon (☰)
 - **Mobile Scrollable Sidebar**: On mobile devices (Android and iOS), sidebar content is fully scrollable to access all menu items comfortably
 - **Top Header**: Displays 'FINDIT.AI' site name with search icon, keeping top area clean and minimal
-- **Mobile Responsive**: Sidebar adapts to mobile screens with smooth slide-in/slide-out animations
-
+- **Mobile Responsive**: Sidebar adapts to mobile screens with smooth slide-in/slide-out animations\n
 ### 2.5 Homepage Structure
 The homepage displays three clearly separated sections with real-time statistics:
-- **Lost Items Section**: Shows all reported lost items with live count
-- **Found Items Section**: Shows all reported found items with live count
+- **Lost Items Section**: Shows all reported lost items with live count\n- **Found Items Section**: Shows all reported found items with live count
 - **Public Return Section**: Shows history of successful returns with live count (clickable items), displaying most recent returns at the top
 \n**Real-Time Counter Updates**: All three section counters automatically update immediately when:\n- New items are added\n- Status changes occur\n- Items are concluded as 'Item Found' or 'Owner Found' (counters adjust accordingly: Lost/Found counts decrease, Return count increases)
 
@@ -178,21 +173,28 @@ All sections sorted by latest first with date-range filter options.
 ### 2.6 Search System
 Two separate, independent search systems:
 - **Lost Items Search**: Searches only within lost item reports
-- **Found Items Search**: Searches only within found item reports\n\nSearch results update instantly to reflect new entries with no mixing between categories.
+- **Found Items Search**: Searches only within found item reports\n\n**Image Search Feature**:
+- **Image Search Button**: Each search section (Lost Items and Found Items) includes an 'Image Search' button alongside text search
+- **Image Upload**: Clicking 'Image Search' button opens image upload interface allowing users to upload one or multiple images
+- **Supported Formats**: Accept common image formats (JPG, PNG, JPEG, WebP)\n- **Visual Similarity Search**: System uses AI-powered visual recognition to find items matching uploaded image based on:\n  - Object type and shape
+  - Color patterns
+  - Visual features and characteristics
+  - Size and proportions
+- **Search Results**: Display items ranked by visual similarity score
+- **Combined Search**: Users can optionally combine image search with text filters for more precise results
+- **Search Scope**: Image search respects category boundaries (Lost Items search only searches lost items, Found Items search only searches found items)\n
+Search results update instantly to reflect new entries with no mixing between categories.
 
 ### 2.7 Item Reporting\n- **Report Lost Item**: Form for users to submit lost item details (requires login), with 'My Reports' history visible on same page
   - Fields include: title, description, category, color, brand, location, date, optional images
   - **Location Suggestions**: When user enters location, system provides quick-select suggestions including:\n    - Student Activity Centre
     - Day Canteen
     - Night Canteen
-    - Others
-    - (Plus any other relevant campus locations)
+    - Others\n    - (Plus any other relevant campus locations)
 - **Report Found Item**: Form for users to submit found item details (requires login), with 'My Reports' history visible on same page
-  - Fields include: title, description, category, color, brand, location, date, optional images
-  - **Location Suggestions**: Same location suggestions as Report Lost Item form
+  - Fields include: title, description, category, color, brand, location, date, optional images\n  - **Location Suggestions**: Same location suggestions as Report Lost Item form
 - Both forms immediately add entries to respective searchable databases and update homepage counters in real-time
-- Upon submission, AI Matching Assistant automatically evaluates potential matches\n
-### 2.8 Item Details Page
+- Upon submission, AI Matching Assistant automatically evaluates potential matches\n\n### 2.8 Item Details Page
 - Clickable items from Lost, Found, or Returned sections open full details pages
 - Lost/Found item details show: item description, date, location, contact info, and other relevant fields
 - **Contact Button**: Each item detail page includes 'Contact Owner/Finder' button that opens messaging interface (requires login)
@@ -261,7 +263,8 @@ Each message must track the following states:
   - Delivered ticks appear when message reaches receiver device
 
 #### 2.10.4 Popup Notification System
-- **Trigger**: When a user receives a new message\n- **Popup Appearance**:
+- **Trigger**: When a user receives a new message
+- **Popup Appearance**:
   - Show in-app popup notification near the three-line hamburger icon (☰)
   - Popup contains:
     - Sender username (fetched dynamically from profiles table)
@@ -292,8 +295,7 @@ Each message must track the following states:
 - **Storage Rule**: Do NOT store usernames inside chat messages
 - **Real-Time Updates**: Username changes in profile reflect immediately in active chats
 
-#### 2.10.7 Chat Access & Initiation
-- **Chat Interface**: Built-in messaging system allowing users to communicate directly within application
+#### 2.10.7 Chat Access & Initiation\n- **Chat Interface**: Built-in messaging system allowing users to communicate directly within application
 - **Contact Flow**: When someone reports found item, they can contact person who reported lost item through chat section
 - **AI Match Integration**: When potential match identified, private chat session automatically enabled between owner and finder
 - **Login Required**: Users must be logged in to access messaging features
@@ -386,7 +388,8 @@ Each message must track the following states:
   - Deleted chats never regenerated or recovered for the user who deleted them
 - **User Privacy**: Phone numbers and emails only shared if users choose to do so within chat conversations
 \n#### 2.10.13 Persistence Across Sessions
-- **Unread State Persistence**: Unread and read states must persist across:\n  - App reloads\n  - Logout/login\n  - Device switches
+- **Unread State Persistence**: Unread and read states must persist across:\n  - App reloads
+  - Logout/login\n  - Device switches
 - **Database Storage**: All message states (sent, delivered, read) stored in database
 - **Session Recovery**: When user logs back in, unread badges and message states restored correctly
 \n#### 2.10.14 Database Schema for Messaging
@@ -407,8 +410,7 @@ Each message must track the following states:
 - delivered_at (timestamp, nullable)\n- read (boolean, default false)
 - read_at (timestamp, nullable)
 - is_deleted (boolean, default false)
-- edited_at (timestamp, nullable)\n
-**chat_visibility table**:
+- edited_at (timestamp, nullable)\n\n**chat_visibility table**:
 - visibility_id (UUID, primary key)\n- chat_id (UUID, references chats table)
 - user_id (UUID, references users)\n- is_visible (boolean, default true)
 - deleted_at (timestamp, nullable)
@@ -604,6 +606,8 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Message Tick Icons**: WhatsApp-style tick icons (✔️, ✔️✔️, 💙✔️✔️) with smooth color transitions
 - **Popup Notification Design**: Clean, modern popup near ☰ icon with sender name and message preview, auto-dismiss after 5 seconds
 - **Unread Badge Design**: Red or blue circular badge with unread count, positioned on chat items in chat list
+- **Image Search Button**: Prominent 'Image Search' button with camera/image icon, positioned alongside text search input
+- **Image Upload Interface**: Clean drag-and-drop zone with file browser option, showing image preview thumbnails after upload
 
 ### 3.3 User Experience\n- **Production-Level UX**: Intuitive navigation flow, clear call-to-action buttons, instant feedback on user actions
 - **Trust-First Design**: Professional appearance, clear information hierarchy, reassuring color palette, transparent process indicators
@@ -619,12 +623,14 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **WhatsApp-Like Messaging**: Familiar messaging experience with delivery states, blue ticks, and popup notifications
 - **Intelligent Notification System**: Popup notifications appear immediately near ☰ icon, unread badges shown only when chat list is opened
 - **Seamless Real-Time Experience**: All message states, ticks, popups, and badges update instantly without page reloads
+- **Visual Search Convenience**: Image search provides intuitive alternative to text-based search, especially useful when item descriptions are difficult to articulate
 
 ## 4. Technical Stack
 - **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
 - **Database**: Supabase PostgreSQL
 - **Real-Time Communication**: Supabase Realtime (for messages, delivery states, read receipts, popup notifications, unread badges)
 - **Email Service**: Supabase Email Service\n- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
+- **Image Recognition**: AI-powered visual similarity search for image-based item matching
 \n## 5. Referenced Images
 - image.png (sidebar navigation reference)
 - image-2.png (UI layout reference)
