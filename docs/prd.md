@@ -86,8 +86,7 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Session Management**: Maintain user session across visits, auto-expire after inactivity
 - **Device Recognition**: Remember logged-in devices for seamless return access
 - **Manual Logout**: Users can manually end session at any time
-
-#### 2.1.5 Guest Access & Login Requirements
+\n#### 2.1.5 Guest Access & Login Requirements
 - **Guest Browsing**: Users can view Lost Items, Found Items, and Return History without authentication
 - **Login Required Actions**: Authentication required only when reporting items or contacting other users
 - **User Profile Storage**: Stores email, phone number, name, verification status, and login history
@@ -210,7 +209,8 @@ Search results update instantly to reflect new entries with no mixing between ca
   - **Location Suggestions**: When user enters location, system provides quick-select suggestions including:\n    - Student Activity Centre
     - Day Canteen
     - Night Canteen
-    - Others\n    - (Plus any other relevant campus locations)
+    - Others
+    - (Plus any other relevant campus locations)
 - **Report Found Item**: Form for users to submit found item details (requires login), with 'My Reports' history visible on same page
   - Fields include: title, description, category, color, brand, location, date, optional images
   - **Location Suggestions**: Same location suggestions as Report Lost Item form
@@ -290,7 +290,8 @@ Each message must track the following states:
     - Sender username (fetched dynamically from profiles table)
     - Message text preview (first 50 characters)
   - Popup appears immediately in real time using Supabase Realtime\n  - Popup auto-dismisses after 5 seconds or when user clicks it
-\n- **Important Rule**: At this stage, DO NOT show unread badge in the chat list yet
+
+- **Important Rule**: At this stage, DO NOT show unread badge in the chat list yet
 - **Popup Click Behavior**: Clicking popup opens the chat directly and marks messages as read
 \n#### 2.10.5 Three-Line Icon (☰) Interaction & Unread Badge Logic
 - **Three-Line Icon Purpose**: Represents opening the chat panel/sidebar
@@ -466,8 +467,10 @@ All items MUST belong to exactly one of these states:
 - **USER_HISTORY**: Private history visible only to the item reporter
 - **MAIN_HISTORY**: Public history visible to ALL users (displayed in Public Return Section)
 \nEach item MUST store:
-- item_id (UUID, primary key)
-- reporter_user_id (UUID, references user who reported item)
+- item_id (UUID, primary key)\n- reporter_user_id (UUID, references user who reported item)
+- receiver_user_id (UUID, references user who received item, nullable, populated when conclusion is 'Owner Found' or 'Item Found')
+- reporter_email (text, email of user who reported item)
+- receiver_email (text, email of user who received item, nullable, populated when conclusion is 'Owner Found' or 'Item Found')
 - item_type (LOST or FOUND)
 - title (text)
 - description (text)
@@ -485,19 +488,23 @@ If the item reporter selects conclusion = 'Owner Found' (for found items) OR 'It
 1. Remove the item from ACTIVE list (Lost Items or Found Items)
 2. Set:\n   - status = OWNER_FOUND (for found items) or ITEM_FOUND (for lost items)
    - history_type = MAIN_HISTORY\n   - concluded_at = current timestamp
+   - receiver_user_id = user_id of the person who received the item (the other user in the chat)
+   - receiver_email = email of the person who received the item (fetched from profiles table)
 3. Add the item to Public Return Section at the top (most recent first)
 4. Update homepage statistics in real-time:\n   - Decrease Lost Items count (if lost item concluded as 'Item Found')
    - Decrease Found Items count (if found item concluded as 'Owner Found')
    - Increase Return Items count\n5. Make the item visible in:\n   - Public Return Section (visible to ALL users)
 6. Remove the item from:\n   - Reporter's private Lost/Found list
 \nThis rule applies when conclusion is 'Owner Found' or 'Item Found'.
-\n#### 2.11.3 Other Conclusion Behavior
+
+#### 2.11.3 Other Conclusion Behavior
 If conclusion is:\n- 'Owner Not Found'\n- 'Item Not Found'\n
 Then:
 1. Remove item from ACTIVE list (if required by logic)
 2. Set:\n   - history_type = USER_HISTORY
    - status = OWNER_NOT_FOUND or ITEM_NOT_FOUND (as appropriate)
    - concluded_at = current timestamp
+   - receiver_user_id = NULL\n   - receiver_email = NULL
 3. Item remains visible ONLY to the reporter
 4. Item MUST NOT appear in Public Return Section
 5. Homepage statistics remain unchanged
@@ -506,15 +513,21 @@ Then:
 - **Public Access**: MAIN_HISTORY items are readable by ALL users (including guests) in Public Return Section
 - **Read-Only**: No user can edit or delete MAIN_HISTORY items manually
 - **Display**: Public Return Section shows all items with history_type = MAIN_HISTORY
+- **Display Fields**: For each item in Public Return Section, display:
+  - Item details (title, description, category, color, brand, location, date_reported)
+  - Reporter email (reporter_email)
+  - Receiver email (receiver_email)
+  - Conclusion date (concluded_at)
+  - Status (OWNER_FOUND or ITEM_FOUND)
 - **Sorting**: Items sorted by concluded_at timestamp (latest first, most recent at top)
 - **Real-Time Updates**: Public Return Section updates immediately when items are concluded as 'Owner Found' or 'Item Found'
 
 #### 2.11.5 Auto-Delete Policy (CRITICAL)
-Automatically delete items older than 6 months based on concluded_at timestamp.\n
-This auto-delete applies to ALL:\n- USER_HISTORY items
+Automatically delete items older than 6 months based on concluded_at timestamp.\n\nThis auto-delete applies to ALL:\n- USER_HISTORY items
 - MAIN_HISTORY items
 - Any remaining inactive Lost/Found history\n- ACTIVE items in Lost/Found lists that are older than 6 months
-\nNO EXCEPTIONS.\n
+
+NO EXCEPTIONS.\n
 #### 2.11.6 Auto-Delete Execution
 - **Scheduled Task**: Run a scheduled cleanup task daily (e.g., using Supabase cron job or database trigger)
 - **Deletion Criteria**: Delete any item where:
@@ -547,30 +560,33 @@ This auto-delete applies to ALL:\n- USER_HISTORY items
 #### 2.11.9 Validation Rules
 Implementation is INVALID if:
 - 'Owner Found' or 'Item Found' items are not visible to all users in Public Return Section
+- Reporter email or receiver email are not displayed in Public Return Section
 - Homepage statistics do not update when items are concluded\n- Old items remain after 6 months
 - Users can delete public history manually
 - Items exist in multiple lists simultaneously
 - concluded_at or date_reported timestamps are not properly tracked
 - Public Return Section does not display most recent items at the top
+- receiver_user_id or receiver_email are not populated when conclusion is 'Owner Found' or 'Item Found'
 
 #### 2.11.10 Expected Outcome
 - Owner-found and item-found items appear in Public Return Section at the top
+- Public Return Section displays reporter email and receiver email for each item
 - Homepage statistics update in real-time when conclusions are made
 - Old history is auto-cleaned after 6 months
 - Active Lost/Found items older than 6 months are auto-removed
 - System remains clean, consistent, and scalable
-- Users can view public success stories in Public Return Section
+- Users can view public success stories in Public Return Section with full contact information
 - Private conclusions remain private to reporters
 
-### 2.12 Filtering & Sorting\n- All item lists (Lost/Found/Public Return) include date-range filters
+### 2.12 Filtering & Sorting
+- All item lists (Lost/Found/Public Return) include date-range filters
 - Default sorting: latest entries first
 - Filter options easily accessible and responsive
 \n### 2.13 My Reports History
 Users can view their own submission history directly on Report Lost/Report Found pages, showing all previously submitted reports.
 
 ### 2.14 UI/UX Requirements for Chat System
-
-#### 2.14.1 Visual Feedback
+\n#### 2.14.1 Visual Feedback
 - **Disabled State**: Delete Chat button visually disabled (grayed out) until conclusion is made (for item reporters)
 - **Loading States**: Show loading indicator while applying conclusion or sending messages
 - **Success Feedback**: Display success message after conclusion is applied
@@ -614,14 +630,14 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Model Specification**: All API calls must explicitly specify model version as 'gemini-2.5-flash'
 - **No Model Fallback**: Do not fall back to other Gemini model versions (e.g., Gemini 1.5, Gemini Pro)
 - **Version Validation**: Validate that API responses are generated by Gemini 2.5 Flash model
-\n#### 2.15.3 API Request Handling
+
+#### 2.15.3 API Request Handling
 - **Image Preprocessing**: Resize/compress images before sending to API to optimize performance
 - **Request Rate Limiting**: Implement rate limiting to prevent API quota exhaustion
 - **Timeout Handling**: Set reasonable timeout (10-15 seconds) for API requests
 - **Retry Logic**: Implement retry mechanism for failed requests (max 2 retries)
 - **Error Logging**: Log all API errors for debugging and monitoring
-
-#### 2.15.4 Description Generation Process
+\n#### 2.15.4 Description Generation Process
 - **Prompt Engineering**: Use optimized prompts to guide Gemini 2.5 Flash API to generate structured item descriptions
 - **Response Parsing**: Extract and structure description data from API response
 - **Description Storage**: Store generated descriptions temporarily in session or cache
@@ -639,10 +655,11 @@ Users can view their own submission history directly on Report Lost/Report Found
 ### 2.16 Test Data\nPreload realistic test data across all categories (Lost Items, Found Items, Public Return Section) to demonstrate full functionality including:
 - Active lost and found items
 - Items with various conclusion statuses
-- Public history items (Owner Found, Item Found) displayed in Public Return Section
+- Public history items (Owner Found, Item Found) displayed in Public Return Section with reporter and receiver emails
 - Private history items (Owner Not Found, Item Not Found)\n- Chat conversations with various states (concluded, not concluded, deleted by one user)\n- Messages with different delivery states (sent, delivered, read)
 - Unread messages to test popup notifications and badge behavior
-- Items approaching 6-month auto-delete threshold\n- Accurate homepage statistics reflecting current counts
+- Items approaching 6-month auto-delete threshold
+- Accurate homepage statistics reflecting current counts
 - Sample images for testing Gemini 2.5 Flash API image search functionality
 
 ## 3. Design Style\n
@@ -666,6 +683,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Image Upload Interface**: Clean drag-and-drop zone with file browser option, showing image preview thumbnails after upload
 - **AI Analysis Indicator**: Animated loading indicator during Gemini 2.5 Flash API image analysis with progress text
 - **Match Result Highlighting**: Visual highlighting of matching keywords between Gemini-generated description and item descriptions
+- **Email Display in History**: Clear, readable display of reporter and receiver emails in Public Return Section with appropriate formatting
 
 ### 3.3 User Experience\n- **Production-Level UX**: Intuitive navigation flow, clear call-to-action buttons, instant feedback on user actions
 - **Trust-First Design**: Professional appearance, clear information hierarchy, reassuring color palette, transparent process indicators
@@ -677,7 +695,8 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Secure Password Recovery**: Clear, user-friendly password reset flow with helpful feedback messages
 - **Controlled Chat Lifecycle**: Clear visual indicators for chat states, conclusion requirements, and deletion permissions
 - **Role-Based Interface**: Different UI elements shown based on user role (item reporter vs. non-reporter)
-- **Public History Transparency**: Clear distinction between public Public Return Section and private User History\n- **Auto-Cleanup Awareness**: Optional notification or indicator for items approaching 6-month auto-delete threshold\n- **Location Input Convenience**: Quick-select location suggestions improve reporting speed and consistency
+- **Public History Transparency**: Clear distinction between public Public Return Section and private User History, with reporter and receiver contact information visible in public history
+- **Auto-Cleanup Awareness**: Optional notification or indicator for items approaching 6-month auto-delete threshold\n- **Location Input Convenience**: Quick-select location suggestions improve reporting speed and consistency
 - **WhatsApp-Like Messaging**: Familiar messaging experience with delivery states, blue ticks, and popup notifications
 - **Intelligent Notification System**: Popup notifications appear immediately near ☰ icon, unread badges shown only when chat list is opened
 - **Seamless Real-Time Experience**: All message states, ticks, popups, and badges update instantly without page reloads

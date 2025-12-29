@@ -1,12 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Tag, User } from 'lucide-react';
+import { Calendar, MapPin, Tag, User, Mail } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { LostItemWithProfile, FoundItemWithProfile } from '@/types/types';
+import type { LostItemWithProfile, FoundItemWithProfile, ReturnedItem } from '@/types/types';
 
 interface ItemCardProps {
-  item: LostItemWithProfile | FoundItemWithProfile;
+  item: LostItemWithProfile | FoundItemWithProfile | ReturnedItem;
   type: 'lost' | 'found' | 'returned';
 }
 
@@ -35,8 +35,8 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
 
   const getDateField = () => {
     if (type === 'returned') {
-      // For returned items, show the concluded_at date
-      return formatDate(item.concluded_at || item.created_at);
+      // For returned items, show the return_date
+      return formatDate((item as ReturnedItem).return_date || (item as ReturnedItem).created_at);
     }
     if (type === 'lost') return formatDate((item as LostItemWithProfile).date_lost);
     if (type === 'found') return formatDate((item as FoundItemWithProfile).date_found);
@@ -52,7 +52,12 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
 
   const getContactName = () => {
     // Get username or full_name from profile data (joined from profiles table)
-    return item.username || item.full_name || 'Anonymous';
+    // Only for lost/found items, not returned items
+    if (type === 'returned') {
+      return 'See details';
+    }
+    const profileItem = item as LostItemWithProfile | FoundItemWithProfile;
+    return profileItem.username || profileItem.full_name || 'Anonymous';
   };
 
   const getBadgeClass = () => {
@@ -124,12 +129,46 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, type }) => {
             </div>
             <span>{getDateLabel()} {getDateField()}</span>
           </div>
-          <div className="flex items-center text-muted-foreground hover:text-primary transition-colors">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 mr-3">
-              <User className="w-4 h-4" />
+          
+          {type === 'returned' ? (
+            <>
+              <div className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 mr-3">
+                  <User className="w-4 h-4" />
+                </div>
+                <span className="line-clamp-1">Owner: {(item as ReturnedItem).owner_name}</span>
+              </div>
+              {(item as ReturnedItem).owner_contact && (
+                <div className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 mr-3">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <span className="line-clamp-1 text-xs">{(item as ReturnedItem).owner_contact}</span>
+                </div>
+              )}
+              <div className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 mr-3">
+                  <User className="w-4 h-4" />
+                </div>
+                <span className="line-clamp-1">Finder: {(item as ReturnedItem).finder_name}</span>
+              </div>
+              {(item as ReturnedItem).finder_contact && (
+                <div className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 mr-3">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <span className="line-clamp-1 text-xs">{(item as ReturnedItem).finder_contact}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary/50 mr-3">
+                <User className="w-4 h-4" />
+              </div>
+              <span className="line-clamp-1">{getContactName()}</span>
             </div>
-            <span className="line-clamp-1">{getContactName()}</span>
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -202,33 +202,53 @@ const ItemDetailPage: React.FC = () => {
                     <>
                       <div className="flex items-start space-x-3">
                         <User className="w-5 h-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium">Owner</p>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Owner (Receiver)</p>
                           <p className="text-muted-foreground">
                             {(item as ReturnedItem).owner_name}
                           </p>
-                          {(item as ReturnedItem).owner_contact && (
-                            <p className="text-sm text-muted-foreground">
-                              {(item as ReturnedItem).owner_contact}
-                            </p>
-                          )}
                         </div>
                       </div>
 
+                      {(item as ReturnedItem).owner_contact && (
+                        <div className="flex items-start space-x-3">
+                          <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Owner Email</p>
+                            <a 
+                              href={`mailto:${(item as ReturnedItem).owner_contact}`}
+                              className="text-primary hover:underline break-all"
+                            >
+                              {(item as ReturnedItem).owner_contact}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex items-start space-x-3">
                         <User className="w-5 h-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium">Finder</p>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Finder (Reporter)</p>
                           <p className="text-muted-foreground">
                             {(item as ReturnedItem).finder_name}
                           </p>
-                          {(item as ReturnedItem).finder_contact && (
-                            <p className="text-sm text-muted-foreground">
-                              {(item as ReturnedItem).finder_contact}
-                            </p>
-                          )}
                         </div>
                       </div>
+
+                      {(item as ReturnedItem).finder_contact && (
+                        <div className="flex items-start space-x-3">
+                          <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Finder Email</p>
+                            <a 
+                              href={`mailto:${(item as ReturnedItem).finder_contact}`}
+                              className="text-primary hover:underline break-all"
+                            >
+                              {(item as ReturnedItem).finder_contact}
+                            </a>
+                          </div>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>
