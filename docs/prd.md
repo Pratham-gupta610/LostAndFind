@@ -5,7 +5,7 @@
 ### 1.1 Application Name
 FINDIT.AI\n
 ### 1.2 Application Description
-A modern, highly interactive multi-campus Lost & Found web application designed to help users report and search for lost or found items across multiple campus locations, with a focus on trust-first design and seamless user experience. Features secure college email authentication with OTP verification for first-time users only, built-in real-time messaging system with WhatsApp-like delivery states, blue tick read receipts, intelligent popup notifications, advanced chat management including one-sided deletion, role-based conclusion system, and editable/deletable messages for direct communication between users, and AI-powered intelligent matching to automatically identify potential matches between lost and found items.
+A modern, highly interactive multi-campus Lost & Found web application designed to help users report and search for lost or found items across multiple campus locations, with a focus on trust-first design and seamless user experience. Features secure college email authentication with OTP verification for first-time users only, built-in real-time messaging system with WhatsApp-like delivery states, blue tick read receipts, intelligent popup notifications, advanced chat management including one-sided deletion, role-based conclusion system, and editable/deletable messages for direct communication between users, AI-powered intelligent matching to automatically identify potential matches between lost and found items, and Gemini API-powered image description extraction for enhanced visual search capabilities.
 
 ### 1.3 Target Users
 Campus community members (students, faculty, staff) who need to report lost items, search for found items, or help return items to their owners.
@@ -124,7 +124,8 @@ Campus community members (students, faculty, staff) who need to report lost item
 #### 2.3.4 Profile Edit & Save Behavior
 - **Edit Mode Activation**: Clicking 'Edit Profile' enables input fields
 - **Action Buttons in Edit Mode**:
-  - 'Save Changes' button\n  - 'Cancel' button
+  - 'Save Changes' button
+  - 'Cancel' button
 - **Save Changes Action**:
   - Validate inputs (non-empty full name, valid unique username)\n  - Update profile record in database
   - Show success message on successful update
@@ -173,16 +174,32 @@ All sections sorted by latest first with date-range filter options.
 ### 2.6 Search System
 Two separate, independent search systems:
 - **Lost Items Search**: Searches only within lost item reports
-- **Found Items Search**: Searches only within found item reports\n\n**Image Search Feature**:
-- **Image Search Button**: Each search section (Lost Items and Found Items) includes an 'Image Search' button alongside text search
-- **Image Upload**: Clicking 'Image Search' button opens image upload interface allowing users to upload one or multiple images
-- **Supported Formats**: Accept common image formats (JPG, PNG, JPEG, WebP)\n- **Visual Similarity Search**: System uses AI-powered visual recognition to find items matching uploaded image based on:\n  - Object type and shape
-  - Color patterns
-  - Visual features and characteristics
-  - Size and proportions
-- **Search Results**: Display items ranked by visual similarity score
+- **Found Items Search**: Searches only within found item reports\n\n**Image Search Feature with Gemini API Integration**:\n- **Image Search Button**: Each search section (Lost Items and Found Items) includes an 'Image Search' button alongside text search\n- **Image Upload**: Clicking 'Image Search' button opens image upload interface allowing users to upload one or multiple images
+- **Supported Formats**: Accept common image formats (JPG, PNG, JPEG, WebP)
+- **Gemini API Description Extraction**:
+  - When user uploads image, system sends image to Gemini API
+  - Gemini API analyzes image and generates detailed text description of visible items, including:
+    - Object type and category
+    - Color and visual characteristics
+    - Brand or distinctive features (if visible)
+    - Size and shape details
+    - Any text or labels visible on item
+  - Generated description stored temporarily for matching process
+- **Intelligent Matching Process**:
+  - System compares Gemini-generated description against all item descriptions in database
+  - Uses text similarity algorithms to find matching items
+  - Calculates similarity score based on description overlap
+  - Ranks results by relevance score
+- **Search Results Display**:
+  - Display items matching the Gemini-generated description
+  - Show similarity percentage for each result
+  - Highlight matching keywords between generated description and item descriptions
+  - If exact or high-confidence match found, display prominent 'Similar Item Found' indicator
 - **Combined Search**: Users can optionally combine image search with text filters for more precise results
-- **Search Scope**: Image search respects category boundaries (Lost Items search only searches lost items, Found Items search only searches found items)\n
+- **Search Scope**: Image search respects category boundaries (Lost Items search only searches lost items, Found Items search only searches found items)
+- **API Key Configuration**: System securely stores user-provided Gemini API key in environment variables
+- **Error Handling**: Display user-friendly error messages if API call fails or image cannot be processed
+
 Search results update instantly to reflect new entries with no mixing between categories.
 
 ### 2.7 Item Reporting\n- **Report Lost Item**: Form for users to submit lost item details (requires login), with 'My Reports' history visible on same page
@@ -192,7 +209,8 @@ Search results update instantly to reflect new entries with no mixing between ca
     - Night Canteen
     - Others\n    - (Plus any other relevant campus locations)
 - **Report Found Item**: Form for users to submit found item details (requires login), with 'My Reports' history visible on same page
-  - Fields include: title, description, category, color, brand, location, date, optional images\n  - **Location Suggestions**: Same location suggestions as Report Lost Item form
+  - Fields include: title, description, category, color, brand, location, date, optional images
+  - **Location Suggestions**: Same location suggestions as Report Lost Item form
 - Both forms immediately add entries to respective searchable databases and update homepage counters in real-time
 - Upon submission, AI Matching Assistant automatically evaluates potential matches\n\n### 2.8 Item Details Page
 - Clickable items from Lost, Found, or Returned sections open full details pages
@@ -202,8 +220,7 @@ Search results update instantly to reflect new entries with no mixing between ca
 - **Match Indicator**: If item is identified as potential match by AI system, badge displays match confidence percentage
 \n### 2.9 AI-Powered Lost & Found Matching Assistant
 \n#### 2.9.1 Matching Algorithm
-- **Automatic Evaluation**: When found item is reported, system automatically compares against all existing lost item reports
-- **Similarity Analysis**: AI evaluates matches based on:
+- **Automatic Evaluation**: When found item is reported, system automatically compares against all existing lost item reports\n- **Similarity Analysis**: AI evaluates matches based on:
   - Text similarity (title, description, category)
   - Attribute matching (color, brand, location proximity, time proximity)
   - Visual similarity (if images provided)
@@ -219,8 +236,7 @@ Search results update instantly to reflect new entries with no mixing between ca
   - Secure link to view found item details and contact finder
   - Safety instructions reminding users not to share personal details immediately
 - **Real-Time Alerts**: In-app notification badge appears for matched users
-
-#### 2.9.3 Match Output Format
+\n#### 2.9.3 Match Output Format
 System generates match results in following structure:
 - similarity_score: numerical value (0-100)
 - is_match: boolean (true if score ≥ 75%)
@@ -245,7 +261,8 @@ Each message must track the following states:
 \n**Database Fields**:
 - message_id (UUID, primary key)\n- chat_id (UUID, references chats table)
 - sender_id (UUID, references users)\n- receiver_id (UUID, references users)
-- content (text)\n- sent_at (timestamp)\n- delivered (boolean, default false)
+- content (text)\n- sent_at (timestamp)
+- delivered (boolean, default false)
 - delivered_at (timestamp, nullable)
 - read (boolean, default false)
 - read_at (timestamp, nullable)
@@ -295,7 +312,8 @@ Each message must track the following states:
 - **Storage Rule**: Do NOT store usernames inside chat messages
 - **Real-Time Updates**: Username changes in profile reflect immediately in active chats
 
-#### 2.10.7 Chat Access & Initiation\n- **Chat Interface**: Built-in messaging system allowing users to communicate directly within application
+#### 2.10.7 Chat Access & Initiation
+- **Chat Interface**: Built-in messaging system allowing users to communicate directly within application
 - **Contact Flow**: When someone reports found item, they can contact person who reported lost item through chat section
 - **AI Match Integration**: When potential match identified, private chat session automatically enabled between owner and finder
 - **Login Required**: Users must be logged in to access messaging features
@@ -346,7 +364,9 @@ Each message must track the following states:
 - **If 'Item Found' Selected**:\n  - Show confirmation dialog: 'Are you sure the item is found?'
   - On confirmation:\n    - Delete the item from LOST ITEMS list
     - Add the item to Public Return Section at the top (most recent first)
-    - Update homepage statistics: decrease Lost Items count, increase Return Items count\n    - Keep the item in item history with status 'Item Found'\n    - Enable Delete Chat button
+    - Update homepage statistics: decrease Lost Items count, increase Return Items count
+    - Keep the item in item history with status 'Item Found'
+    - Enable Delete Chat button
 
 - **If 'Item Not Found' Selected**:
   - Show confirmation dialog: 'Are you sure the item is not found?'
@@ -388,8 +408,7 @@ Each message must track the following states:
   - Deleted chats never regenerated or recovered for the user who deleted them
 - **User Privacy**: Phone numbers and emails only shared if users choose to do so within chat conversations
 \n#### 2.10.13 Persistence Across Sessions
-- **Unread State Persistence**: Unread and read states must persist across:\n  - App reloads
-  - Logout/login\n  - Device switches
+- **Unread State Persistence**: Unread and read states must persist across:\n  - App reloads\n  - Logout/login\n  - Device switches
 - **Database Storage**: All message states (sent, delivered, read) stored in database
 - **Session Recovery**: When user logs back in, unread badges and message states restored correctly
 \n#### 2.10.14 Database Schema for Messaging
@@ -471,7 +490,8 @@ If the item reporter selects conclusion = 'Owner Found' (for found items) OR 'It
    - Increase Return Items count\n5. Make the item visible in:\n   - Public Return Section (visible to ALL users)
 6. Remove the item from:\n   - Reporter's private Lost/Found list
 \nThis rule applies when conclusion is 'Owner Found' or 'Item Found'.
-\n#### 2.11.3 Other Conclusion Behavior
+
+#### 2.11.3 Other Conclusion Behavior
 If conclusion is:\n- 'Owner Not Found'\n- 'Item Not Found'\n
 Then:
 1. Remove item from ACTIVE list (if required by logic)
@@ -490,8 +510,7 @@ Then:
 - **Real-Time Updates**: Public Return Section updates immediately when items are concluded as 'Owner Found' or 'Item Found'
 
 #### 2.11.5 Auto-Delete Policy (CRITICAL)
-Automatically delete items older than 6 months based on concluded_at timestamp.\n
-This auto-delete applies to ALL:\n- USER_HISTORY items
+Automatically delete items older than 6 months based on concluded_at timestamp.\n\nThis auto-delete applies to ALL:\n- USER_HISTORY items
 - MAIN_HISTORY items
 - Any remaining inactive Lost/Found history\n- ACTIVE items in Lost/Found lists that are older than 6 months
 \nNO EXCEPTIONS.\n
@@ -580,7 +599,37 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Rollback Prevention**: Once conclusion is made, it cannot be undone (permanent action)
 - **Real-Time Security**: Ensure real-time updates respect Row Level Security policies
 
-### 2.15 Test Data\nPreload realistic test data across all categories (Lost Items, Found Items, Public Return Section) to demonstrate full functionality including:
+### 2.15 Gemini API Integration Configuration
+
+#### 2.15.1 API Key Management
+- **Environment Variable Storage**: Store Gemini API key securely in environment variables (GEMINI_API_KEY)
+- **Key Input Interface**: Provide admin/settings interface for authorized users to input and update API key
+- **Key Validation**: Validate API key format and test connection before saving
+- **Secure Storage**: Never expose API key in client-side code or logs
+- **Key Rotation Support**: Allow updating API key without system downtime
+\n#### 2.15.2 API Request Handling
+- **Image Preprocessing**: Resize/compress images before sending to API to optimize performance
+- **Request Rate Limiting**: Implement rate limiting to prevent API quota exhaustion
+- **Timeout Handling**: Set reasonable timeout (10-15 seconds) for API requests
+- **Retry Logic**: Implement retry mechanism for failed requests (max 2 retries)
+- **Error Logging**: Log all API errors for debugging and monitoring
+
+#### 2.15.3 Description Generation Process
+- **Prompt Engineering**: Use optimized prompts to guide Gemini API to generate structured item descriptions
+- **Response Parsing**: Extract and structure description data from API response
+- **Description Storage**: Store generated descriptions temporarily in session or cache
+- **Fallback Mechanism**: If API fails, allow users to proceed with manual text search
+\n#### 2.15.4 Performance Optimization
+- **Caching**: Cache API responses for identical images to reduce redundant calls
+- **Async Processing**: Process image analysis asynchronously to avoid blocking UI
+- **Loading Indicators**: Show clear loading state during image analysis
+- **Progress Feedback**: Display progress messages ('Analyzing image...', 'Searching for matches...')
+\n#### 2.15.5 Cost Management
+- **Usage Monitoring**: Track API usage and costs\n- **Usage Limits**: Set daily/monthly usage limits to control costs
+- **Alert System**: Send alerts when approaching usage limits
+- **Optimization**: Compress images and optimize prompts to minimize token usage
+
+### 2.16 Test Data\nPreload realistic test data across all categories (Lost Items, Found Items, Public Return Section) to demonstrate full functionality including:
 - Active lost and found items
 - Items with various conclusion statuses
 - Public history items (Owner Found, Item Found) displayed in Public Return Section
@@ -588,6 +637,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - Unread messages to test popup notifications and badge behavior
 - Items approaching 6-month auto-delete threshold
 - Accurate homepage statistics reflecting current counts
+- Sample images for testing Gemini API image search functionality
 
 ## 3. Design Style\n
 ### 3.1 Visual Theme
@@ -608,6 +658,8 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Unread Badge Design**: Red or blue circular badge with unread count, positioned on chat items in chat list
 - **Image Search Button**: Prominent 'Image Search' button with camera/image icon, positioned alongside text search input
 - **Image Upload Interface**: Clean drag-and-drop zone with file browser option, showing image preview thumbnails after upload
+- **AI Analysis Indicator**: Animated loading indicator during Gemini API image analysis with progress text
+- **Match Result Highlighting**: Visual highlighting of matching keywords between Gemini-generated description and item descriptions
 
 ### 3.3 User Experience\n- **Production-Level UX**: Intuitive navigation flow, clear call-to-action buttons, instant feedback on user actions
 - **Trust-First Design**: Professional appearance, clear information hierarchy, reassuring color palette, transparent process indicators
@@ -623,14 +675,16 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **WhatsApp-Like Messaging**: Familiar messaging experience with delivery states, blue ticks, and popup notifications
 - **Intelligent Notification System**: Popup notifications appear immediately near ☰ icon, unread badges shown only when chat list is opened
 - **Seamless Real-Time Experience**: All message states, ticks, popups, and badges update instantly without page reloads
-- **Visual Search Convenience**: Image search provides intuitive alternative to text-based search, especially useful when item descriptions are difficult to articulate
-
-## 4. Technical Stack
+- **Visual Search Convenience**: Image search with Gemini API provides intuitive alternative to text-based search, especially useful when item descriptions are difficult to articulate
+- **AI-Powered Search Feedback**: Clear feedback during image analysis process with progress indicators and result explanations
+\n## 4. Technical Stack
 - **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
 - **Database**: Supabase PostgreSQL
 - **Real-Time Communication**: Supabase Realtime (for messages, delivery states, read receipts, popup notifications, unread badges)
 - **Email Service**: Supabase Email Service\n- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
 - **Image Recognition**: AI-powered visual similarity search for image-based item matching
+- **Gemini API**: Google Gemini API for image description extraction and intelligent matching
+- **API Key Storage**: Secure environment variable storage for Gemini API key
 \n## 5. Referenced Images
 - image.png (sidebar navigation reference)
 - image-2.png (UI layout reference)

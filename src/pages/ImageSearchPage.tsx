@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Upload, Search, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, Search, X, Image as ImageIcon, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { searchItemsByImage } from '@/db/api';
+import { analyzeImageAndSearch } from '@/db/api';
 import ItemCard from '@/components/common/ItemCard';
 import type { LostItemWithProfile, FoundItemWithProfile } from '@/types/types';
 
@@ -13,6 +13,7 @@ const ImageSearchPage: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<LostItemWithProfile | FoundItemWithProfile>>([]);
+  const [extractedDescription, setExtractedDescription] = useState<string>('');
   const [hasSearched, setHasSearched] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -70,6 +71,7 @@ const ImageSearchPage: React.FC = () => {
     setSelectedImage(null);
     setImagePreview('');
     setSearchResults([]);
+    setExtractedDescription('');
     setHasSearched(false);
     setUploadProgress(0);
   };
@@ -88,6 +90,7 @@ const ImageSearchPage: React.FC = () => {
       setSearching(true);
       setUploadProgress(0);
       setHasSearched(false);
+      setExtractedDescription('');
 
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -98,25 +101,28 @@ const ImageSearchPage: React.FC = () => {
           }
           return prev + 10;
         });
-      }, 200);
+      }, 300);
 
-      const results = await searchItemsByImage(selectedImage);
+      // Call Gemini-powered search
+      const { description, matches } = await analyzeImageAndSearch(selectedImage);
       
       clearInterval(progressInterval);
       setUploadProgress(100);
       
-      setSearchResults(results);
+      setExtractedDescription(description);
+      setSearchResults(matches);
       setHasSearched(true);
 
       toast({
-        title: 'Search Complete',
-        description: `Found ${results.length} matching ${results.length === 1 ? 'item' : 'items'}.`,
+        title: 'Analysis Complete',
+        description: `Found ${matches.length} matching ${matches.length === 1 ? 'item' : 'items'}.`,
       });
     } catch (error) {
       console.error('Error searching by image:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to search for items. Please try again.';
       toast({
         title: 'Search Failed',
-        description: 'Failed to search for items. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -134,9 +140,12 @@ const ImageSearchPage: React.FC = () => {
             <ImageIcon className="w-7 h-7 text-background" />
           </div>
           <div>
-            <h1 className="text-3xl xl:text-4xl font-bold">Image Search</h1>
+            <h1 className="text-3xl xl:text-4xl font-bold flex items-center gap-2">
+              AI Image Search
+              <Sparkles className="w-6 h-6 text-accent animate-pulse" />
+            </h1>
             <p className="text-muted-foreground">
-              Upload an image to find similar lost or found items
+              Upload an image and let AI find similar lost or found items
             </p>
           </div>
         </div>
@@ -146,7 +155,7 @@ const ImageSearchPage: React.FC = () => {
           <CardHeader>
             <CardTitle>Upload Image</CardTitle>
             <CardDescription>
-              Upload a photo of the item you're looking for. We'll search through all lost and found items.
+              Upload a photo of the item you're looking for. Our AI will analyze it and search through all lost and found items.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -215,12 +224,12 @@ const ImageSearchPage: React.FC = () => {
                     {searching ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Searching...
+                        Analyzing with AI...
                       </>
                     ) : (
                       <>
-                        <Search className="w-4 h-4 mr-2" />
-                        Search Similar Items
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Analyze & Search with AI
                       </>
                     )}
                   </Button>
@@ -232,6 +241,28 @@ const ImageSearchPage: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* AI-Extracted Description */}
+        {extractedDescription && (
+          <Card className="mb-8 animate-slide-in border-accent/30 bg-gradient-to-br from-card to-accent/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-accent animate-pulse" />
+                AI Analysis Result
+              </CardTitle>
+              <CardDescription>
+                Gemini AI has analyzed your image and extracted the following description
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-secondary/50 rounded-lg p-4 border border-accent/20">
+                <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                  {extractedDescription}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Search Results */}
         {hasSearched && (

@@ -965,3 +965,127 @@ export const searchItemsByImage = async (imageFile: File): Promise<Array<LostIte
     throw error;
   }
 };
+
+// Analyze image with Gemini and search for matching items
+export const analyzeImageAndSearch = async (imageFile: File): Promise<{
+  description: string;
+  matches: Array<LostItemWithProfile | FoundItemWithProfile>;
+}> => {
+  try {
+    // Convert image to base64
+    const base64Image = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(imageFile);
+    });
+
+    // Call Gemini edge function to analyze image
+    const { data, error } = await supabase.functions.invoke('analyze-image-gemini', {
+      body: JSON.stringify({
+        imageBase64: base64Image
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (error) {
+      const errorMsg = await error?.context?.text();
+      console.error('Edge function error in analyze-image-gemini:', errorMsg || error?.message);
+      throw new Error(errorMsg || error?.message || 'Failed to analyze image');
+    }
+
+    if (!data?.description) {
+      throw new Error('No description returned from image analysis');
+    }
+
+    const description = data.description;
+
+    // Get all items
+    const [lostItems, foundItems] = await Promise.all([
+      getLostItems(),
+      getFoundItems()
+    ]);
+
+    const allItems = [...lostItems, ...foundItems];
+
+    // Match items based on description similarity
+    const matches = matchItemsByDescription(allItems, description);
+
+    return {
+      description,
+      matches
+    };
+  } catch (error) {
+    console.error('Error analyzing image and searching:', error);
+    throw error;
+  }
+};
+
+// Helper function to match items by description similarity
+const matchItemsByDescription = (
+  items: Array<LostItemWithProfile | FoundItemWithProfile>,
+  searchDescription: string
+): Array<LostItemWithProfile | FoundItemWithProfile> => {
+  const searchLower = searchDescription.toLowerCase();
+  const searchWords = searchLower.split(/\s+/).filter(word => word.length > 2);
+
+  // Calculate relevance score for each item
+  const scoredItems = items.map(item => {
+    let score = 0;
+    const itemText = `${item.item_name} ${item.description} ${item.category} ${item.additional_info || ''}`.toLowerCase();
+
+    // Exact phrase matches (highest weight)
+    if (itemText.includes(searchLower)) {
+      score += 100;
+    }
+
+    // Item name matches (high weight)
+    if (item.item_name.toLowerCase().includes(searchLower) || searchLower.includes(item.item_name.toLowerCase())) {
+      score += 50;
+    }
+
+    // Category matches (medium-high weight)
+    if (item.category.toLowerCase().includes(searchLower) || searchLower.includes(item.category.toLowerCase())) {
+      score += 40;
+    }
+
+    // Description matches (medium weight)
+    if (item.description.toLowerCase().includes(searchLower) || searchLower.includes(item.description.toLowerCase())) {
+      score += 35;
+    }
+
+    // Additional info matches (medium weight)
+    if (item.additional_info && (item.additional_info.toLowerCase().includes(searchLower) || searchLower.includes(item.additional_info.toLowerCase()))) {
+      score += 30;
+    }
+
+    // Word-by-word matching (lower weight)
+    searchWords.forEach(word => {
+      if (itemText.includes(word)) {
+        score += 5;
+      }
+      if (item.item_name.toLowerCase().includes(word)) {
+        score += 10;
+      }
+      if (item.category.toLowerCase().includes(word)) {
+        score += 8;
+      }
+      if (item.description.toLowerCase().includes(word)) {
+        score += 6;
+      }
+    });
+
+    return { item, score };
+  });
+
+  // Filter items with score > 0 and sort by score (descending)
+  const matchedItems = scoredItems
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(({ item }) => item);
+
+  // Return top 20 matches
+  return matchedItems.slice(0, 20);
+};
