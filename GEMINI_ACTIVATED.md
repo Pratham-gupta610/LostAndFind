@@ -10,6 +10,7 @@ Your Gemini API key has been successfully configured and the AI-powered Image Se
 
 - **API Key**: Securely stored in Supabase secrets
 - **Edge Function**: `analyze-image-gemini` deployed and ready
+- **AI Model**: Google Gemini 2.0 Flash (Experimental) - Latest & Fastest
 - **Frontend**: Updated with AI-powered UI
 - **Matching Algorithm**: Smart relevance-based scoring active
 - **Security**: API key encrypted and protected

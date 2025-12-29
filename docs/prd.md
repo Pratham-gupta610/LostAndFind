@@ -5,12 +5,13 @@
 ### 1.1 Application Name
 FINDIT.AI\n
 ### 1.2 Application Description
-A modern, highly interactive multi-campus Lost & Found web application designed to help users report and search for lost or found items across multiple campus locations, with a focus on trust-first design and seamless user experience. Features secure college email authentication with OTP verification for first-time users only, built-in real-time messaging system with WhatsApp-like delivery states, blue tick read receipts, intelligent popup notifications, advanced chat management including one-sided deletion, role-based conclusion system, and editable/deletable messages for direct communication between users, AI-powered intelligent matching to automatically identify potential matches between lost and found items, and Gemini API-powered image description extraction for enhanced visual search capabilities.
+A modern, highly interactive multi-campus Lost & Found web application designed to help users report and search for lost or found items across multiple campus locations, with a focus on trust-first design and seamless user experience. Features secure college email authentication with OTP verification for first-time users only, built-in real-time messaging system with WhatsApp-like delivery states, blue tick read receipts, intelligent popup notifications, advanced chat management including one-sided deletion, role-based conclusion system, and editable/deletable messages for direct communication between users, AI-powered intelligent matching to automatically identify potential matches between lost and found items, and **Gemini 2.5 Flash API-powered** image description extraction for enhanced visual search capabilities.
 
 ### 1.3 Target Users
 Campus community members (students, faculty, staff) who need to report lost items, search for found items, or help return items to their owners.
 
-## 2. Core Functionality\n
+## 2. Core Functionality
+
 ### 2.1 User Authentication & Authorization
 \n#### 2.1.1 First-Time User Authentication Flow
 - **Email Entry**: User enters college email address in format *@iiitg.ac.in
@@ -149,8 +150,7 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Data Validation**: Validate all inputs on both client and server side
 - **Username Uniqueness**: Enforce unique username constraint at database level
 - **Session Persistence**: Profile changes persist across sessions
-
-#### 2.3.7 Profile UX Requirements
+\n#### 2.3.7 Profile UX Requirements
 - **Loading State**: Display loading indicator while fetching profile data
 - **Disabled Save Button**: Disable 'Save Changes' button during update operation
 - **Success Confirmation**: Show clear confirmation message after successful profile update
@@ -176,11 +176,11 @@ All sections sorted by latest first with date-range filter options.
 ### 2.6 Search System
 Two separate, independent search systems:
 - **Lost Items Search**: Searches only within lost item reports
-- **Found Items Search**: Searches only within found item reports\n\n**Image Search Feature with Gemini API Integration**:\n- **Image Search Button**: Each search section (Lost Items and Found Items) includes an 'Image Search' button alongside text search
+- **Found Items Search**: Searches only within found item reports\n\n**Image Search Feature with Gemini 2.5 Flash API Integration**:\n- **Image Search Button**: Each search section (Lost Items and Found Items) includes an 'Image Search' button alongside text search
 - **Image Upload**: Clicking 'Image Search' button opens image upload interface allowing users to upload one or multiple images
-- **Supported Formats**: Accept common image formats (JPG, PNG, JPEG, WebP)\n- **Gemini API Description Extraction**:
-  - When user uploads image, system sends image to Gemini API
-  - Gemini API analyzes image and generates detailed text description of visible items, including:
+- **Supported Formats**: Accept common image formats (JPG, PNG, JPEG, WebP)\n- **Gemini 2.5 Flash API Description Extraction**:
+  - When user uploads image, system sends image to **Gemini 2.5 Flash API**
+  - **Gemini 2.5 Flash** analyzes image and generates detailed text description of visible items, including:
     - Object type and category
     - Color and visual characteristics
     - Brand or distinctive features (if visible)
@@ -200,6 +200,7 @@ Two separate, independent search systems:
 - **Combined Search**: Users can optionally combine image search with text filters for more precise results
 - **Search Scope**: Image search respects category boundaries (Lost Items search only searches lost items, Found Items search only searches found items)
 - **API Key Configuration**: System uses provided Gemini API key: AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8
+- **API Model Version**: Strictly use **Gemini 2.5 Flash** model for all image analysis requests
 - **Error Handling**: Display user-friendly error messages if API call fails or image cannot be processed
 
 Search results update instantly to reflect new entries with no mixing between categories.
@@ -282,7 +283,8 @@ Each message must track the following states:
   - Delivered ticks appear when message reaches receiver device
 
 #### 2.10.4 Popup Notification System
-- **Trigger**: When a user receives a new message\n- **Popup Appearance**:
+- **Trigger**: When a user receives a new message
+- **Popup Appearance**:
   - Show in-app popup notification near the three-line hamburger icon (☰)
   - Popup contains:
     - Sender username (fetched dynamically from profiles table)
@@ -508,7 +510,8 @@ Then:
 - **Real-Time Updates**: Public Return Section updates immediately when items are concluded as 'Owner Found' or 'Item Found'
 
 #### 2.11.5 Auto-Delete Policy (CRITICAL)
-Automatically delete items older than 6 months based on concluded_at timestamp.\n\nThis auto-delete applies to ALL:\n- USER_HISTORY items
+Automatically delete items older than 6 months based on concluded_at timestamp.\n
+This auto-delete applies to ALL:\n- USER_HISTORY items
 - MAIN_HISTORY items
 - Any remaining inactive Lost/Found history\n- ACTIVE items in Lost/Found lists that are older than 6 months
 \nNO EXCEPTIONS.\n
@@ -606,24 +609,29 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Secure Storage**: Never expose API key in client-side code, version control, or logs
 - **Key Validation**: Validate API key connection on application startup to ensure proper integration
 
-#### 2.15.2 API Request Handling
+#### 2.15.2 API Model Version
+- **Strict Model Requirement**: Use **Gemini 2.5 Flash** model exclusively for all image analysis and description extraction requests
+- **Model Specification**: All API calls must explicitly specify model version as 'gemini-2.5-flash'
+- **No Model Fallback**: Do not fall back to other Gemini model versions (e.g., Gemini 1.5, Gemini Pro)
+- **Version Validation**: Validate that API responses are generated by Gemini 2.5 Flash model
+\n#### 2.15.3 API Request Handling
 - **Image Preprocessing**: Resize/compress images before sending to API to optimize performance
 - **Request Rate Limiting**: Implement rate limiting to prevent API quota exhaustion
 - **Timeout Handling**: Set reasonable timeout (10-15 seconds) for API requests
 - **Retry Logic**: Implement retry mechanism for failed requests (max 2 retries)
 - **Error Logging**: Log all API errors for debugging and monitoring
 
-#### 2.15.3 Description Generation Process
-- **Prompt Engineering**: Use optimized prompts to guide Gemini API to generate structured item descriptions
+#### 2.15.4 Description Generation Process
+- **Prompt Engineering**: Use optimized prompts to guide Gemini 2.5 Flash API to generate structured item descriptions
 - **Response Parsing**: Extract and structure description data from API response
 - **Description Storage**: Store generated descriptions temporarily in session or cache
 - **Fallback Mechanism**: If API fails, allow users to proceed with manual text search
-\n#### 2.15.4 Performance Optimization
+\n#### 2.15.5 Performance Optimization
 - **Caching**: Cache API responses for identical images to reduce redundant calls
 - **Async Processing**: Process image analysis asynchronously to avoid blocking UI
 - **Loading Indicators**: Show clear loading state during image analysis
 - **Progress Feedback**: Display progress messages ('Analyzing image...', 'Searching for matches...')
-\n#### 2.15.5 Cost Management
+\n#### 2.15.6 Cost Management
 - **Usage Monitoring**: Track API usage and costs\n- **Usage Limits**: Set daily/monthly usage limits to control costs
 - **Alert System**: Send alerts when approaching usage limits
 - **Optimization**: Compress images and optimize prompts to minimize token usage
@@ -634,9 +642,8 @@ Users can view their own submission history directly on Report Lost/Report Found
 - Public history items (Owner Found, Item Found) displayed in Public Return Section
 - Private history items (Owner Not Found, Item Not Found)\n- Chat conversations with various states (concluded, not concluded, deleted by one user)\n- Messages with different delivery states (sent, delivered, read)
 - Unread messages to test popup notifications and badge behavior
-- Items approaching 6-month auto-delete threshold
-- Accurate homepage statistics reflecting current counts
-- Sample images for testing Gemini API image search functionality
+- Items approaching 6-month auto-delete threshold\n- Accurate homepage statistics reflecting current counts
+- Sample images for testing Gemini 2.5 Flash API image search functionality
 
 ## 3. Design Style\n
 ### 3.1 Visual Theme
@@ -657,7 +664,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Unread Badge Design**: Red or blue circular badge with unread count, positioned on chat items in chat list
 - **Image Search Button**: Prominent 'Image Search' button with camera/image icon, positioned alongside text search input
 - **Image Upload Interface**: Clean drag-and-drop zone with file browser option, showing image preview thumbnails after upload
-- **AI Analysis Indicator**: Animated loading indicator during Gemini API image analysis with progress text
+- **AI Analysis Indicator**: Animated loading indicator during Gemini 2.5 Flash API image analysis with progress text
 - **Match Result Highlighting**: Visual highlighting of matching keywords between Gemini-generated description and item descriptions
 
 ### 3.3 User Experience\n- **Production-Level UX**: Intuitive navigation flow, clear call-to-action buttons, instant feedback on user actions
@@ -674,14 +681,15 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **WhatsApp-Like Messaging**: Familiar messaging experience with delivery states, blue ticks, and popup notifications
 - **Intelligent Notification System**: Popup notifications appear immediately near ☰ icon, unread badges shown only when chat list is opened
 - **Seamless Real-Time Experience**: All message states, ticks, popups, and badges update instantly without page reloads
-- **Visual Search Convenience**: Image search with Gemini API provides intuitive alternative to text-based search, especially useful when item descriptions are difficult to articulate
+- **Visual Search Convenience**: Image search with Gemini 2.5 Flash API provides intuitive alternative to text-based search, especially useful when item descriptions are difficult to articulate
 - **AI-Powered Search Feedback**: Clear feedback during image analysis process with progress indicators and result explanations
 \n## 4. Technical Stack
 - **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
 - **Database**: Supabase PostgreSQL\n- **Real-Time Communication**: Supabase Realtime (for messages, delivery states, read receipts, popup notifications, unread badges)
 - **Email Service**: Supabase Email Service\n- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
 - **Image Recognition**: AI-powered visual similarity search for image-based item matching
-- **Gemini API**: Google Gemini API for image description extraction and intelligent matching
-- **API Key**: AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8 (configured in environment variables as GEMINI_API_KEY)\n\n## 5. Referenced Images
+- **Gemini API**: **Google Gemini 2.5 Flash API** for image description extraction and intelligent matching
+- **API Key**: AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8 (configured in environment variables as GEMINI_API_KEY)\n- **API Model Version**: Strictly use **Gemini 2.5 Flash** model for all image analysis requests
+\n## 5. Referenced Images
 - image.png (sidebar navigation reference)
 - image-2.png (UI layout reference)

@@ -4,7 +4,7 @@
 
 **Date Activated**: December 30, 2024  
 **Feature**: AI-Powered Image Search  
-**Technology**: Google Gemini 1.5 Flash  
+**Technology**: Google Gemini 2.0 Flash (Experimental)  
 **Status**: 🟢 LIVE
 
 ---
