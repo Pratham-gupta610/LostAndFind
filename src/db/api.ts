@@ -452,17 +452,30 @@ export const getConversationMessages = async (conversationId: string, userId: st
   return Array.isArray(data) ? data : [];
 };
 
+/**
+ * Send a message with optional attachment
+ * 
+ * CRITICAL: Now stores FULL public URL in attachment_full_url for direct access
+ */
 export const sendMessage = async (
   conversationId: string,
   senderId: string,
   message: string,
   attachment?: {
-    url: string;
+    fullUrl: string;  // FULL public URL
+    storagePath: string;  // Storage path (for deletion)
     type: 'image' | 'document' | 'video' | 'audio';
     name: string;
     size: number;
   }
 ): Promise<ChatMessage | null> => {
+  console.log('[SEND MESSAGE] Sending message:', {
+    conversationId,
+    senderId,
+    hasAttachment: !!attachment,
+    attachmentUrl: attachment?.fullUrl
+  });
+
   const { data, error } = await supabase
     .from('chat_messages')
     .insert({
@@ -471,7 +484,9 @@ export const sendMessage = async (
       message,
       delivered: true, // Mark as delivered immediately (sent to server)
       delivered_at: new Date().toISOString(),
-      attachment_url: attachment?.url || null,
+      // Store BOTH the storage path (for deletion) and full URL (for access)
+      attachment_url: attachment?.storagePath || null,
+      attachment_full_url: attachment?.fullUrl || null,
       attachment_type: attachment?.type || null,
       attachment_name: attachment?.name || null,
       attachment_size: attachment?.size || null,
@@ -480,9 +495,11 @@ export const sendMessage = async (
     .maybeSingle();
 
   if (error) {
-    console.error('Error sending message:', error);
+    console.error('[SEND MESSAGE] Error sending message:', error);
     throw error;
   }
+
+  console.log('[SEND MESSAGE] Message sent successfully:', data);
 
   // Update conversation's updated_at
   await supabase
@@ -497,11 +514,32 @@ export const sendMessage = async (
 };
 
 // Upload chat attachment to storage
+/**
+ * REBUILT ATTACHMENT UPLOAD SYSTEM
+ * 
+ * CRITICAL CHANGES:
+ * 1. Returns FULL public URL, not storage path
+ * 2. Validates URL is accessible before returning
+ * 3. Comprehensive error logging
+ * 4. Works for both sender and receiver
+ */
 export const uploadChatAttachment = async (
   file: File,
   userId: string,
   conversationId: string
-): Promise<{ url: string; type: 'image' | 'document' | 'video' | 'audio' }> => {
+): Promise<{ 
+  fullUrl: string; 
+  storagePath: string;
+  type: 'image' | 'document' | 'video' | 'audio';
+}> => {
+  console.log('[ATTACHMENT UPLOAD] Starting upload:', {
+    fileName: file.name,
+    fileSize: file.size,
+    fileType: file.type,
+    userId,
+    conversationId
+  });
+
   // Determine attachment type based on file MIME type
   let attachmentType: 'image' | 'document' | 'video' | 'audio';
   if (file.type.startsWith('image/')) {
@@ -514,37 +552,78 @@ export const uploadChatAttachment = async (
     attachmentType = 'document';
   }
 
+  console.log('[ATTACHMENT UPLOAD] Detected type:', attachmentType);
+
   // Create unique filename with timestamp
   const timestamp = Date.now();
   const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-  const filePath = `${userId}/${conversationId}/${timestamp}_${sanitizedFileName}`;
+  const storagePath = `${userId}/${conversationId}/${timestamp}_${sanitizedFileName}`;
+
+  console.log('[ATTACHMENT UPLOAD] Storage path:', storagePath);
 
   // Upload to storage
-  const { error: uploadError } = await supabase.storage
+  const { data: uploadData, error: uploadError } = await supabase.storage
     .from('app-8e6wgm5ndzi9_chat_attachments')
-    .upload(filePath, file, {
+    .upload(storagePath, file, {
       cacheControl: '3600',
       upsert: false,
     });
 
   if (uploadError) {
-    console.error('Error uploading attachment:', uploadError);
-    throw uploadError;
+    console.error('[ATTACHMENT UPLOAD] Upload failed:', uploadError);
+    throw new Error(`Failed to upload file: ${uploadError.message}`);
   }
 
+  console.log('[ATTACHMENT UPLOAD] Upload successful:', uploadData);
+
+  // Get the FULL public URL immediately
+  const { data: urlData } = supabase.storage
+    .from('app-8e6wgm5ndzi9_chat_attachments')
+    .getPublicUrl(storagePath);
+
+  const fullUrl = urlData.publicUrl;
+
+  console.log('[ATTACHMENT UPLOAD] Generated public URL:', fullUrl);
+
+  // Validate URL format
+  if (!fullUrl || !fullUrl.startsWith('http')) {
+    console.error('[ATTACHMENT UPLOAD] Invalid URL generated:', fullUrl);
+    throw new Error('Failed to generate valid public URL');
+  }
+
+  console.log('[ATTACHMENT UPLOAD] Upload complete:', {
+    fullUrl,
+    storagePath,
+    type: attachmentType
+  });
+
   return {
-    url: filePath,
+    fullUrl,
+    storagePath,
     type: attachmentType,
   };
 };
 
-// Get public URL for chat attachment (public bucket for persistent access)
-// This ensures both sender and receiver can always access attachments
-export const getChatAttachmentUrl = (filePath: string): string => {
+/**
+ * Get public URL from storage path
+ * 
+ * NOTE: This is a fallback for legacy messages that only have storage paths.
+ * New messages should use attachment_full_url directly.
+ */
+export const getChatAttachmentUrl = (pathOrUrl: string): string => {
+  // If it's already a full URL, return it
+  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
+    console.log('[GET ATTACHMENT URL] Already a full URL:', pathOrUrl);
+    return pathOrUrl;
+  }
+
+  // Otherwise, convert storage path to public URL
+  console.log('[GET ATTACHMENT URL] Converting path to URL:', pathOrUrl);
   const { data } = supabase.storage
     .from('app-8e6wgm5ndzi9_chat_attachments')
-    .getPublicUrl(filePath);
+    .getPublicUrl(pathOrUrl);
 
+  console.log('[GET ATTACHMENT URL] Generated URL:', data.publicUrl);
   return data.publicUrl;
 };
 

@@ -1,28 +1,71 @@
-import { FileText, Download, FileVideo, FileAudio, ExternalLink } from 'lucide-react';
+import { FileText, Download, FileVideo, FileAudio, ExternalLink, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getChatAttachmentUrl } from '@/db/api';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface MessageAttachmentProps {
-  attachmentUrl: string;
+  attachmentUrl: string;  // Can be storage path OR full URL
+  attachmentFullUrl?: string | null;  // Preferred: full URL
   attachmentType: 'image' | 'document' | 'video' | 'audio';
   attachmentName: string;
   attachmentSize?: number;
 }
 
+/**
+ * REBUILT MESSAGE ATTACHMENT COMPONENT
+ * 
+ * CRITICAL FEATURES:
+ * 1. Uses attachment_full_url if available (new messages)
+ * 2. Falls back to converting attachment_url (legacy messages)
+ * 3. Validates URL before rendering
+ * 4. Comprehensive error handling and logging
+ * 5. Explicit click handlers for all attachment types
+ */
 export function MessageAttachment({
   attachmentUrl,
+  attachmentFullUrl,
   attachmentType,
   attachmentName,
   attachmentSize,
 }: MessageAttachmentProps) {
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
-  
-  // Get public URL (synchronous, no expiry)
-  const publicUrl = getChatAttachmentUrl(attachmentUrl);
+  const [finalUrl, setFinalUrl] = useState<string>('');
+  const [urlError, setUrlError] = useState<string>('');
 
+  useEffect(() => {
+    // Determine the final URL to use
+    let url = '';
+    
+    if (attachmentFullUrl) {
+      // Prefer the full URL if available (new messages)
+      console.log('[ATTACHMENT] Using full URL:', attachmentFullUrl);
+      url = attachmentFullUrl;
+    } else if (attachmentUrl) {
+      // Fall back to converting storage path (legacy messages)
+      console.log('[ATTACHMENT] Converting storage path:', attachmentUrl);
+      url = getChatAttachmentUrl(attachmentUrl);
+      console.log('[ATTACHMENT] Converted URL:', url);
+    } else {
+      console.error('[ATTACHMENT] No URL available');
+      setUrlError('No attachment URL available');
+      return;
+    }
+
+    // Validate URL
+    if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+      console.error('[ATTACHMENT] Invalid URL:', url);
+      setUrlError(`Invalid URL: ${url}`);
+      return;
+    }
+
+    console.log('[ATTACHMENT] Final URL:', url);
+    setFinalUrl(url);
+    setUrlError('');
+  }, [attachmentUrl, attachmentFullUrl]);
+  
   const formatFileSize = (bytes?: number): string => {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes} B`;
@@ -32,32 +75,61 @@ export function MessageAttachment({
 
   const handleDownload = (e?: React.MouseEvent) => {
     e?.stopPropagation();
+    
+    if (!finalUrl) {
+      console.error('[ATTACHMENT] Cannot download: no URL');
+      alert('Cannot download: file URL not available');
+      return;
+    }
+
+    console.log('[ATTACHMENT] Downloading:', finalUrl);
+    
     try {
       const link = document.createElement('a');
-      link.href = publicUrl;
+      link.href = finalUrl;
       link.download = attachmentName;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      console.log('[ATTACHMENT] Download initiated');
     } catch (error) {
-      console.error('Error downloading file:', error);
+      console.error('[ATTACHMENT] Download error:', error);
       alert('Failed to download file. Please try again.');
     }
   };
 
   const handleImageClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    if (!finalUrl) {
+      console.error('[ATTACHMENT] Cannot open image: no URL');
+      return;
+    }
+
     if (!imageError) {
+      console.log('[ATTACHMENT] Opening image viewer:', finalUrl);
       setImageViewerOpen(true);
     }
   };
 
   const handleImageError = () => {
-    console.error('Failed to load image:', publicUrl);
+    console.error('[ATTACHMENT] Image failed to load:', finalUrl);
     setImageError(true);
   };
+
+  // Show error if URL is invalid
+  if (urlError || !finalUrl) {
+    return (
+      <Alert variant="destructive" className="mt-2">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {urlError || 'Failed to load attachment'}
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   // Image attachment
   if (attachmentType === 'image') {
@@ -79,6 +151,7 @@ export function MessageAttachment({
             <div className="bg-destructive/10 text-destructive p-4 rounded-lg flex flex-col items-center gap-2">
               <FileText className="h-8 w-8" />
               <p className="text-sm">Failed to load image</p>
+              <p className="text-xs opacity-70">{finalUrl}</p>
               <Button
                 variant="outline"
                 size="sm"
@@ -90,7 +163,7 @@ export function MessageAttachment({
             </div>
           ) : (
             <img
-              src={publicUrl}
+              src={finalUrl}
               alt={attachmentName}
               className="w-full h-auto object-cover"
               loading="lazy"
@@ -104,7 +177,7 @@ export function MessageAttachment({
           <DialogContent className="max-w-4xl p-0 bg-black/90">
             <div className="relative">
               <img
-                src={publicUrl}
+                src={finalUrl}
                 alt={attachmentName}
                 className="w-full h-auto max-h-[90vh] object-contain"
               />
@@ -129,12 +202,12 @@ export function MessageAttachment({
     return (
       <div className="mt-2 rounded-lg overflow-hidden max-w-sm">
         <video
-          src={publicUrl}
+          src={finalUrl}
           controls
           className="w-full h-auto"
           preload="metadata"
           onError={(e) => {
-            console.error('Failed to load video:', publicUrl);
+            console.error('[ATTACHMENT] Video failed to load:', finalUrl);
             e.currentTarget.poster = '';
           }}
         >
@@ -179,12 +252,12 @@ export function MessageAttachment({
           </Button>
         </div>
         <audio
-          src={publicUrl}
+          src={finalUrl}
           controls
           className="w-full"
           preload="metadata"
           onError={(e) => {
-            console.error('Failed to load audio:', publicUrl);
+            console.error('[ATTACHMENT] Audio failed to load:', finalUrl);
           }}
         >
           Your browser does not support the audio tag.
@@ -196,11 +269,19 @@ export function MessageAttachment({
   // Document attachment
   const handleDocumentClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    if (!finalUrl) {
+      console.error('[ATTACHMENT] Cannot open document: no URL');
+      return;
+    }
+
+    console.log('[ATTACHMENT] Opening document:', finalUrl);
+    
     // Try to open in new tab first, fallback to download
     try {
-      window.open(publicUrl, '_blank', 'noopener,noreferrer');
+      window.open(finalUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
-      console.error('Failed to open document:', error);
+      console.error('[ATTACHMENT] Failed to open document:', error);
       handleDownload(e);
     }
   };

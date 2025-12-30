@@ -116,16 +116,31 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
       
       // Upload attachment if present
       if (attachmentFile) {
+        console.log('[CHAT] Uploading attachment:', attachmentFile.name);
         setUploading(true);
-        const uploadResult = await uploadChatAttachment(attachmentFile, user.id, conversationId);
-        attachmentData = {
-          url: uploadResult.url,
-          type: uploadResult.type,
-          name: attachmentFile.name,
-          size: attachmentFile.size,
-        };
-        setUploading(false);
+        
+        try {
+          const uploadResult = await uploadChatAttachment(attachmentFile, user.id, conversationId);
+          console.log('[CHAT] Upload result:', uploadResult);
+          
+          attachmentData = {
+            fullUrl: uploadResult.fullUrl,
+            storagePath: uploadResult.storagePath,
+            type: uploadResult.type,
+            name: attachmentFile.name,
+            size: attachmentFile.size,
+          };
+          
+          console.log('[CHAT] Attachment data prepared:', attachmentData);
+        } catch (uploadError) {
+          console.error('[CHAT] Upload failed:', uploadError);
+          throw new Error('Failed to upload attachment');
+        } finally {
+          setUploading(false);
+        }
       }
+      
+      console.log('[CHAT] Sending message with attachment:', !!attachmentData);
       
       await sendMessage(
         conversationId, 
@@ -134,6 +149,8 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
         attachmentData
       );
       
+      console.log('[CHAT] Message sent successfully');
+      
       setNewMessage('');
       clearAttachment();
       
@@ -141,10 +158,10 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
       await loadMessages();
     } catch (err) {
       setError('Failed to send message');
-      console.error('Error sending message:', err);
+      console.error('[CHAT] Error sending message:', err);
       toast({
         title: 'Error',
-        description: 'Failed to send message. Please try again.',
+        description: err instanceof Error ? err.message : 'Failed to send message. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -555,6 +572,7 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
                                   {msg.attachment_url && msg.attachment_type && !msg.is_deleted && (
                                     <MessageAttachment
                                       attachmentUrl={msg.attachment_url}
+                                      attachmentFullUrl={msg.attachment_full_url}
                                       attachmentType={msg.attachment_type}
                                       attachmentName={msg.attachment_name || 'file'}
                                       attachmentSize={msg.attachment_size || undefined}

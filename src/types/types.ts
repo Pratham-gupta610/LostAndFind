@@ -202,7 +202,8 @@ export interface ChatMessage {
   delivered?: boolean;
   delivered_at?: string | null;
   read_at?: string | null;
-  attachment_url?: string | null;
+  attachment_url?: string | null;  // Storage path (for deletion)
+  attachment_full_url?: string | null;  // FULL public URL (for rendering)
   attachment_type?: AttachmentType | null;
   attachment_name?: string | null;
   attachment_size?: number | null;
