@@ -182,6 +182,8 @@ export interface ChatConversationWithDetails extends ChatConversation {
     sender_id: string;
     created_at: string;
   } | null;
+  user_deleted_at?: string | null; // Timestamp when current user deleted this chat
+  has_new_messages?: boolean; // Whether there are new messages after deletion
 }
 
 export interface ChatMessage {

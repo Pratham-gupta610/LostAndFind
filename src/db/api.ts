@@ -435,12 +435,14 @@ export const getUserConversationsWithDetails = async (userId: string) => {
   return Array.isArray(data) ? data : [];
 };
 
-export const getConversationMessages = async (conversationId: string): Promise<ChatMessage[]> => {
+// Get messages for a conversation, filtered by user's deletion timestamp
+// Only returns messages created after the user deleted the chat (or all if not deleted)
+export const getConversationMessages = async (conversationId: string, userId: string): Promise<ChatMessage[]> => {
   const { data, error } = await supabase
-    .from('chat_messages')
-    .select('*')
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true });
+    .rpc('get_conversation_messages_for_user', {
+      p_conversation_id: conversationId,
+      p_user_id: userId
+    });
 
   if (error) {
     console.error('Error fetching messages:', error);
@@ -700,23 +702,24 @@ export const deleteChatForUser = async (conversationId: string, userId: string):
   return result;
 };
 
-// Get conversations for user (excluding deleted ones)
+// Get conversations for user with deletion info
+// Uses new timestamp-based deletion system for WhatsApp-like behavior
 export const getChatConversationsForUser = async (userId: string) => {
   const { data, error } = await supabase
-    .from('chat_conversations_with_details')
-    .select('*')
-    .contains('participant_ids', [userId])
-    .order('updated_at', { ascending: false });
+    .rpc('get_user_conversations_with_deletions', {
+      p_user_id: userId
+    });
 
   if (error) {
     console.error('Error fetching conversations:', error);
     throw error;
   }
 
-  // Filter out conversations deleted by this user
+  // Filter to show only:
+  // 1. Conversations never deleted by user (user_deleted_at is NULL)
+  // 2. Conversations with new messages after deletion (has_new_messages is TRUE)
   const filtered = (data || []).filter(conv => {
-    const deletedBy = conv.deleted_by_user_ids || [];
-    return !deletedBy.includes(userId);
+    return conv.user_deleted_at === null || conv.has_new_messages === true;
   });
 
   return filtered;

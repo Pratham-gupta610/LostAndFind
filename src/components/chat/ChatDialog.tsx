@@ -84,7 +84,7 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
     
     try {
       setLoading(true);
-      const data = await getConversationMessages(conversationId);
+      const data = await getConversationMessages(conversationId, user.id);
       setMessages(data);
       
       // Mark messages as read
