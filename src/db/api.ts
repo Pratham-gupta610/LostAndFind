@@ -538,13 +538,18 @@ export const uploadChatAttachment = async (
   };
 };
 
-// Get public URL for chat attachment
-export const getChatAttachmentUrl = (filePath: string): string => {
-  const { data } = supabase.storage
+// Get signed URL for chat attachment (private bucket)
+export const getChatAttachmentUrl = async (filePath: string): Promise<string> => {
+  const { data, error } = await supabase.storage
     .from('app-8e6wgm5ndzi9_chat_attachments')
-    .getPublicUrl(filePath);
+    .createSignedUrl(filePath, 3600); // 1 hour expiry
 
-  return data.publicUrl;
+  if (error) {
+    console.error('Error creating signed URL:', error);
+    throw error;
+  }
+
+  return data.signedUrl;
 };
 
 // Delete chat attachment from storage

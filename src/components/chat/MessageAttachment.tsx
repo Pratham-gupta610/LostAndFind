@@ -1,8 +1,9 @@
 import { FileText, Download, FileVideo, FileAudio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getChatAttachmentUrl } from '@/db/api';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MessageAttachmentProps {
   attachmentUrl: string;
@@ -18,7 +19,27 @@ export function MessageAttachment({
   attachmentSize,
 }: MessageAttachmentProps) {
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
-  const publicUrl = getChatAttachmentUrl(attachmentUrl);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const fetchSignedUrl = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+        const url = await getChatAttachmentUrl(attachmentUrl);
+        setSignedUrl(url);
+      } catch (err) {
+        console.error('Error fetching attachment URL:', err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSignedUrl();
+  }, [attachmentUrl]);
 
   const formatFileSize = (bytes?: number): string => {
     if (!bytes) return '';
@@ -28,14 +49,31 @@ export function MessageAttachment({
   };
 
   const handleDownload = () => {
+    if (!signedUrl) return;
     const link = document.createElement('a');
-    link.href = publicUrl;
+    link.href = signedUrl;
     link.download = attachmentName;
     link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
+
+  if (loading) {
+    return (
+      <div className="mt-2">
+        <Skeleton className="h-32 w-48 rounded-lg bg-muted" />
+      </div>
+    );
+  }
+
+  if (error || !signedUrl) {
+    return (
+      <div className="mt-2 bg-destructive/10 text-destructive rounded-lg p-3 max-w-sm">
+        <p className="text-sm">Failed to load attachment</p>
+      </div>
+    );
+  }
 
   // Image attachment
   if (attachmentType === 'image') {
@@ -46,7 +84,7 @@ export function MessageAttachment({
           onClick={() => setImageViewerOpen(true)}
         >
           <img
-            src={publicUrl}
+            src={signedUrl}
             alt={attachmentName}
             className="w-full h-auto object-cover hover:opacity-90 transition-opacity"
             loading="lazy"
@@ -58,7 +96,7 @@ export function MessageAttachment({
           <DialogContent className="max-w-4xl p-0 bg-black/90">
             <div className="relative">
               <img
-                src={publicUrl}
+                src={signedUrl}
                 alt={attachmentName}
                 className="w-full h-auto max-h-[90vh] object-contain"
               />
@@ -83,7 +121,7 @@ export function MessageAttachment({
     return (
       <div className="mt-2 rounded-lg overflow-hidden max-w-sm">
         <video
-          src={publicUrl}
+          src={signedUrl}
           controls
           className="w-full h-auto"
           preload="metadata"
@@ -111,7 +149,7 @@ export function MessageAttachment({
           </div>
         </div>
         <audio
-          src={publicUrl}
+          src={signedUrl}
           controls
           className="w-full"
           preload="metadata"
