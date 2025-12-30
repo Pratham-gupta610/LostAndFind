@@ -88,11 +88,11 @@ const ReportLostPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
+    // Validate file size (5MB maximum)
+    if (file.size > 5 * 1024 * 1024) {
       toast({
         title: 'File too large',
-        description: 'Image must be less than 10MB',
+        description: 'Image size must be less than or equal to 5MB',
         variant: 'destructive',
       });
       return;
