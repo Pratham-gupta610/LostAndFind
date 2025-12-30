@@ -86,7 +86,8 @@ Campus community members (students, faculty, staff) who need to report lost item
 - **Session Management**: Maintain user session across visits, auto-expire after inactivity
 - **Device Recognition**: Remember logged-in devices for seamless return access
 - **Manual Logout**: Users can manually end session at any time
-\n#### 2.1.5 Guest Access & Login Requirements
+
+#### 2.1.5 Guest Access & Login Requirements
 - **Guest Browsing**: Users can view Lost Items, Found Items, and Return History without authentication
 - **Login Required Actions**: Authentication required only when reporting items or contacting other users
 - **User Profile Storage**: Stores email, phone number, name, verification status, and login history
@@ -166,7 +167,8 @@ Campus community members (students, faculty, staff) who need to report lost item
 
 ### 2.5 Homepage Structure
 The homepage displays three clearly separated sections with real-time statistics:
-- **Lost Items Section**: Shows all reported lost items with live count\n- **Found Items Section**: Shows all reported found items with live count
+- **Lost Items Section**: Shows all reported lost items with live count
+- **Found Items Section**: Shows all reported found items with live count
 - **Public Return Section**: Shows history of successful returns with live count (clickable items), displaying most recent returns at the top
 \n**Real-Time Counter Updates**: All three section counters automatically update immediately when:\n- New items are added\n- Status changes occur\n- Items are concluded as 'Item Found' or 'Owner Found' (counters adjust accordingly: Lost/Found counts decrease, Return count increases)
 
@@ -206,13 +208,14 @@ Search results update instantly to reflect new entries with no mixing between ca
 
 ### 2.7 Item Reporting\n- **Report Lost Item**: Form for users to submit lost item details (requires login), with 'My Reports' history visible on same page
   - Fields include: title, description, category, color, brand, location, date, optional images
+  - **Image Upload Size Limit**: Maximum 10 MB per image
   - **Location Suggestions**: When user enters location, system provides quick-select suggestions including:\n    - Student Activity Centre
     - Day Canteen
     - Night Canteen
-    - Others
-    - (Plus any other relevant campus locations)
+    - Others\n    - (Plus any other relevant campus locations)
 - **Report Found Item**: Form for users to submit found item details (requires login), with 'My Reports' history visible on same page
   - Fields include: title, description, category, color, brand, location, date, optional images
+  - **Image Upload Size Limit**: Maximum 10 MB per image
   - **Location Suggestions**: Same location suggestions as Report Lost Item form
 - Both forms immediately add entries to respective searchable databases and update homepage counters in real-time
 - Upon submission, AI Matching Assistant automatically evaluates potential matches\n\n### 2.8 Item Details Page
@@ -256,33 +259,57 @@ System generates match results in following structure:
 - **Database Behavior**: Chat record is created in database only when first message is sent
 - **Real-Time Appearance**: Once first message is sent, chat appears immediately in both users' chat lists
 
-#### 2.10.2 Message Delivery States
+#### 2.10.2 Message Delivery States with WhatsApp-Like Status System
 Each message must track the following states:
-- **sent**: Message stored on server
-- **delivered**: Message delivered to receiver device
-- **read**: Receiver has opened the chat and seen the message
+- **sent**: Message stored on server (single tick ✔️)
+- **delivered**: Message delivered to receiver device (double grey tick ✔️✔️)
+- **read**: Receiver has opened the chat and seen the message (double blue tick 💙✔️✔️)
 \n**Database Fields**:
 - message_id (UUID, primary key)\n- chat_id (UUID, references chats table)
 - sender_id (UUID, references users)\n- receiver_id (UUID, references users)
 - content (text)\n- sent_at (timestamp)
-- delivered (boolean, default false)
+- status (enum: 'sent', 'delivered', 'read')
 - delivered_at (timestamp, nullable)
-- read (boolean, default false)
 - read_at (timestamp, nullable)
 - is_deleted (boolean, default false)
 - edited_at (timestamp, nullable)
-\n#### 2.10.3 Blue Tick Read Receipts (WhatsApp-Style)
+\n**Message Flow Logic**:
+1. **When user sends message**:
+   - Store message in database
+   - Set status = 'sent'
+   - Set sent_at = current timestamp
+   - Display single tick (✔️) to sender
+\n2. **When message delivered to receiver device**:
+   - Update status = 'delivered'
+   - Set delivered_at = current timestamp
+   - Display double grey ticks (✔️✔️) to sender in real-time
+
+3. **When receiver opens chat and message becomes visible**:
+   - Update status = 'read'
+   - Set read_at = current timestamp
+   - Display double blue ticks (💙✔️✔️) to sender in real-time\n   - Mark all unread messages in that chat as read
+
+**Status Update Rules**:
+- Status updates are real-time and immediate
+- Each message can only transition forward: sent → delivered → read
+- Once marked as 'read', status cannot revert
+- Track read events per message ID to avoid duplicate updates
+- Blue tick appears ONLY when receiver opens chat and views message
+- If receiver is offline, message remains in 'sent' or 'delivered' state
+- If message is deleted before being read, it never shows blue tick
+
+#### 2.10.3 Blue Tick Read Receipts (WhatsApp-Style)
 - **Tick Icons**:
-  - ✔️ (single gray tick) = sent\n  - ✔️✔️ (double gray ticks) = delivered
+  - ✔️ (single grey tick) = sent\n  - ✔️✔️ (double grey ticks) = delivered
   - 💙✔️✔️ (double blue ticks) = read/seen
 \n- **Read Receipt Behavior**:
   - When receiver opens the chat:\n    - Mark all unread messages as read in database
-    - Set read = true and read_at = current timestamp
-    - Notify sender in real time via Supabase Realtime\n    - Update sender UI to show blue ticks immediately
+    - Set status = 'read' and read_at = current timestamp
+    - Notify sender in real time via Supabase Realtime
+    - Update sender UI to show blue ticks immediately
   - Blue ticks appear only after receiver has opened and viewed the chat
   - Delivered ticks appear when message reaches receiver device
-
-#### 2.10.4 Popup Notification System
+\n#### 2.10.4 Popup Notification System
 - **Trigger**: When a user receives a new message
 - **Popup Appearance**:
   - Show in-app popup notification near the three-line hamburger icon (☰)
@@ -393,11 +420,13 @@ Each message must track the following states:
   - Other user cannot recover deleted messages
 - **Permission Control**: Users cannot edit or delete others' messages
 \n#### 2.10.11 Real-Time Requirements
-- **Real-Time Delivery**: Messages delivered instantly with real-time synchronization using Supabase Realtime\n- **Real-Time Tick Updates**: Delivery and read states update in real time without page reload
+- **Real-Time Delivery**: Messages delivered instantly with real-time synchronization using Supabase Realtime\n- **Real-Time Status Updates**: Message status (sent/delivered/read) updates in real time without page reload
+- **Real-Time Tick Updates**: Delivery and read states update in real time with smooth tick transitions
 - **Real-Time Popup Notifications**: Popups appear immediately when messages arrive
 - **Real-Time Unread Badges**: Unread counts update instantly when messages are read
 - **No Page Reloads**: All updates happen seamlessly without requiring page refresh
 - **Multiple Chats Support**: System correctly handles multiple simultaneous chats and users
+- **Performance & Sync**: Avoid duplicate read updates, ensure efficient real-time synchronization
 
 #### 2.10.12 Chat Features
 - **Message Notifications**: Users receive popup notifications for new messages near ☰ icon
@@ -410,8 +439,7 @@ Each message must track the following states:
 - **User Privacy**: Phone numbers and emails only shared if users choose to do so within chat conversations
 \n#### 2.10.13 Persistence Across Sessions
 - **Unread State Persistence**: Unread and read states must persist across:\n  - App reloads\n  - Logout/login\n  - Device switches
-- **Database Storage**: All message states (sent, delivered, read) stored in database
-- **Session Recovery**: When user logs back in, unread badges and message states restored correctly
+- **Database Storage**: All message states (sent, delivered, read) stored in database\n- **Session Recovery**: When user logs back in, unread badges and message states restored correctly
 \n#### 2.10.14 Database Schema for Messaging
 \n**chats table**:
 - chat_id (UUID, primary key)
@@ -426,11 +454,12 @@ Each message must track the following states:
 - receiver_id (UUID, references users)
 - content (text)
 - sent_at (timestamp)
-- delivered (boolean, default false)
-- delivered_at (timestamp, nullable)\n- read (boolean, default false)
+- status (enum: 'sent', 'delivered', 'read')\n- delivered_at (timestamp, nullable)
 - read_at (timestamp, nullable)
 - is_deleted (boolean, default false)
-- edited_at (timestamp, nullable)\n\n**chat_visibility table**:
+- edited_at (timestamp, nullable)
+
+**chat_visibility table**:
 - visibility_id (UUID, primary key)\n- chat_id (UUID, references chats table)
 - user_id (UUID, references users)\n- is_visible (boolean, default true)
 - deleted_at (timestamp, nullable)
@@ -439,25 +468,31 @@ Each message must track the following states:
 - conclusion_id (UUID, primary key)
 - item_id (UUID, references items table)
 - item_type (LOST or FOUND)
-- conclusion_status (OWNER_FOUND | OWNER_NOT_FOUND | ITEM_FOUND | ITEM_NOT_FOUND)\n- concluded_at (timestamp)\n- concluded_by (UUID, references users)
+- conclusion_status (OWNER_FOUND | OWNER_NOT_FOUND | ITEM_FOUND | ITEM_NOT_FOUND)
+- concluded_at (timestamp)\n- concluded_by (UUID, references users)
 \n#### 2.10.15 Backend Logic Requirements
 - **Chat Creation**: Create chat record in database only after first message is sent
+- **Status Tracking**: Track message status transitions (sent → delivered → read)
 - **Delivered State Update**: Mark message as delivered when it reaches receiver device
 - **Read State Update**: Mark messages as read when receiver opens chat
 - **Real-Time Events**: Emit real-time events for:\n  - New messages
+  - Status changes (sent/delivered/read)
   - Delivery confirmations
   - Read receipts
   - Popup notifications
   - Unread badge updates
 - **Row Level Security**: Ensure users can only access chats they are part of
+- **Edge Case Handling**: Handle offline users, deleted messages, and status persistence
 
 #### 2.10.16 Frontend Logic Requirements
 - **Popup Near ☰ Icon**: Display popup notification near hamburger menu icon when new message arrives
 - **Chat List Rendering**: Render chat list only when ☰ icon is clicked
 - **Unread Badge Handling**: Show unread badges on chat items when chat list is opened
-- **Blue Tick UI Updates**: Update message ticks in real time based on delivery and read states
-- **Smooth Animations**: Animate popup appearance, badge updates, and tick changes
-- **Loading States**: Show loading indicators during message sending and state updates
+- **Status Tick UI Updates**: Update message ticks in real time based on status:\n  - Single tick (✔️) for 'sent'\n  - Double grey ticks (✔️✔️) for 'delivered'
+  - Double blue ticks (💙✔️✔️) for 'read'
+- **Smooth Animations**: Animate popup appearance, badge updates, and tick transitions
+- **Loading States**: Show loading indicators during message sending and status updates
+- **Real-Time Synchronization**: Listen to Supabase Realtime events for instant status updates
 
 ### 2.11 Item History Management with Public History & Auto-Cleanup
 
@@ -482,7 +517,7 @@ All items MUST belong to exactly one of these states:
 - status (ACTIVE | OWNER_FOUND | OWNER_NOT_FOUND | ITEM_FOUND | ITEM_NOT_FOUND)
 - concluded_at (timestamp, nullable)
 - history_type (ACTIVE | USER_HISTORY | MAIN_HISTORY)
-- images (array, optional)
+- images (array, optional, max 10 MB per image)
 \n#### 2.11.2 Owner Found / Item Found Conclusion Behavior
 If the item reporter selects conclusion = 'Owner Found' (for found items) OR 'Item Found' (for lost items), perform ALL actions atomically:
 1. Remove the item from ACTIVE list (Lost Items or Found Items)
@@ -505,8 +540,7 @@ Then:
    - status = OWNER_NOT_FOUND or ITEM_NOT_FOUND (as appropriate)
    - concluded_at = current timestamp
    - receiver_user_id = NULL\n   - receiver_email = NULL
-3. Item remains visible ONLY to the reporter
-4. Item MUST NOT appear in Public Return Section
+3. Item remains visible ONLY to the reporter\n4. Item MUST NOT appear in Public Return Section
 5. Homepage statistics remain unchanged
 
 #### 2.11.4 Main History Visibility (Public Return Section)
@@ -526,8 +560,7 @@ Then:
 Automatically delete items older than 6 months based on concluded_at timestamp.\n\nThis auto-delete applies to ALL:\n- USER_HISTORY items
 - MAIN_HISTORY items
 - Any remaining inactive Lost/Found history\n- ACTIVE items in Lost/Found lists that are older than 6 months
-
-NO EXCEPTIONS.\n
+\nNO EXCEPTIONS.\n
 #### 2.11.6 Auto-Delete Execution
 - **Scheduled Task**: Run a scheduled cleanup task daily (e.g., using Supabase cron job or database trigger)
 - **Deletion Criteria**: Delete any item where:
@@ -583,8 +616,7 @@ Implementation is INVALID if:
 - Default sorting: latest entries first
 - Filter options easily accessible and responsive
 \n### 2.13 My Reports History
-Users can view their own submission history directly on Report Lost/Report Found pages, showing all previously submitted reports.
-
+Users can view their own submission history directly on Report Lost/Report Found pages, showing all previously submitted reports.\n
 ### 2.14 UI/UX Requirements for Chat System
 \n#### 2.14.1 Visual Feedback
 - **Disabled State**: Delete Chat button visually disabled (grayed out) until conclusion is made (for item reporters)
@@ -592,11 +624,11 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Success Feedback**: Display success message after conclusion is applied
 - **Error Handling**: Show user-friendly error messages if conclusion fails or message sending fails
 - **Confirmation Dialogs**: Clear, concise confirmation messages for all conclusion actions
-- **Tick Animations**: Smooth transitions when ticks change from gray to blue
+- **Tick Animations**: Smooth transitions when ticks change:\n  - Single tick (✔️) → Double grey ticks (✔️✔️) → Double blue ticks (💙✔️✔️)
 - **Popup Animations**: Smooth slide-in animation for popup notifications near ☰ icon
 - **Badge Animations**: Smooth appearance and disappearance of unread badges
-
-#### 2.14.2 Interaction Design
+- **Status Indicator Colors**: Clear visual distinction between sent (grey), delivered (grey), and read (blue) states
+\n#### 2.14.2 Interaction Design
 - **Prevent Double Actions**: Disable conclusion buttons after first click to prevent multiple conclusions
 - **Clear Button States**: Visually distinguish between enabled and disabled Delete Chat button
 - **Smooth Transitions**: Animate state changes (button enabling, item removal from lists, item addition to Public Return Section)
@@ -604,6 +636,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Statistics Animation**: Smooth counter transitions when homepage statistics update
 - **Popup Click Behavior**: Clicking popup opens chat directly and marks messages as read
 - **Badge Click Behavior**: Clicking chat with unread badge opens chat and clears badge
+- **Real-Time Tick Updates**: Sender sees tick changes immediately without manual refresh
 
 #### 2.14.3 Data Integrity & Security
 - **Authorization Rules**:
@@ -612,9 +645,10 @@ Users can view their own submission history directly on Report Lost/Report Found
   - Never allow one user to delete chats or items for another user
   - Only message senders can edit or delete their own messages
 - **Validation**: Validate user permissions before allowing any conclusion, deletion, or message action
-- **Audit Trail**: Log all conclusions, deletions, message edits, and state changes for security and dispute resolution
+- **Audit Trail**: Log all conclusions, deletions, message edits, status changes, and state transitions for security and dispute resolution
 - **Rollback Prevention**: Once conclusion is made, it cannot be undone (permanent action)
 - **Real-Time Security**: Ensure real-time updates respect Row Level Security policies
+- **Status Integrity**: Ensure message status transitions are one-way and cannot be reversed
 
 ### 2.15 Gemini API Integration Configuration
 
@@ -630,8 +664,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Model Specification**: All API calls must explicitly specify model version as 'gemini-2.5-flash'
 - **No Model Fallback**: Do not fall back to other Gemini model versions (e.g., Gemini 1.5, Gemini Pro)
 - **Version Validation**: Validate that API responses are generated by Gemini 2.5 Flash model
-
-#### 2.15.3 API Request Handling
+\n#### 2.15.3 API Request Handling
 - **Image Preprocessing**: Resize/compress images before sending to API to optimize performance
 - **Request Rate Limiting**: Implement rate limiting to prevent API quota exhaustion
 - **Timeout Handling**: Set reasonable timeout (10-15 seconds) for API requests
@@ -661,6 +694,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - Items approaching 6-month auto-delete threshold
 - Accurate homepage statistics reflecting current counts
 - Sample images for testing Gemini 2.5 Flash API image search functionality
+- Test images up to 10 MB to validate upload size limit
 
 ## 3. Design Style\n
 ### 3.1 Visual Theme
@@ -676,11 +710,11 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Conclusion Buttons**: Prominent, clearly labeled buttons with distinct styling for different conclusion options
 - **Disabled Button Styling**: Grayed-out appearance with reduced opacity (0.5) and no-cursor pointer for disabled Delete Chat button
 - **History Badges**: Clear visual indicators for MAIN_HISTORY items (public) vs USER_HISTORY items (private)\n- **Location Suggestions**: Dropdown or autocomplete UI for location field with quick-select options (Student Activity Centre, Day Canteen, Night Canteen, Others, etc.)
-- **Message Tick Icons**: WhatsApp-style tick icons (✔️, ✔️✔️, 💙✔️✔️) with smooth color transitions
-- **Popup Notification Design**: Clean, modern popup near ☰ icon with sender name and message preview, auto-dismiss after 5 seconds
-- **Unread Badge Design**: Red or blue circular badge with unread count, positioned on chat items in chat list
+- **Message Status Tick Icons**: WhatsApp-style tick icons with smooth color transitions:\n  - ✔️ (single grey tick) for 'sent'\n  - ✔️✔️ (double grey ticks) for 'delivered'
+  - 💙✔️✔️ (double blue ticks) for 'read'
+- **Popup Notification Design**: Clean, modern popup near ☰ icon with sender name and message preview, auto-dismiss after 5 seconds\n- **Unread Badge Design**: Red or blue circular badge with unread count, positioned on chat items in chat list
 - **Image Search Button**: Prominent 'Image Search' button with camera/image icon, positioned alongside text search input
-- **Image Upload Interface**: Clean drag-and-drop zone with file browser option, showing image preview thumbnails after upload
+- **Image Upload Interface**: Clean drag-and-drop zone with file browser option, showing image preview thumbnails after upload, max 10 MB per image indicator
 - **AI Analysis Indicator**: Animated loading indicator during Gemini 2.5 Flash API image analysis with progress text
 - **Match Result Highlighting**: Visual highlighting of matching keywords between Gemini-generated description and item descriptions
 - **Email Display in History**: Clear, readable display of reporter and receiver emails in Public Return Section with appropriate formatting
@@ -697,14 +731,14 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Role-Based Interface**: Different UI elements shown based on user role (item reporter vs. non-reporter)
 - **Public History Transparency**: Clear distinction between public Public Return Section and private User History, with reporter and receiver contact information visible in public history
 - **Auto-Cleanup Awareness**: Optional notification or indicator for items approaching 6-month auto-delete threshold\n- **Location Input Convenience**: Quick-select location suggestions improve reporting speed and consistency
-- **WhatsApp-Like Messaging**: Familiar messaging experience with delivery states, blue ticks, and popup notifications
-- **Intelligent Notification System**: Popup notifications appear immediately near ☰ icon, unread badges shown only when chat list is opened
-- **Seamless Real-Time Experience**: All message states, ticks, popups, and badges update instantly without page reloads
+- **WhatsApp-Like Messaging**: Familiar messaging experience with delivery states (sent/delivered/read), blue ticks, and popup notifications
+- **Intelligent Notification System**: Popup notifications appear immediately near ☰ icon, unread badges shown only when chat list is opened\n- **Seamless Real-Time Experience**: All message states, ticks, popups, and badges update instantly without page reloads
 - **Visual Search Convenience**: Image search with Gemini 2.5 Flash API provides intuitive alternative to text-based search, especially useful when item descriptions are difficult to articulate
 - **AI-Powered Search Feedback**: Clear feedback during image analysis process with progress indicators and result explanations
+- **Flexible Image Upload**: Support for images up to 10 MB allows high-quality item photos for better identification
 \n## 4. Technical Stack
 - **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
-- **Database**: Supabase PostgreSQL\n- **Real-Time Communication**: Supabase Realtime (for messages, delivery states, read receipts, popup notifications, unread badges)
+- **Database**: Supabase PostgreSQL\n- **Real-Time Communication**: Supabase Realtime (for messages, delivery states, read receipts, popup notifications, unread badges, status updates)
 - **Email Service**: Supabase Email Service\n- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
 - **Image Recognition**: AI-powered visual similarity search for image-based item matching
 - **Gemini API**: **Google Gemini 2.5 Flash API** for image description extraction and intelligent matching

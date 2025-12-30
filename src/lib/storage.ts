@@ -1,7 +1,7 @@
 import { supabase } from '@/db/supabase';
 
 const BUCKET_NAME = 'app-8e6wgm5ndzi9_item_images';
-const MAX_FILE_SIZE = 1024 * 1024; // 1MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export interface UploadResult {
   url: string | null;
@@ -23,7 +23,7 @@ export async function uploadImage(
     if (file.size > MAX_FILE_SIZE) {
       return {
         url: null,
-        error: 'File size must be less than 1MB',
+        error: 'File size must be less than 10MB',
       };
     }
 

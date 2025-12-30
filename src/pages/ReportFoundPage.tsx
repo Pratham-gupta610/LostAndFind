@@ -88,11 +88,11 @@ const ReportFoundPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (1MB)
-    if (file.size > 1024 * 1024) {
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: 'File too large',
-        description: 'Image must be less than 1MB',
+        description: 'Image must be less than 10MB',
         variant: 'destructive',
       });
       return;

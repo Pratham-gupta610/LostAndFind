@@ -461,6 +461,8 @@ export const sendMessage = async (
       conversation_id: conversationId,
       sender_id: senderId,
       message,
+      delivered: true, // Mark as delivered immediately (sent to server)
+      delivered_at: new Date().toISOString(),
     })
     .select()
     .maybeSingle();
@@ -482,7 +484,10 @@ export const sendMessage = async (
 export const markMessagesAsRead = async (conversationId: string, userId: string): Promise<void> => {
   const { error } = await supabase
     .from('chat_messages')
-    .update({ read: true })
+    .update({ 
+      read: true,
+      read_at: new Date().toISOString(),
+    })
     .eq('conversation_id', conversationId)
     .neq('sender_id', userId)
     .eq('read', false);

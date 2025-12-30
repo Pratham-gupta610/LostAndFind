@@ -32,6 +32,7 @@ import { getConversationMessages, sendMessage, markMessagesAsRead, deleteChatFor
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import type { ChatMessage } from '@/types/types';
+import { MessageStatusIcon, getMessageStatus } from './MessageStatusIcon';
 
 interface ChatDialogProps {
   open: boolean;
@@ -464,6 +465,13 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
                                 </p>
                                 {msg.edited_at && (
                                   <span className="text-xs opacity-70 italic">(edited)</span>
+                                )}
+                                {/* Message Status - Only show for own messages */}
+                                {isOwnMessage && !msg.is_deleted && (
+                                  <MessageStatusIcon 
+                                    status={getMessageStatus(msg)} 
+                                    className="ml-1"
+                                  />
                                 )}
                               </div>
                             </>

@@ -195,6 +195,9 @@ export interface ChatMessage {
   edited_at: string | null;
   is_deleted: boolean;
   deleted_at: string | null;
+  delivered?: boolean;
+  delivered_at?: string | null;
+  read_at?: string | null;
 }
 
 export type MatchStatus = 'pending' | 'confirmed' | 'rejected';
