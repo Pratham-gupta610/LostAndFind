@@ -203,18 +203,17 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
       return;
     }
 
-    // Validate file type
+    // Validate file type - Only images, videos, and audio allowed
     const allowedTypes = [
       'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'application/pdf', 'application/msword', 
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain', 'video/mp4', 'video/webm', 'audio/mpeg', 'audio/wav'
+      'video/mp4', 'video/webm', 'video/quicktime',
+      'audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg'
     ];
 
     if (!allowedTypes.includes(file.type)) {
       toast({
         title: 'Invalid file type',
-        description: 'Please upload an image, document, video, or audio file',
+        description: 'Please upload an image, video, or audio file only',
         variant: 'destructive',
       });
       return;
@@ -644,12 +643,12 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
                 )}
                 
                 <form onSubmit={handleSend} className="flex gap-2">
-                  {/* Hidden file input */}
+                  {/* Hidden file input - Only images, videos, and audio */}
                   <input
                     ref={fileInputRef}
                     type="file"
                     className="hidden"
-                    accept="image/*,application/pdf,.doc,.docx,.txt,video/*,audio/*"
+                    accept="image/*,video/*,audio/*"
                     onChange={handleFileInputChange}
                   />
                   

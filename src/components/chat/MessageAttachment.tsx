@@ -1,4 +1,4 @@
-import { FileText, Download, FileVideo, FileAudio, ExternalLink, AlertCircle } from 'lucide-react';
+import { FileAudio, Download, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getChatAttachmentUrl } from '@/db/api';
 import { useState, useEffect } from 'react';
@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 interface MessageAttachmentProps {
   attachmentUrl: string;  // Can be storage path OR full URL
   attachmentFullUrl?: string | null;  // Preferred: full URL
-  attachmentType: 'image' | 'document' | 'video' | 'audio';
+  attachmentType: 'image' | 'video' | 'audio';  // NO documents
   attachmentName: string;
   attachmentSize?: number;
 }
@@ -22,6 +22,7 @@ interface MessageAttachmentProps {
  * 3. Validates URL before rendering
  * 4. Comprehensive error handling and logging
  * 5. Explicit click handlers for all attachment types
+ * 6. ONLY supports images, videos, and audio (NO documents)
  */
 export function MessageAttachment({
   attachmentUrl,
@@ -149,7 +150,7 @@ export function MessageAttachment({
         >
           {imageError ? (
             <div className="bg-destructive/10 text-destructive p-4 rounded-lg flex flex-col items-center gap-2">
-              <FileText className="h-8 w-8" />
+              <AlertCircle className="h-8 w-8" />
               <p className="text-sm">Failed to load image</p>
               <p className="text-xs opacity-70">{finalUrl}</p>
               <Button
@@ -266,60 +267,13 @@ export function MessageAttachment({
     );
   }
 
-  // Document attachment
-  const handleDocumentClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    if (!finalUrl) {
-      console.error('[ATTACHMENT] Cannot open document: no URL');
-      return;
-    }
-
-    console.log('[ATTACHMENT] Opening document:', finalUrl);
-    
-    // Try to open in new tab first, fallback to download
-    try {
-      window.open(finalUrl, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      console.error('[ATTACHMENT] Failed to open document:', error);
-      handleDownload(e);
-    }
-  };
-
+  // Unsupported attachment type
   return (
-    <div 
-      className="mt-2 bg-muted rounded-lg p-3 flex items-center gap-3 max-w-sm cursor-pointer hover:bg-muted/80 transition-colors"
-      onClick={handleDocumentClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleDocumentClick(e as any);
-        }
-      }}
-    >
-      <div className="flex-shrink-0 w-10 h-10 bg-background rounded flex items-center justify-center">
-        <FileText className="h-5 w-5 text-muted-foreground" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{attachmentName}</p>
-        {attachmentSize && (
-          <p className="text-xs text-muted-foreground">{formatFileSize(attachmentSize)}</p>
-        )}
-        <p className="text-xs text-primary flex items-center gap-1 mt-1">
-          <ExternalLink className="h-3 w-3" />
-          Tap to open
-        </p>
-      </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="flex-shrink-0"
-        onClick={handleDownload}
-      >
-        <Download className="h-4 w-4" />
-      </Button>
-    </div>
+    <Alert variant="destructive" className="mt-2">
+      <AlertCircle className="h-4 w-4" />
+      <AlertDescription>
+        Unsupported attachment type: {attachmentType}
+      </AlertDescription>
+    </Alert>
   );
 }

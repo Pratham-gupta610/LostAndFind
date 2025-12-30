@@ -456,6 +456,7 @@ export const getConversationMessages = async (conversationId: string, userId: st
  * Send a message with optional attachment
  * 
  * CRITICAL: Now stores FULL public URL in attachment_full_url for direct access
+ * ONLY supports images, videos, and audio (NO documents)
  */
 export const sendMessage = async (
   conversationId: string,
@@ -464,7 +465,7 @@ export const sendMessage = async (
   attachment?: {
     fullUrl: string;  // FULL public URL
     storagePath: string;  // Storage path (for deletion)
-    type: 'image' | 'document' | 'video' | 'audio';
+    type: 'image' | 'video' | 'audio';
     name: string;
     size: number;
   }
@@ -522,6 +523,7 @@ export const sendMessage = async (
  * 2. Validates URL is accessible before returning
  * 3. Comprehensive error logging
  * 4. Works for both sender and receiver
+ * 5. ONLY supports images, videos, and audio (NO documents)
  */
 export const uploadChatAttachment = async (
   file: File,
@@ -530,7 +532,7 @@ export const uploadChatAttachment = async (
 ): Promise<{ 
   fullUrl: string; 
   storagePath: string;
-  type: 'image' | 'document' | 'video' | 'audio';
+  type: 'image' | 'video' | 'audio';
 }> => {
   console.log('[ATTACHMENT UPLOAD] Starting upload:', {
     fileName: file.name,
@@ -541,7 +543,8 @@ export const uploadChatAttachment = async (
   });
 
   // Determine attachment type based on file MIME type
-  let attachmentType: 'image' | 'document' | 'video' | 'audio';
+  // ONLY images, videos, and audio are supported
+  let attachmentType: 'image' | 'video' | 'audio';
   if (file.type.startsWith('image/')) {
     attachmentType = 'image';
   } else if (file.type.startsWith('video/')) {
@@ -549,7 +552,8 @@ export const uploadChatAttachment = async (
   } else if (file.type.startsWith('audio/')) {
     attachmentType = 'audio';
   } else {
-    attachmentType = 'document';
+    console.error('[ATTACHMENT UPLOAD] Unsupported file type:', file.type);
+    throw new Error('Only images, videos, and audio files are supported');
   }
 
   console.log('[ATTACHMENT UPLOAD] Detected type:', attachmentType);

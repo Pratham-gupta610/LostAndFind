@@ -186,7 +186,7 @@ export interface ChatConversationWithDetails extends ChatConversation {
   has_new_messages?: boolean; // Whether there are new messages after deletion
 }
 
-export type AttachmentType = 'image' | 'document' | 'video' | 'audio';
+export type AttachmentType = 'image' | 'video' | 'audio';  // Documents removed from chat attachments
 
 export interface ChatMessage {
   id: string;
