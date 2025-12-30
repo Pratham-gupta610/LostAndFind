@@ -49,8 +49,8 @@ serve(async (req) => {
     // Remove data URL prefix if present
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-    // Call Gemini API with Gemini 2.0 Flash (latest model)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`;
+    // Call Gemini API with Gemini 2.5 Flash Lite
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${geminiApiKey}`;
     
     const prompt = `Analyze this image of a lost or found item and provide a detailed description. Include:
 1. Item type/category (e.g., phone, wallet, keys, bag, etc.)

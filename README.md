@@ -6,6 +6,7 @@ FINDIT.AI is a modern, highly interactive web application designed to help campu
 
 ## ✨ Key Features
 
+- **🤖 AI-Powered Image Analysis**: Automatic item description generation using Gemini 2.5 Flash Lite
 - **📦 Lost Items Management**: Report and search for lost items with detailed descriptions
 - **🔍 Found Items Management**: Report and browse found items to help return them to owners
 - **📜 History of Returns**: View successful reunions and inspiring success stories
@@ -42,6 +43,33 @@ npx vite --host 127.0.0.1
 ### Environment Setup
 
 The application uses Supabase for backend services. Environment variables are already configured in the `.env` file.
+
+### 🤖 AI-Powered Image Analysis (Gemini 2.5 Flash Lite)
+
+FINDIT.AI includes AI-powered image analysis to automatically generate detailed item descriptions from uploaded images.
+
+**Quick Setup (3 Steps)**:
+
+1. **Get API Key**: Visit [Google AI Studio](https://aistudio.google.com/app/apikey) and create an API key
+2. **Update .env**: Replace `YOUR_GEMINI_API_KEY_HERE` with your actual key
+3. **Set Supabase Secret**: Update `GEMINI_API_KEY` in Supabase Dashboard (Settings → Edge Functions → Secrets)
+
+**Automated Setup**:
+```bash
+chmod +x setup-gemini.sh
+./setup-gemini.sh
+```
+
+**Documentation**:
+- **[GEMINI_INTEGRATION_GUIDE.md](./GEMINI_INTEGRATION_GUIDE.md)** - Comprehensive setup guide
+- **[GEMINI_QUICK_REFERENCE.md](./GEMINI_QUICK_REFERENCE.md)** - Quick reference
+- **[GEMINI_SUMMARY.md](./GEMINI_SUMMARY.md)** - Implementation overview
+
+**Features**:
+- ⚡ Fast analysis (2-3 seconds)
+- 🎯 Accurate item descriptions
+- 💰 Very low cost (~$0.0002/request)
+- 🔒 Secure API key management
 
 ## 📚 Documentation
 
@@ -88,7 +116,8 @@ The application uses Supabase for backend services. Environment variables are al
 
 - **Frontend**: React 18 + TypeScript
 - **Styling**: Tailwind CSS + shadcn/ui
-- **Backend**: Supabase (PostgreSQL)
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **AI**: Google Gemini 2.5 Flash Lite
 - **Routing**: React Router v6
 - **Forms**: React Hook Form + Zod
 - **Build Tool**: Vite
