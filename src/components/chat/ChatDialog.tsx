@@ -27,12 +27,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Send, AlertCircle, Loader2, Trash2, MoreVertical, Edit2, X, Check, CheckCircle } from 'lucide-react';
-import { getConversationMessages, sendMessage, markMessagesAsRead, deleteChatForUser, editMessage, softDeleteMessage, concludeItem, canDeleteChat } from '@/db/api';
+import { Send, AlertCircle, Loader2, Trash2, MoreVertical, Edit2, X, Check, CheckCircle, Paperclip, Image as ImageIcon } from 'lucide-react';
+import { getConversationMessages, sendMessage, markMessagesAsRead, deleteChatForUser, editMessage, softDeleteMessage, concludeItem, canDeleteChat, uploadChatAttachment } from '@/db/api';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import type { ChatMessage } from '@/types/types';
 import { MessageStatusIcon, getMessageStatus } from './MessageStatusIcon';
+import { AttachmentPreview } from './AttachmentPreview';
+import { MessageAttachment } from './MessageAttachment';
 
 interface ChatDialogProps {
   open: boolean;
@@ -61,6 +63,12 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
   const [editingText, setEditingText] = useState('');
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // Attachment state
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open && conversationId) {
@@ -98,22 +106,131 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user || !conversationId) return;
+    if ((!newMessage.trim() && !attachmentFile) || !user || !conversationId) return;
 
     try {
       setSending(true);
       setError('');
       
-      await sendMessage(conversationId, user.id, newMessage.trim());
+      let attachmentData = undefined;
+      
+      // Upload attachment if present
+      if (attachmentFile) {
+        setUploading(true);
+        const uploadResult = await uploadChatAttachment(attachmentFile, user.id, conversationId);
+        attachmentData = {
+          url: uploadResult.url,
+          type: uploadResult.type,
+          name: attachmentFile.name,
+          size: attachmentFile.size,
+        };
+        setUploading(false);
+      }
+      
+      await sendMessage(
+        conversationId, 
+        user.id, 
+        newMessage.trim() || '📎 Attachment', 
+        attachmentData
+      );
+      
       setNewMessage('');
+      clearAttachment();
       
       // Reload messages
       await loadMessages();
     } catch (err) {
       setError('Failed to send message');
       console.error('Error sending message:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to send message. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
       setSending(false);
+      setUploading(false);
+    }
+  };
+
+  // Handle paste event for images
+  const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      // Check if pasted item is an image
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          handleFileSelect(file);
+        }
+        break;
+      }
+    }
+  };
+
+  // Handle file selection
+  const handleFileSelect = (file: File) => {
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast({
+        title: 'File too large',
+        description: 'Maximum file size is 10MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf', 'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain', 'video/mp4', 'video/webm', 'audio/mpeg', 'audio/wav'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload an image, document, video, or audio file',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setAttachmentFile(file);
+
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAttachmentPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setAttachmentPreview(null);
+    }
+  };
+
+  // Clear attachment
+  const clearAttachment = () => {
+    setAttachmentFile(null);
+    setAttachmentPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle file input change
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
     }
   };
 
@@ -425,13 +542,25 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
                           ) : (
                             <>
                               <div className="flex items-start justify-between gap-2">
-                                <p className="text-sm flex-1">
-                                  {msg.is_deleted ? (
-                                    <span className="italic opacity-70">This message was deleted</span>
-                                  ) : (
-                                    msg.message
+                                <div className="flex-1">
+                                  <p className="text-sm">
+                                    {msg.is_deleted ? (
+                                      <span className="italic opacity-70">This message was deleted</span>
+                                    ) : (
+                                      msg.message
+                                    )}
+                                  </p>
+                                  
+                                  {/* Show attachment if present */}
+                                  {msg.attachment_url && msg.attachment_type && !msg.is_deleted && (
+                                    <MessageAttachment
+                                      attachmentUrl={msg.attachment_url}
+                                      attachmentType={msg.attachment_type}
+                                      attachmentName={msg.attachment_name || 'file'}
+                                      attachmentSize={msg.attachment_size || undefined}
+                                    />
                                   )}
-                                </p>
+                                </div>
                                 {isOwnMessage && !msg.is_deleted && (
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -485,16 +614,56 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
 
               {/* MESSAGE INPUT - At bottom of scroll container */}
               <div className="sticky bottom-0 bg-background border-t px-6 py-4">
+                {/* Attachment Preview */}
+                {attachmentFile && (
+                  <div className="mb-3">
+                    <AttachmentPreview
+                      file={attachmentFile}
+                      previewUrl={attachmentPreview || undefined}
+                      onRemove={clearAttachment}
+                    />
+                  </div>
+                )}
+                
                 <form onSubmit={handleSend} className="flex gap-2">
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*,application/pdf,.doc,.docx,.txt,video/*,audio/*"
+                    onChange={handleFileInputChange}
+                  />
+                  
+                  {/* Attachment button */}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={sending || uploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Paperclip className="w-4 h-4" />
+                  </Button>
+                  
                   <Input
-                    placeholder="Type your message..."
+                    placeholder="Type your message or paste an image..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    disabled={sending}
+                    onPaste={handlePaste}
+                    disabled={sending || uploading}
                     className="flex-1"
                   />
-                  <Button type="submit" disabled={sending || !newMessage.trim()} size="icon">
-                    {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  <Button 
+                    type="submit" 
+                    disabled={sending || uploading || (!newMessage.trim() && !attachmentFile)} 
+                    size="icon"
+                  >
+                    {(sending || uploading) ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
                   </Button>
                 </form>
               </div>

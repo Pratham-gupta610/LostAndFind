@@ -1,22 +1,47 @@
-import React, { useEffect, useState } from 'react';
-import { MessageSquare, Loader2, Package } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { MessageSquare, Loader2, Package, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getChatConversationsForUser } from '@/db/api';
+import { getChatConversationsForUser, deleteChatForUser } from '@/db/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import ChatDialog from '@/components/chat/ChatDialog';
 import { formatDistanceToNow } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 import type { ChatConversationWithDetails } from '@/types/types';
 
 const ChatHistoryPage: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [conversations, setConversations] = useState<ChatConversationWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedConversation, setSelectedConversation] = useState<ChatConversationWithDetails | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState<ChatConversationWithDetails | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  
+  // Long press state
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const [longPressActive, setLongPressActive] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -62,6 +87,57 @@ const ChatHistoryPage: React.FC = () => {
     setSelectedConversation(null);
     // Reload conversations to update timestamps
     loadConversations();
+  };
+
+  const handleDeleteChat = async () => {
+    if (!user || !conversationToDelete) return;
+
+    try {
+      setDeleting(true);
+      await deleteChatForUser(conversationToDelete.id, user.id);
+      
+      toast({
+        title: 'Chat Deleted',
+        description: 'The conversation has been removed from your chat list.',
+      });
+      
+      // Reload conversations
+      await loadConversations();
+    } catch (err) {
+      console.error('Error deleting chat:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete chat. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setConversationToDelete(null);
+    }
+  };
+
+  const handleLongPressStart = (conversation: ChatConversationWithDetails) => {
+    longPressTimer.current = setTimeout(() => {
+      setLongPressActive(true);
+      setConversationToDelete(conversation);
+      setDeleteDialogOpen(true);
+    }, 500); // 500ms for long press
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    setLongPressActive(false);
+  };
+
+  const handleCardClick = (conversation: ChatConversationWithDetails) => {
+    // Only open chat if not in long press mode
+    if (!longPressActive) {
+      handleOpenChat(conversation);
+    }
   };
 
   // Get other participant from participants array
@@ -147,54 +223,75 @@ const ChatHistoryPage: React.FC = () => {
               const lastMessage = conversation.last_message;
               
               return (
-                <Card 
-                  key={conversation.id} 
-                  className="hover:shadow-lg transition-all duration-200 cursor-pointer"
-                  onClick={() => handleOpenChat(conversation)}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      {/* Item Icon */}
-                      <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Package className="w-8 h-8 text-primary" />
-                      </div>
-
-                      {/* Conversation Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex-1 min-w-0">
-                            {/* PRIMARY: Item Name (BOLD) */}
-                            <h3 className="font-bold text-lg truncate">
-                              {itemName}
-                            </h3>
-                            {/* SECONDARY: Username */}
-                            <p className="text-sm text-muted-foreground truncate">
-                              with {getOtherUserName(conversation)}
-                            </p>
-                            {/* TERTIARY: Last message preview */}
-                            {lastMessage && (
-                              <p className="text-xs text-muted-foreground truncate mt-1">
-                                {lastMessage.message}
-                              </p>
-                            )}
+                <ContextMenu key={conversation.id}>
+                  <ContextMenuTrigger>
+                    <Card 
+                      className="hover:shadow-lg transition-all duration-200 cursor-pointer select-none"
+                      onClick={() => handleCardClick(conversation)}
+                      onMouseDown={() => handleLongPressStart(conversation)}
+                      onMouseUp={handleLongPressEnd}
+                      onMouseLeave={handleLongPressEnd}
+                      onTouchStart={() => handleLongPressStart(conversation)}
+                      onTouchEnd={handleLongPressEnd}
+                      onTouchCancel={handleLongPressEnd}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex items-start space-x-4">
+                          {/* Item Icon */}
+                          <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Package className="w-8 h-8 text-primary" />
                           </div>
-                          <Badge variant="secondary" className="flex-shrink-0">
-                            {conversation.item_type}
-                          </Badge>
-                        </div>
 
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
-                          <span>
-                            {lastMessage 
-                              ? formatDistanceToNow(new Date(lastMessage.created_at), { addSuffix: true })
-                              : formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true })
-                            }
-                          </span>
+                          {/* Conversation Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="flex-1 min-w-0">
+                                {/* PRIMARY: Item Name (BOLD) */}
+                                <h3 className="font-bold text-lg truncate">
+                                  {itemName}
+                                </h3>
+                                {/* SECONDARY: Username */}
+                                <p className="text-sm text-muted-foreground truncate">
+                                  with {getOtherUserName(conversation)}
+                                </p>
+                                {/* TERTIARY: Last message preview */}
+                                {lastMessage && (
+                                  <p className="text-xs text-muted-foreground truncate mt-1">
+                                    {lastMessage.message}
+                                  </p>
+                                )}
+                              </div>
+                              <Badge variant="secondary" className="flex-shrink-0">
+                                {conversation.item_type}
+                              </Badge>
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+                              <span>
+                                {lastMessage 
+                                  ? formatDistanceToNow(new Date(lastMessage.created_at), { addSuffix: true })
+                                  : formatDistanceToNow(new Date(conversation.created_at), { addSuffix: true })
+                                }
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => {
+                        setConversationToDelete(conversation);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Chat
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               );
             })}
           </div>
@@ -211,6 +308,36 @@ const ChatHistoryPage: React.FC = () => {
           conversation={selectedConversation}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Chat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the conversation from your chat list. If the other user sends a new message, 
+              the chat will reappear with only new messages visible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteChat}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

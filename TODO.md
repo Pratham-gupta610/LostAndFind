@@ -1,54 +1,51 @@
-# Task: Implement Public Item History and Automatic Cleanup
+# Task: Enhance Chat System with Advanced Messaging & Attachments
 
 ## Plan
+
 - [x] Step 1: Database Schema Updates (Completed)
-  - [x] Add history_type column to lost_items and found_items tables
-  - [x] Add concluded_at timestamp column (already existed)
-  - [x] Create indexes for performance
-  - [x] Update existing concluded items with proper history_type
-- [x] Step 2: Create Database Functions (Completed)
-  - [x] Create function to handle "Owner Found" conclusion (MAIN_HISTORY)
-  - [x] Create function to handle other conclusions (USER_HISTORY)
-  - [x] Create function for auto-cleanup (6 months old items)
-  - [x] Create function for manual user history deletion
-- [x] Step 3: Update RLS Policies (Completed)
-  - [x] MAIN_HISTORY items readable by all authenticated users
-  - [x] USER_HISTORY items readable only by reporter
-  - [x] Prevent manual deletion of MAIN_HISTORY items
-- [ ] Step 4: Create Scheduled Cleanup
-  - [ ] Create Edge Function for daily cleanup task
-  - [ ] Configure to run daily via cron
-  - [ ] Delete items where concluded_at < (now - 6 months)
-- [ ] Step 5: Update TypeScript Types
-  - [ ] Add history_type enum
-  - [ ] Add concluded_at field
-  - [ ] Update item interfaces
-- [ ] Step 6: Update API Functions
-  - [ ] Update concludeItem to use new logic
-  - [ ] Create getMainHistory function
-  - [ ] Create getUserHistory function
-  - [ ] Create deleteUserHistoryItem function
-- [ ] Step 7: Create Main History UI
-  - [ ] Create MainHistory page component
-  - [ ] Display all MAIN_HISTORY items (public)
-  - [ ] Show item details with "Owner Found" badge
-- [ ] Step 8: Update User History UI
-  - [ ] Update existing history page
-  - [ ] Show only USER_HISTORY items
-  - [ ] Add delete button for user's own items
-- [ ] Step 9: Update Navigation
-  - [ ] Add "Success Stories" or "Main History" link
-  - [ ] Update routes
-- [ ] Step 10: Testing and Validation
-  - [ ] Test "Owner Found" → MAIN_HISTORY flow
-  - [ ] Test other conclusions → USER_HISTORY flow
-  - [ ] Test auto-cleanup logic
-  - [ ] Test manual deletion
-  - [ ] Run lint
+  - [x] Add attachment fields to chat_messages table
+  - [x] Create storage bucket for chat attachments
+  - [x] Update RLS policies for attachments
+
+- [x] Step 2: Backend API Updates (Completed)
+  - [x] Add sendMessageWithAttachment function
+  - [x] Add file upload utilities
+  - [x] Update message fetching to include attachments
+
+- [x] Step 3: Message Input Enhancements (Completed)
+  - [x] Add paste detection for text and images
+  - [x] Add image preview component for pasted images
+  - [x] Add clipboard image handling
+
+- [x] Step 4: Attachment Upload UI (Completed)
+  - [x] Add paperclip icon next to input
+  - [x] Create file picker dialog
+  - [x] Add file type validation
+  - [x] Add upload progress indicator
+  - [x] Add file preview before sending
+
+- [x] Step 5: Message Display with Attachments (Completed)
+  - [x] Update message component to show attachments
+  - [x] Add image viewer for image attachments
+  - [x] Add document download for file attachments
+  - [x] Add file type icons
+
+- [x] Step 6: Chat List Management (WhatsApp-like) (Completed)
+  - [x] Add long-press detection on chat items
+  - [x] Create context menu for delete option
+  - [x] Implement delete chat functionality
+  - [x] Update chat list to respect deletion
+
+- [x] Step 7: Testing & Validation (Completed)
+  - [x] Test paste functionality
+  - [x] Test file uploads
+  - [x] Test chat deletion
+  - [x] Test message reappearance after deletion
+  - [x] Run lint check
 
 ## Notes
-- CRITICAL: "Owner Found" MUST create MAIN_HISTORY (public)
-- CRITICAL: Other conclusions MUST create USER_HISTORY (private)
-- CRITICAL: Auto-delete after 6 months based on concluded_at
-- CRITICAL: Users cannot delete MAIN_HISTORY items
-- CRITICAL: All state changes must be atomic/transactional
+- Chat deletion is user-specific (already implemented with deleted_by_user_ids)
+- Messages after deletion should reappear (already handled by RPC function)
+- Attachment support added to database and UI
+- WhatsApp-style UX patterns implemented
+- All features completed and tested

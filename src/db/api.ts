@@ -455,7 +455,13 @@ export const getConversationMessages = async (conversationId: string, userId: st
 export const sendMessage = async (
   conversationId: string,
   senderId: string,
-  message: string
+  message: string,
+  attachment?: {
+    url: string;
+    type: 'image' | 'document' | 'video' | 'audio';
+    name: string;
+    size: number;
+  }
 ): Promise<ChatMessage | null> => {
   const { data, error } = await supabase
     .from('chat_messages')
@@ -465,6 +471,10 @@ export const sendMessage = async (
       message,
       delivered: true, // Mark as delivered immediately (sent to server)
       delivered_at: new Date().toISOString(),
+      attachment_url: attachment?.url || null,
+      attachment_type: attachment?.type || null,
+      attachment_name: attachment?.name || null,
+      attachment_size: attachment?.size || null,
     })
     .select()
     .maybeSingle();
@@ -477,10 +487,76 @@ export const sendMessage = async (
   // Update conversation's updated_at
   await supabase
     .from('chat_conversations')
-    .update({ updated_at: new Date().toISOString() })
+    .update({ 
+      updated_at: new Date().toISOString(),
+      last_message_at: new Date().toISOString()
+    })
     .eq('id', conversationId);
 
   return data;
+};
+
+// Upload chat attachment to storage
+export const uploadChatAttachment = async (
+  file: File,
+  userId: string,
+  conversationId: string
+): Promise<{ url: string; type: 'image' | 'document' | 'video' | 'audio' }> => {
+  // Determine attachment type based on file MIME type
+  let attachmentType: 'image' | 'document' | 'video' | 'audio';
+  if (file.type.startsWith('image/')) {
+    attachmentType = 'image';
+  } else if (file.type.startsWith('video/')) {
+    attachmentType = 'video';
+  } else if (file.type.startsWith('audio/')) {
+    attachmentType = 'audio';
+  } else {
+    attachmentType = 'document';
+  }
+
+  // Create unique filename with timestamp
+  const timestamp = Date.now();
+  const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  const filePath = `${userId}/${conversationId}/${timestamp}_${sanitizedFileName}`;
+
+  // Upload to storage
+  const { error: uploadError } = await supabase.storage
+    .from('app-8e6wgm5ndzi9_chat_attachments')
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error('Error uploading attachment:', uploadError);
+    throw uploadError;
+  }
+
+  return {
+    url: filePath,
+    type: attachmentType,
+  };
+};
+
+// Get public URL for chat attachment
+export const getChatAttachmentUrl = (filePath: string): string => {
+  const { data } = supabase.storage
+    .from('app-8e6wgm5ndzi9_chat_attachments')
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+};
+
+// Delete chat attachment from storage
+export const deleteChatAttachment = async (filePath: string): Promise<void> => {
+  const { error } = await supabase.storage
+    .from('app-8e6wgm5ndzi9_chat_attachments')
+    .remove([filePath]);
+
+  if (error) {
+    console.error('Error deleting attachment:', error);
+    throw error;
+  }
 };
 
 export const markMessagesAsRead = async (conversationId: string, userId: string): Promise<void> => {

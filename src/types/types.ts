@@ -186,6 +186,8 @@ export interface ChatConversationWithDetails extends ChatConversation {
   has_new_messages?: boolean; // Whether there are new messages after deletion
 }
 
+export type AttachmentType = 'image' | 'document' | 'video' | 'audio';
+
 export interface ChatMessage {
   id: string;
   conversation_id: string;
@@ -200,6 +202,10 @@ export interface ChatMessage {
   delivered?: boolean;
   delivered_at?: string | null;
   read_at?: string | null;
+  attachment_url?: string | null;
+  attachment_type?: AttachmentType | null;
+  attachment_name?: string | null;
+  attachment_size?: number | null;
 }
 
 export type MatchStatus = 'pending' | 'confirmed' | 'rejected';
