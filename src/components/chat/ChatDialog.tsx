@@ -27,13 +27,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Send, AlertCircle, Loader2, Trash2, MoreVertical, Edit2, X, Check, CheckCircle, Paperclip, Image as ImageIcon } from 'lucide-react';
-import { getConversationMessages, sendMessage, markMessagesAsRead, deleteChatForUser, editMessage, softDeleteMessage, concludeItem, canDeleteChat, uploadChatAttachment } from '@/db/api';
+import { Send, AlertCircle, Loader2, Trash2, MoreVertical, Edit2, X, Check, CheckCircle } from 'lucide-react';
+import { getConversationMessages, sendMessage, markMessagesAsRead, deleteChatForUser, editMessage, softDeleteMessage, concludeItem, canDeleteChat } from '@/db/api';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
 import type { ChatMessage } from '@/types/types';
 import { MessageStatusIcon, getMessageStatus } from './MessageStatusIcon';
-import { AttachmentPreview } from './AttachmentPreview';
 import { MessageAttachment } from './MessageAttachment';
 
 interface ChatDialogProps {
@@ -63,12 +62,6 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
   const [editingText, setEditingText] = useState('');
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  
-  // Attachment state
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open && conversationId) {
@@ -106,53 +99,19 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!newMessage.trim() && !attachmentFile) || !user || !conversationId) return;
+    if (!newMessage.trim() || !user || !conversationId) return;
 
     try {
       setSending(true);
       setError('');
       
-      let attachmentData = undefined;
-      
-      // Upload attachment if present
-      if (attachmentFile) {
-        console.log('[CHAT] Uploading attachment:', attachmentFile.name);
-        setUploading(true);
-        
-        try {
-          const uploadResult = await uploadChatAttachment(attachmentFile, user.id, conversationId);
-          console.log('[CHAT] Upload result:', uploadResult);
-          
-          attachmentData = {
-            fullUrl: uploadResult.fullUrl,
-            storagePath: uploadResult.storagePath,
-            type: uploadResult.type,
-            name: attachmentFile.name,
-            size: attachmentFile.size,
-          };
-          
-          console.log('[CHAT] Attachment data prepared:', attachmentData);
-        } catch (uploadError) {
-          console.error('[CHAT] Upload failed:', uploadError);
-          throw new Error('Failed to upload attachment');
-        } finally {
-          setUploading(false);
-        }
-      }
-      
-      console.log('[CHAT] Sending message with attachment:', !!attachmentData);
-      
       await sendMessage(
         conversationId, 
         user.id, 
-        newMessage.trim() || '📎 Attachment', 
-        attachmentData
+        newMessage.trim()
       );
       
-      console.log('[CHAT] Message sent successfully');
-      
       setNewMessage('');
-      clearAttachment();
       
       // Reload messages
       await loadMessages();
@@ -166,87 +125,6 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
       });
     } finally {
       setSending(false);
-      setUploading(false);
-    }
-  };
-
-  // Handle paste event for images
-  const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      
-      // Check if pasted item is an image
-      if (item.type.startsWith('image/')) {
-        e.preventDefault();
-        const file = item.getAsFile();
-        if (file) {
-          handleFileSelect(file);
-        }
-        break;
-      }
-    }
-  };
-
-  // Handle file selection
-  const handleFileSelect = (file: File) => {
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (file.size > maxSize) {
-      toast({
-        title: 'File too large',
-        description: 'Maximum file size is 10MB',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate file type - Only images, videos, and audio allowed
-    const allowedTypes = [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm', 'video/quicktime',
-      'audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/ogg'
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        title: 'Invalid file type',
-        description: 'Please upload an image, video, or audio file only',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setAttachmentFile(file);
-
-    // Create preview for images
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setAttachmentPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setAttachmentPreview(null);
-    }
-  };
-
-  // Clear attachment
-  const clearAttachment = () => {
-    setAttachmentFile(null);
-    setAttachmentPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  // Handle file input change
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileSelect(file);
     }
   };
 
@@ -631,52 +509,20 @@ const ChatDialog = ({ open, onClose, conversationId, otherUserName, conversation
 
               {/* MESSAGE INPUT - At bottom of scroll container */}
               <div className="sticky bottom-0 bg-background border-t px-6 py-4">
-                {/* Attachment Preview */}
-                {attachmentFile && (
-                  <div className="mb-3">
-                    <AttachmentPreview
-                      file={attachmentFile}
-                      previewUrl={attachmentPreview || undefined}
-                      onRemove={clearAttachment}
-                    />
-                  </div>
-                )}
-                
                 <form onSubmit={handleSend} className="flex gap-2">
-                  {/* Hidden file input - Only images, videos, and audio */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    accept="image/*,video/*,audio/*"
-                    onChange={handleFileInputChange}
-                  />
-                  
-                  {/* Attachment button */}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={sending || uploading}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Paperclip className="w-4 h-4" />
-                  </Button>
-                  
                   <Input
-                    placeholder="Type your message or paste an image..."
+                    placeholder="Type your message..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onPaste={handlePaste}
-                    disabled={sending || uploading}
+                    disabled={sending}
                     className="flex-1"
                   />
                   <Button 
                     type="submit" 
-                    disabled={sending || uploading || (!newMessage.trim() && !attachmentFile)} 
+                    disabled={sending || !newMessage.trim()} 
                     size="icon"
                   >
-                    {(sending || uploading) ? (
+                    {sending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <Send className="w-4 h-4" />

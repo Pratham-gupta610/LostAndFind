@@ -5,7 +5,7 @@
 ### 1.1 Application Name
 FINDIT.AI\n
 ### 1.2 Application Description
-A modern, highly interactive multi-campus Lost & Found web application designed to help users report and search for lost or found items across multiple campus locations, with a focus on trust-first design and seamless user experience. Features secure college email authentication with OTP verification for first-time users only, built-in real-time messaging system with WhatsApp-like delivery states, blue tick read receipts, intelligent popup notifications, advanced chat management including one-sided deletion, role-based conclusion system, editable/deletable messages, **rich media support (text paste, image paste)**, **WhatsApp-style long-press chat deletion**, and direct communication between users, AI-powered intelligent matching to automatically identify potential matches between lost and found items, and **Gemini 2.5 Flash API-powered** image description extraction for enhanced visual search capabilities.
+A modern, highly interactive multi-campus Lost & Found web application designed to help users report and search for lost or found items across multiple campus locations, with a focus on trust-first design and seamless user experience. Features secure college email authentication with OTP verification for first-time users only, built-in real-time messaging system with WhatsApp-like delivery states, blue tick read receipts, intelligent popup notifications, advanced chat management including one-sided deletion, role-based conclusion system, editable/deletable messages, **text paste support**, **WhatsApp-style long-press chat deletion**, and direct communication between users, AI-powered intelligent matching to automatically identify potential matches between lost and found items, and **Gemini 2.5 Flash API-powered** image description extraction for enhanced visual search capabilities.
 
 ### 1.3 Target Users
 Campus community members (students, faculty, staff) who need to report lost items, search for found items, or help return items to their owners.
@@ -128,7 +128,8 @@ Campus community members (students, faculty, staff) who need to report lost item
   - 'Save Changes' button
   - 'Cancel' button
 - **Save Changes Action**:
-  - Validate inputs (non-empty full name, valid unique username)\n  - Update profile record in database
+  - Validate inputs (non-empty full name, valid unique username)
+  - Update profile record in database
   - Show success message on successful update
   - Show error message if validation fails or update fails
   - Disable 'Save' button while updating (prevent duplicate submissions)
@@ -167,7 +168,8 @@ Campus community members (students, faculty, staff) who need to report lost item
 
 ### 2.5 Homepage Structure
 The homepage displays three clearly separated sections with real-time statistics:
-- **Lost Items Section**: Shows all reported lost items with live count\n- **Found Items Section**: Shows all reported found items with live count
+- **Lost Items Section**: Shows all reported lost items with live count
+- **Found Items Section**: Shows all reported found items with live count
 - **Public Return Section**: Shows history of successful returns with live count (clickable items), displaying most recent returns at the top
 \n**Real-Time Counter Updates**: All three section counters automatically update immediately when:\n- New items are added\n- Status changes occur\n- Items are concluded as 'Item Found' or 'Owner Found' (counters adjust accordingly: Lost/Found counts decrease, Return count increases)
 
@@ -176,8 +178,7 @@ All sections sorted by latest first with date-range filter options.
 ### 2.6 Search System
 Two separate, independent search systems:
 - **Lost Items Search**: Searches only within lost item reports
-- **Found Items Search**: Searches only within found item reports
-\n**Image Search Feature with Gemini 2.5 Flash API Integration**:\n- **Image Search Button**: Each search section (Lost Items and Found Items) includes an 'Image Search' button alongside text search
+- **Found Items Search**: Searches only within found item reports\n\n**Image Search Feature with Gemini 2.5 Flash API Integration**:\n- **Image Search Button**: Each search section (Lost Items and Found Items) includes an 'Image Search' button alongside text search
 - **Image Upload**: Clicking 'Image Search' button opens image upload interface allowing users to upload one or multiple images
 - **Supported Formats**: Accept common image formats (JPG, PNG, JPEG, WebP)\n- **Gemini 2.5 Flash API Description Extraction**:
   - When user uploads image, system sends image to **Gemini 2.5 Flash API**
@@ -267,10 +268,7 @@ Each message must track the following states:
 \n**Database Fields**:
 - message_id (UUID, primary key)\n- chat_id (UUID, references chats table)
 - sender_id (UUID, references users)\n- receiver_id (UUID, references users)
-- content (text)\n- message_type (enum: 'text', 'image')
-- attachment_url (text, nullable, stores file URL for images)
-- attachment_name (text, nullable, stores original file name)\n- attachment_size (integer, nullable, stores file size in bytes)
-- sent_at (timestamp)
+- content (text)\n- message_type (enum: 'text')\n- sent_at (timestamp)
 - status (enum: 'sent', 'delivered', 'read')\n- delivered_at (timestamp, nullable)
 - read_at (timestamp, nullable)
 - is_deleted (boolean, default false)
@@ -357,55 +355,15 @@ Each message must track the following states:
 - **Character Limit**: Enforce reasonable character limit (e.g., 5000 characters) for pasted text
 - **Validation**: Validate pasted content to prevent malicious scripts or code injection
 
-**2.10.8.2 Image Paste Support**
-- **Direct Image Paste**: Users can paste images directly into the chat input field from clipboard
-- **Clipboard Image Detection**: System automatically detects when pasted content is an image
-- **Image Preview**: Show image preview thumbnail immediately after paste, before sending
-- **Preview Actions**:
-  - Display pasted image in preview area above input field
-  - Show 'Remove' button to cancel pasted image
-  - Show 'Send' button to confirm and send image
-- **Supported Sources**: Accept images copied from:
-  - Screenshots (Print Screen, Snipping Tool, etc.)
-  - Image files copied from file explorer
-  - Images copied from web browsers
-  - Images copied from other applications
-- **Format Handling**: Automatically convert clipboard images to supported formats (JPG, PNG, WebP)
-- **Size Validation**: Validate pasted image size (max 10 MB) before allowing send
-- **Error Handling**: Show clear error message if pasted image exceeds size limit or is invalid format
-
-**2.10.8.3 Attachment Upload Icon**
-- **Icon Placement**: Add paperclip icon (📎) or plus icon (+) next to the message input bar on the left side
-- **Icon Visibility**: Icon always visible and accessible in chat input area
-- **Click Behavior**: Clicking icon opens file upload dialog for images only
-\n**2.10.8.4 File Upload Options**
-- **Supported File Types**:
-  - **Images Only**: JPG, JPEG, PNG, GIF, WebP, BMP\n- **File Size Limits**:
-  - Images: Maximum 10 MB per file
-- **Multiple File Upload**: Allow users to select and upload multiple images at once (up to 5 files per upload)
-- **File Validation**: Validate file type and size before upload
-- **Rejected Files**: Show clear error message for invalid file types or oversized files
-\n**2.10.8.5 Upload Progress & Preview**
-- **Upload Progress Bar**: Display progress bar showing upload percentage for each file
-- **File Preview**:
-  - **Images**: Show thumbnail preview with file name and size
-- **Preview Actions**:
-  - 'Remove' button to cancel upload before sending
-  - 'Send' button to confirm and send attachment
-- **Loading State**: Disable send button during upload to prevent duplicate submissions
-- **Upload Cancellation**: Allow users to cancel ongoing uploads
-
-**2.10.8.6 Sent Attachment Display**
-- **Image Messages**: Display images inline in chat with clickable preview (opens full-size view)
-- **Attachment Metadata**: Show file name, size, and upload timestamp
-- **Delivery States**: Attachments follow same delivery state logic (sent/delivered/read ticks)
-\n**2.10.8.7 Input Field Behavior**
-- **Multi-Input Support**: Users can combine text and pasted/uploaded images in single message
-- **Clear Input**: After sending message, clear input field and remove all previews
-- **Draft Persistence**: Optionally save unsent message drafts locally (not required for MVP)
-- **Smooth Transitions**: Animate preview appearance and removal\n\n#### 2.10.9 WhatsApp-Style Chat List Management
-
-**2.10.9.1 Long-Press (Hard Click) Interaction**
+**2.10.8.2 Image Support Removed**
+- **No Image Paste**: Image pasting from clipboard is NOT supported in chat input
+- **No Image Upload**: Image upload functionality is NOT available in chat interface
+- **Text-Only Messaging**: Chat system supports text messages only\n\n**2.10.8.3 Input Field Behavior**
+- **Text Input Only**: Users can type or paste text into message input field
+- **Clear Input**: After sending message, clear input field\n- **Draft Persistence**: Optionally save unsent message drafts locally (not required for MVP)
+- **Smooth Transitions**: Animate input field interactions\n
+#### 2.10.9 WhatsApp-Style Chat List Management
+\n**2.10.9.1 Long-Press (Hard Click) Interaction**
 - **Trigger**: User performs long-press (hold click for 500-800ms) on a chat item in the chat list
 - **Visual Feedback**: On long-press, highlight selected chat with subtle background color change or border
 - **Action Menu**: Display action menu with following option:
@@ -414,8 +372,7 @@ Each message must track the following states:
 - **Menu Dismissal**: Clicking outside menu or pressing back/escape closes menu without action
 \n**2.10.9.2 Delete Chat from Chat List**
 - **Delete Action**: When user selects 'Delete Chat' from long-press menu:\n  - Show confirmation dialog: 'Delete this chat? Messages will be removed from your chat list.'
-  - Confirmation options: 'Cancel' and 'Delete'
-- **Deletion Behavior**:
+  - Confirmation options: 'Cancel' and 'Delete'\n- **Deletion Behavior**:
   - Remove chat from user's chat list immediately
   - Deletion is **local to the user** (one-sided deletion)
   - Other user's chat list remains unaffected
@@ -451,8 +408,7 @@ Each message must track the following states:
 - **Touch Feedback**: Provide haptic feedback (vibration) on mobile devices when long-press is detected
 
 #### 2.10.10 One-Sided Chat Deletion (Device/User-Specific)
-- **User-Specific Deletion**: Deleting a chat must be DEVICE/USER-SPECIFIC
-- **Deletion Behavior**:
+- **User-Specific Deletion**: Deleting a chat must be DEVICE/USER-SPECIFIC\n- **Deletion Behavior**:
   - If User A deletes a chat: chat is removed ONLY from User A's chat list\n  - Chat MUST remain visible for User B\n- **Implementation Mechanism**: Use `chat_visibility` table to track which users have deleted the chat
 - **Database Structure**: Never hard-delete chat messages globally unless both users delete manually
 - **Visibility Control**: Each user maintains their own visibility state for each chat
@@ -552,8 +508,7 @@ Each message must track the following states:
 - **Database Storage**: All message states (sent, delivered, read) and deletion states stored in database
 - **Session Recovery**: When user logs back in, unread badges, message states, and deletion states restored correctly
 \n#### 2.10.16 Database Schema for Messaging
-
-**chats table**:
+\n**chats table**:
 - chat_id (UUID, primary key)
 - item_id (UUID, references items table)
 - user1_id (UUID, references users)\n- user2_id (UUID, references users)
@@ -564,16 +519,15 @@ Each message must track the following states:
 - chat_id (UUID, references chats table)
 - sender_id (UUID, references users)
 - receiver_id (UUID, references users)
-- content (text)\n- message_type (enum: 'text', 'image')
-- attachment_url (text, nullable, stores file URL for images)
-- attachment_name (text, nullable, stores original file name)\n- attachment_size (integer, nullable, stores file size in bytes)\n- sent_at (timestamp)\n- status (enum: 'sent', 'delivered', 'read')\n- delivered_at (timestamp, nullable)
+- content (text)\n- message_type (enum: 'text')\n- sent_at (timestamp)\n- status (enum: 'sent', 'delivered', 'read')\n- delivered_at (timestamp, nullable)
 - read_at (timestamp, nullable)
 - is_deleted (boolean, default false)
 - edited_at (timestamp, nullable)
-\n**chat_visibility table**:
+
+**chat_visibility table**:
 - visibility_id (UUID, primary key)\n- chat_id (UUID, references chats table)
-- user_id (UUID, references users)\n- is_visible (boolean, default true)
-- deleted_at (timestamp, nullable)
+- user_id (UUID, references users)
+- is_visible (boolean, default true)\n- deleted_at (timestamp, nullable)
 
 **item_conclusions table**:
 - conclusion_id (UUID, primary key)
@@ -581,14 +535,12 @@ Each message must track the following states:
 - item_type (LOST or FOUND)
 - conclusion_status (OWNER_FOUND | OWNER_NOT_FOUND | ITEM_FOUND | ITEM_NOT_FOUND)
 - concluded_at (timestamp)\n- concluded_by (UUID, references users)
-\n#### 2.10.17 Backend Logic Requirements
+
+#### 2.10.17 Backend Logic Requirements
 - **Chat Creation**: Create chat record in database only after first message is sent
 - **Status Tracking**: Track message status transitions (sent → delivered → read)
 - **Delivered State Update**: Mark message as delivered when it reaches receiver device
 - **Read State Update**: Mark messages as read when receiver opens chat
-- **File Upload Handling**: Process and store uploaded image files securely in cloud storage (Supabase Storage)
-- **File URL Generation**: Generate secure, time-limited URLs for image downloads
-- **Attachment Validation**: Validate image file types, sizes, and content before storage
 - **Deletion Timestamp Tracking**: Store and manage `deleted_at` timestamps in `chat_visibility` table
 - **Message Filtering**: Filter messages based on `deleted_at` timestamp when fetching chat history
 - **Chat Reappearance Logic**: Automatically set `is_visible = true` when new message arrives after deletion
@@ -600,26 +552,21 @@ Each message must track the following states:
   - Unread badge updates
   - Chat deletions
   - Chat reappearances
-  - Image uploads
 - **Row Level Security**: Ensure users can only access chats they are part of
-- **Edge Case Handling**: Handle offline users, deleted messages, deleted chats, status persistence, and image upload failures
+- **Edge Case Handling**: Handle offline users, deleted messages, deleted chats, status persistence
 
 #### 2.10.18 Frontend Logic Requirements
 - **Popup Near ☰ Icon**: Display popup notification near hamburger menu icon when new message arrives
 - **Chat List Rendering**: Render chat list only when ☰ icon is clicked
 - **Unread Badge Handling**: Show unread badges on chat items when chat list is opened
 - **Status Tick UI Updates**: Update message ticks in real time based on status:\n  - Single tick (✔️) for 'sent'\n  - Double grey ticks (✔️✔️) for 'delivered'\n  - Double blue ticks (💙✔️✔️) for 'read'\n- **Text Paste Detection**: Detect Ctrl+V / Cmd+V keypress and accept pasted text
-- **Image Paste Detection**: Detect clipboard image paste and show preview
-- **Image Preview UI**: Display pasted/uploaded image thumbnails with remove option
-- **File Upload Dialog**: Open native file picker for images when attachment icon is clicked
-- **Upload Progress UI**: Show progress bars and image previews during upload
-- **Attachment Display**: Render images inline with clickable preview\n- **Long-Press Detection**: Detect long-press (500-800ms hold) on chat items
+- **Long-Press Detection**: Detect long-press (500-800ms hold) on chat items
 - **Right-Click Menu**: Show action menu on right-click (desktop)\n- **Action Menu UI**: Display 'Delete Chat' option in overlay menu
 - **Deletion Confirmation**: Show confirmation dialog before deleting chat
 - **Chat Removal Animation**: Animate chat removal from list\n- **Chat Reappearance Animation**: Animate chat reappearance when new message arrives
 - **Message Filtering**: Filter out messages sent before `deleted_at` timestamp
-- **Smooth Animations**: Animate popup appearance, badge updates, tick transitions, preview appearance, upload progress, and chat list changes
-- **Loading States**: Show loading indicators during message sending, image uploads, and status updates
+- **Smooth Animations**: Animate popup appearance, badge updates, tick transitions, and chat list changes
+- **Loading States**: Show loading indicators during message sending and status updates
 - **Real-Time Synchronization**: Listen to Supabase Realtime events for instant status updates, chat deletions, and reappearances
 
 ### 2.11 Item History Management with Public History & Auto-Cleanup
@@ -665,8 +612,7 @@ If the item reporter selects conclusion = 'Owner Found' (for found items) OR 'It
 If conclusion is:\n- 'Owner Not Found'\n- 'Item Not Found'\n
 Then:
 1. Remove item from ACTIVE list (if required by logic)
-2. Set:
-   - history_type = USER_HISTORY
+2. Set:\n   - history_type = USER_HISTORY
    - status = OWNER_NOT_FOUND or ITEM_NOT_FOUND (as appropriate)
    - concluded_at = current timestamp
    - receiver_user_id = NULL\n   - receiver_email = NULL
@@ -691,7 +637,8 @@ Automatically delete items older than 6 months based on concluded_at timestamp.\
 This auto-delete applies to ALL:\n- USER_HISTORY items
 - MAIN_HISTORY items
 - Any remaining inactive Lost/Found history\n- ACTIVE items in Lost/Found lists that are older than 6 months
-\nNO EXCEPTIONS.\n
+
+NO EXCEPTIONS.\n
 #### 2.11.6 Auto-Delete Execution
 - **Scheduled Task**: Run a scheduled cleanup task daily (e.g., using Supabase cron job or database trigger)
 - **Deletion Criteria**: Delete any item where:
@@ -753,16 +700,14 @@ Users can view their own submission history directly on Report Lost/Report Found
 ### 2.14 UI/UX Requirements for Chat System
 \n#### 2.14.1 Visual Feedback
 - **Disabled State**: Delete Chat button visually disabled (grayed out) until conclusion is made (for item reporters)
-- **Loading States**: Show loading indicator while applying conclusion, sending messages, or uploading images
-- **Success Feedback**: Display success message after conclusion is applied or image is uploaded
-- **Error Handling**: Show user-friendly error messages if conclusion fails, message sending fails, or image upload fails
+- **Loading States**: Show loading indicator while applying conclusion or sending messages
+- **Success Feedback**: Display success message after conclusion is applied
+- **Error Handling**: Show user-friendly error messages if conclusion fails or message sending fails
 - **Confirmation Dialogs**: Clear, concise confirmation messages for all conclusion actions and chat deletions
 - **Tick Animations**: Smooth transitions when ticks change:\n  - Single tick (✔️) → Double grey ticks (✔️✔️) → Double blue ticks (💙✔️✔️)
 - **Popup Animations**: Smooth slide-in animation for popup notifications near ☰ icon
 - **Badge Animations**: Smooth appearance and disappearance of unread badges
 - **Status Indicator Colors**: Clear visual distinction between sent (grey), delivered (grey), and read (blue) states
-- **Image Preview Animations**: Smooth appearance of pasted/uploaded image previews
-- **Upload Progress Indicators**: Clear progress bars with percentage display during image uploads
 - **Long-Press Visual Feedback**: Highlight selected chat with background color change during long-press
 - **Action Menu Animations**: Smooth slide-in animation for long-press action menu
 - **Chat Removal Animation**: Smooth fade-out animation when chat is deleted from list
@@ -776,10 +721,6 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Popup Click Behavior**: Clicking popup opens chat directly and marks messages as read
 - **Badge Click Behavior**: Clicking chat with unread badge opens chat and clears badge
 - **Real-Time Tick Updates**: Sender sees tick changes immediately without manual refresh
-- **Paste Detection**: Immediate detection and handling of text/image paste actions
-- **Preview Interactions**: Clear 'Remove' and 'Send' buttons for pasted/uploaded content
-- **Attachment Icon Feedback**: Visual feedback (color change, scale) when attachment icon is clicked
-- **File Selection Feedback**: Show selected images immediately with preview thumbnails
 - **Long-Press Timing**: Consistent 500-800ms hold duration for long-press detection
 - **Haptic Feedback**: Vibration feedback on mobile devices when long-press is detected
 - **Menu Dismissal**: Clicking outside action menu or pressing back/escape closes menu
@@ -790,18 +731,15 @@ Users can view their own submission history directly on Report Lost/Report Found
   - Only chat participants can delete their own chat view
   - Never allow one user to delete chats or items for another user
   - Only message senders can edit or delete their own messages
-- **File Upload Security**: Validate image file types, sizes, and content to prevent malicious uploads
-- **Secure File Storage**: Store uploaded images in secure cloud storage with access control
-- **URL Security**: Generate time-limited, secure URLs for image downloads
-- **Clipboard Security**: Validate pasted content to prevent script injection or malicious code
-- **Validation**: Validate user permissions before allowing any conclusion, deletion, message action, or image upload
-- **Audit Trail**: Log all conclusions, deletions, message edits, status changes, state transitions, image uploads, and chat deletions for security and dispute resolution
+- **Validation**: Validate user permissions before allowing any conclusion, deletion, or message action
+- **Audit Trail**: Log all conclusions, deletions, message edits, status changes, state transitions, and chat deletions for security and dispute resolution
 - **Rollback Prevention**: Once conclusion is made, it cannot be undone (permanent action)
 - **Real-Time Security**: Ensure real-time updates respect Row Level Security policies
 - **Status Integrity**: Ensure message status transitions are one-way and cannot be reversed
 - **Deletion Integrity**: Ensure chat deletion states are correctly tracked and enforced
 - **Message Filtering Integrity**: Ensure messages sent before deletion remain hidden after chat reappears
-\n### 2.15 Gemini API Integration Configuration
+
+### 2.15 Gemini API Integration Configuration
 
 #### 2.15.1 API Key Management
 - **Provided API Key**: AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8
@@ -811,8 +749,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Key Validation**: Validate API key connection on application startup to ensure proper integration
 \n#### 2.15.2 API Model Version
 - **Strict Model Requirement**: Use **Gemini 2.5 Flash** model exclusively for all image analysis and description extraction requests
-- **Model Specification**: All API calls must explicitly specify model version as 'gemini-2.5-flash'
-- **No Model Fallback**: Do not fall back to other Gemini model versions (e.g., Gemini 1.5, Gemini Pro)
+- **Model Specification**: All API calls must explicitly specify model version as 'gemini-2.5-flash'\n- **No Model Fallback**: Do not fall back to other Gemini model versions (e.g., Gemini 1.5, Gemini Pro)
 - **Version Validation**: Validate that API responses are generated by Gemini 2.5 Flash model
 \n#### 2.15.3 API Request Handling
 - **Image Preprocessing**: Resize/compress images before sending to API to optimize performance
@@ -840,7 +777,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - Items with various conclusion statuses
 - Public history items (Owner Found, Item Found) displayed in Public Return Section with reporter and receiver emails
 - Private history items (Owner Not Found, Item Not Found)\n- Chat conversations with various states (concluded, not concluded, deleted by one user)\n- Messages with different delivery states (sent, delivered, read)
-- Messages with image attachments\n- Unread messages to test popup notifications and badge behavior
+- Unread messages to test popup notifications and badge behavior
 - Items approaching 6-month auto-delete threshold
 - Accurate homepage statistics reflecting current counts
 - Sample images for testing Gemini 2.5 Flash API image search functionality
@@ -870,11 +807,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **AI Analysis Indicator**: Animated loading indicator during Gemini 2.5 Flash API image analysis with progress text
 - **Match Result Highlighting**: Visual highlighting of matching keywords between Gemini-generated description and item descriptions
 - **Email Display in History**: Clear, readable display of reporter and receiver emails in Public Return Section with appropriate formatting
-- **Attachment Icon Design**: Paperclip (📎) or plus (+) icon with subtle hover effect, positioned left of message input
-- **Image Preview Cards**: Clean thumbnail cards with file name, size, and remove button for pasted/uploaded images
-- **Upload Progress Bars**: Thin, animated progress bars with percentage display and smooth color transitions
-- **Attachment Display in Chat**: Inline image display with clickable preview\n- **Long-Press Highlight**: Subtle background color change (#F3F4F6) or border highlight during long-press
-- **Action Menu Design**: Clean overlay menu with rounded corners, shadow, and clear action items with icons
+- **Long-Press Highlight**: Subtle background color change (#F3F4F6) or border highlight during long-press\n- **Action Menu Design**: Clean overlay menu with rounded corners, shadow, and clear action items with icons
 - **Deletion Confirmation Dialog**: Modern modal dialog with clear messaging and action buttons
 - **Chat Removal Animation**: Smooth fade-out with slide-left effect when chat is deleted\n- **Chat Reappearance Animation**: Smooth fade-in with slide-right effect when deleted chat reappears
 
@@ -889,27 +822,24 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Controlled Chat Lifecycle**: Clear visual indicators for chat states, conclusion requirements, and deletion permissions
 - **Role-Based Interface**: Different UI elements shown based on user role (item reporter vs. non-reporter)
 - **Public History Transparency**: Clear distinction between public Public Return Section and private User History, with reporter and receiver contact information visible in public history
-- **Auto-Cleanup Awareness**: Optional notification or indicator for items approaching 6-month auto-delete threshold
-- **Location Input Convenience**: Quick-select location suggestions improve reporting speed and consistency
+- **Auto-Cleanup Awareness**: Optional notification or indicator for items approaching 6-month auto-delete threshold\n- **Location Input Convenience**: Quick-select location suggestions improve reporting speed and consistency
 - **WhatsApp-Like Messaging**: Familiar messaging experience with delivery states (sent/delivered/read), blue ticks, and popup notifications
-- **Intelligent Notification System**: Popup notifications appear immediately near ☰ icon, unread badges shown only when chat list is opened\n- **Seamless Real-Time Experience**: All message states, ticks, popups, and badges update instantly without page reloads
+- **Intelligent Notification System**: Popup notifications appear immediately near ☰ icon, unread badges shown only when chat list is opened
+- **Seamless Real-Time Experience**: All message states, ticks, popups, and badges update instantly without page reloads
 - **Visual Search Convenience**: Image search with Gemini 2.5 Flash API provides intuitive alternative to text-based search, especially useful when item descriptions are difficult to articulate
 - **AI-Powered Search Feedback**: Clear feedback during image analysis process with progress indicators and result explanations
 - **Flexible Image Upload**: Support for images up to 10 MB allows high-quality item photos for better identification
-- **Flexible Input Methods**: Users can type, paste text, or paste/upload images seamlessly within chat\n- **Instant Paste Feedback**: Immediate preview and confirmation for pasted content before sending
-- **Clear Upload Progress**: Real-time progress indicators and image previews during uploads
-- **Intuitive Attachment Management**: Easy-to-use attachment icon for image uploads only
 - **WhatsApp-Style Chat Management**: Familiar long-press interaction for quick chat deletion without opening conversation
 - **Smart Chat Reappearance**: Deleted chats automatically reappear when new messages arrive, showing only new content
 - **Persistent Deletion State**: Deletion states persist across sessions and devices for consistent experience
 - **Flexible Deletion Options**: Users can delete chats from within conversation or directly from chat list
 - **Clear Deletion Feedback**: Smooth animations and confirmations for all deletion actions
-\n## 4. Technical Stack
+
+## 4. Technical Stack
 - **Frontend**: medo.dev\n- **Authentication**: Supabase Email OTP (first-time only) / Session-based login (returning users) / OTP-based password reset
 - **Database**: Supabase PostgreSQL
 - **Real-Time Communication**: Supabase Realtime (for messages, delivery states, read receipts, popup notifications, unread badges, status updates, chat deletions, chat reappearances)
-- **Email Service**: Supabase Email Service\n- **File Storage**: Supabase Storage (for uploaded images)
-- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
+- **Email Service**: Supabase Email Service\n- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
 - **Image Recognition**: AI-powered visual similarity search for image-based item matching
 - **Gemini API**: **Google Gemini 2.5 Flash API** for image description extraction and intelligent matching
 - **API Key**: AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8 (configured in environment variables as GEMINI_API_KEY)\n- **API Model Version**: Strictly use **Gemini 2.5 Flash** model for all image analysis requests
