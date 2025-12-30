@@ -1,9 +1,8 @@
-import { FileText, Download, FileVideo, FileAudio } from 'lucide-react';
+import { FileText, Download, FileVideo, FileAudio, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getChatAttachmentUrl } from '@/db/api';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface MessageAttachmentProps {
   attachmentUrl: string;
@@ -19,27 +18,10 @@ export function MessageAttachment({
   attachmentSize,
 }: MessageAttachmentProps) {
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    const fetchSignedUrl = async () => {
-      try {
-        setLoading(true);
-        setError(false);
-        const url = await getChatAttachmentUrl(attachmentUrl);
-        setSignedUrl(url);
-      } catch (err) {
-        console.error('Error fetching attachment URL:', err);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSignedUrl();
-  }, [attachmentUrl]);
+  const [imageError, setImageError] = useState(false);
+  
+  // Get public URL (synchronous, no expiry)
+  const publicUrl = getChatAttachmentUrl(attachmentUrl);
 
   const formatFileSize = (bytes?: number): string => {
     if (!bytes) return '';
@@ -48,47 +30,73 @@ export function MessageAttachment({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleDownload = () => {
-    if (!signedUrl) return;
-    const link = document.createElement('a');
-    link.href = signedUrl;
-    link.download = attachmentName;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    try {
+      const link = document.createElement('a');
+      link.href = publicUrl;
+      link.download = attachmentName;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Failed to download file. Please try again.');
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="mt-2">
-        <Skeleton className="h-32 w-48 rounded-lg bg-muted" />
-      </div>
-    );
-  }
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!imageError) {
+      setImageViewerOpen(true);
+    }
+  };
 
-  if (error || !signedUrl) {
-    return (
-      <div className="mt-2 bg-destructive/10 text-destructive rounded-lg p-3 max-w-sm">
-        <p className="text-sm">Failed to load attachment</p>
-      </div>
-    );
-  }
+  const handleImageError = () => {
+    console.error('Failed to load image:', publicUrl);
+    setImageError(true);
+  };
 
   // Image attachment
   if (attachmentType === 'image') {
     return (
       <>
         <div 
-          className="mt-2 cursor-pointer rounded-lg overflow-hidden max-w-xs"
-          onClick={() => setImageViewerOpen(true)}
+          className="mt-2 cursor-pointer rounded-lg overflow-hidden max-w-xs hover:opacity-90 transition-opacity"
+          onClick={handleImageClick}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleImageClick(e as any);
+            }
+          }}
         >
-          <img
-            src={signedUrl}
-            alt={attachmentName}
-            className="w-full h-auto object-cover hover:opacity-90 transition-opacity"
-            loading="lazy"
-          />
+          {imageError ? (
+            <div className="bg-destructive/10 text-destructive p-4 rounded-lg flex flex-col items-center gap-2">
+              <FileText className="h-8 w-8" />
+              <p className="text-sm">Failed to load image</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownload}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+            </div>
+          ) : (
+            <img
+              src={publicUrl}
+              alt={attachmentName}
+              className="w-full h-auto object-cover"
+              loading="lazy"
+              onError={handleImageError}
+            />
+          )}
         </div>
 
         {/* Image Viewer Dialog */}
@@ -96,7 +104,7 @@ export function MessageAttachment({
           <DialogContent className="max-w-4xl p-0 bg-black/90">
             <div className="relative">
               <img
-                src={signedUrl}
+                src={publicUrl}
                 alt={attachmentName}
                 className="w-full h-auto max-h-[90vh] object-contain"
               />
@@ -121,15 +129,29 @@ export function MessageAttachment({
     return (
       <div className="mt-2 rounded-lg overflow-hidden max-w-sm">
         <video
-          src={signedUrl}
+          src={publicUrl}
           controls
           className="w-full h-auto"
           preload="metadata"
+          onError={(e) => {
+            console.error('Failed to load video:', publicUrl);
+            e.currentTarget.poster = '';
+          }}
         >
           Your browser does not support the video tag.
         </video>
-        <div className="bg-muted px-3 py-2 text-xs text-muted-foreground">
-          {attachmentName} {attachmentSize && `• ${formatFileSize(attachmentSize)}`}
+        <div className="bg-muted px-3 py-2 text-xs text-muted-foreground flex items-center justify-between">
+          <span className="truncate flex-1">
+            {attachmentName} {attachmentSize && `• ${formatFileSize(attachmentSize)}`}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-2 h-6 px-2"
+            onClick={handleDownload}
+          >
+            <Download className="h-3 w-3" />
+          </Button>
         </div>
       </div>
     );
@@ -140,19 +162,30 @@ export function MessageAttachment({
     return (
       <div className="mt-2 bg-muted rounded-lg p-3 max-w-sm">
         <div className="flex items-center gap-2 mb-2">
-          <FileAudio className="h-5 w-5 text-muted-foreground" />
+          <FileAudio className="h-5 w-5 text-muted-foreground flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{attachmentName}</p>
             {attachmentSize && (
               <p className="text-xs text-muted-foreground">{formatFileSize(attachmentSize)}</p>
             )}
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="flex-shrink-0 h-8 w-8"
+            onClick={handleDownload}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
         </div>
         <audio
-          src={signedUrl}
+          src={publicUrl}
           controls
           className="w-full"
           preload="metadata"
+          onError={(e) => {
+            console.error('Failed to load audio:', publicUrl);
+          }}
         >
           Your browser does not support the audio tag.
         </audio>
@@ -161,8 +194,30 @@ export function MessageAttachment({
   }
 
   // Document attachment
+  const handleDocumentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Try to open in new tab first, fallback to download
+    try {
+      window.open(publicUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Failed to open document:', error);
+      handleDownload(e);
+    }
+  };
+
   return (
-    <div className="mt-2 bg-muted rounded-lg p-3 flex items-center gap-3 max-w-sm">
+    <div 
+      className="mt-2 bg-muted rounded-lg p-3 flex items-center gap-3 max-w-sm cursor-pointer hover:bg-muted/80 transition-colors"
+      onClick={handleDocumentClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleDocumentClick(e as any);
+        }
+      }}
+    >
       <div className="flex-shrink-0 w-10 h-10 bg-background rounded flex items-center justify-center">
         <FileText className="h-5 w-5 text-muted-foreground" />
       </div>
@@ -171,6 +226,10 @@ export function MessageAttachment({
         {attachmentSize && (
           <p className="text-xs text-muted-foreground">{formatFileSize(attachmentSize)}</p>
         )}
+        <p className="text-xs text-primary flex items-center gap-1 mt-1">
+          <ExternalLink className="h-3 w-3" />
+          Tap to open
+        </p>
       </div>
       <Button
         variant="ghost"
