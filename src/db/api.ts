@@ -702,6 +702,28 @@ export const deleteChatForUser = async (conversationId: string, userId: string):
   return result;
 };
 
+// Restore deleted chat (undo deletion, show all messages again)
+export const restoreChatForUser = async (conversationId: string, userId: string): Promise<{ success: boolean; message: string }> => {
+  const { data, error } = await supabase
+    .rpc('restore_deleted_chat_for_user', {
+      p_conversation_id: conversationId,
+      p_user_id: userId
+    });
+
+  if (error) {
+    console.error('Error restoring chat:', error);
+    throw new Error('Failed to restore chat: ' + error.message);
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error('No response from restore operation');
+  }
+
+  const result = data[0];
+  
+  return result;
+};
+
 // Get conversations for user with deletion info
 // Uses new timestamp-based deletion system for WhatsApp-like behavior
 export const getChatConversationsForUser = async (userId: string) => {
