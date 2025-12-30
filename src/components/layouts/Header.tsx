@@ -41,7 +41,7 @@ const Header: React.FC = () => {
     { name: 'Found Items', path: '/found-items' },
     { name: 'Report Lost', path: '/report-lost' },
     { name: 'Report Found', path: '/report-found' },
-    { name: 'Image Search', path: '/image-search' },
+    { name: 'Smart Search', path: '/image-search' },
     { name: 'Chats', path: '/chats' },
     { name: 'History', path: '/history' },
   ];

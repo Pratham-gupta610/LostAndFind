@@ -141,7 +141,7 @@ const ImageSearchPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-3xl xl:text-4xl font-bold flex items-center gap-2">
-              AI Image Search
+              Smart Search
               <Sparkles className="w-6 h-6 text-accent animate-pulse" />
             </h1>
             <p className="text-muted-foreground">

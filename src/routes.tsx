@@ -50,7 +50,7 @@ const routes: RouteConfig[] = [
     element: <ReportFoundPage />
   },
   {
-    name: 'Image Search',
+    name: 'Smart Search',
     path: '/image-search',
     element: <ImageSearchPage />
   },

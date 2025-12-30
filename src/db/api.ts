@@ -949,7 +949,7 @@ export const cleanupOldHistoryItems = async (): Promise<{
   };
 };
 
-// Image Search API
+// Smart Search API
 export const searchItemsByImage = async (imageFile: File): Promise<Array<LostItemWithProfile | FoundItemWithProfile>> => {
   try {
     // For now, return all active items as a placeholder
