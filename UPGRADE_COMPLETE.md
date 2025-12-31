@@ -126,7 +126,7 @@ left corner."
 ## 🔒 Security & Compatibility
 
 ### No Changes Required
-- ✅ Same API key (managed via environment variables)
+- ✅ Same API key (AIzaSyAlaS0Nmtr4pZot9m887DvyG56x69jj0i4)
 
 - ✅ Same authentication method
 - ✅ Same security measures
