@@ -201,7 +201,7 @@ Two separate, independent search systems:
   - If exact or high-confidence match found, display prominent 'Similar Item Found' indicator
 - **Combined Search**: Users can optionally combine image search with text filters for more precise results
 - **Search Scope**: Image search respects category boundaries (Lost Items search only searches lost items, Found Items search only searches found items)
-- **API Key Configuration**: System uses provided Gemini API key
+- **API Key Configuration**: System uses provided Gemini API key:AIzaSyAlaS0Nmtr4pZot9m887DvyG56x69jj0i4
 - **API Model Version**: Strictly use **Gemini 2.5 Flash** model for all image analysis requests
 - **Error Handling**: Display user-friendly error messages if API call fails or image cannot be processed
 
@@ -742,7 +742,8 @@ Users can view their own submission history directly on Report Lost/Report Found
 ### 2.15 Gemini API Integration Configuration
 
 #### 2.15.1 API Key Management
-- **Environment Variable Storage**: Store Gemini API key securely in environment variables as GEMINI_API_KEY
+- **Provided API Key**: AIzaSyAlaS0Nmtr4pZot9m887DvyG56x69jj0i4
+- **Environment Variable Storage**: Store Gemini API key securely in environment variables as GEMINI_API_KEY=AIzaSyAlaS0Nmtr4pZot9m887DvyG56x69jj0i4
 - **Key Configuration**: Configure the provided API key in the application's environment configuration file (.env or equivalent)
 - **Secure Storage**: Never expose API key in client-side code, version control, or logs
 - **Key Validation**: Validate API key connection on application startup to ensure proper integration
@@ -841,6 +842,7 @@ Users can view their own submission history directly on Report Lost/Report Found
 - **Email Service**: Supabase Email Service\n- **Scheduled Tasks**: Supabase cron jobs or database triggers for auto-cleanup
 - **Image Recognition**: AI-powered visual similarity search for image-based item matching
 - **Gemini API**: **Google Gemini 2.5 Flash API** for image description extraction and intelligent matching
+  - **API Key**: AIzaSyAlaS0Nmtr4pZot9m887DvyG56x69jj0i4
  (configured in environment variables as GEMINI_API_KEY)\n- **API Model Version**: Strictly use **Gemini 2.5 Flash** model for all image analysis requests
 \n## 5. Referenced Images
 - image.png (sidebar navigation reference)
