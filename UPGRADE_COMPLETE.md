@@ -126,7 +126,6 @@ left corner."
 ## 🔒 Security & Compatibility
 
 ### No Changes Required
-- ✅ Same API key (AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8)
 - ✅ Same authentication method
 - ✅ Same security measures
 - ✅ Same privacy protections
