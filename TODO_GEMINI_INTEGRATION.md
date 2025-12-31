@@ -117,7 +117,9 @@ Display results + description
 ### Waiting For
 
 ✅ **COMPLETE** - Gemini API Key configured and activated!
-**API Key**: AIzaSyAlaS0Nmtr4pZot9m887DvyG56x69jj0i4
+**API Key**:
+Managed securely via environment variables (`VITE_GEMINI_API_KEY`) and never committed to the repository.
+
 **Status**: Securely stored in Supabase secrets  
 **Model**: Gemini 2.0 Flash (Experimental) - UPGRADED! 🚀  
 **Feature**: FULLY OPERATIONAL with latest AI model
