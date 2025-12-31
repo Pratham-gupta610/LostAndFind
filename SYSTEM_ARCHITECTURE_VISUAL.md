@@ -56,7 +56,7 @@
 ┃  │  2. Get API key from secrets                             │   ┃
 ┃  │     • Deno.env.get('GEMINI_API_KEY')                      │   ┃
 ┃  │     • Encrypted storage                                   │   ┃
-┃  │     • ✅ Key: AIzaSyA27DHTEleWLXl3CPuAipEOvGOKosHekS8     │   ┃
+┃  │        │   ┃
 ┃  └──────────────────────────────────────────────────────────┘   ┃
 ┃                            ↓                                      ┃
 ┃  ┌──────────────────────────────────────────────────────────┐   ┃
